@@ -55,3 +55,7 @@ Initialize a working Electron + React + TypeScript project with test runner conf
 - [x] `npm test` runs and passes (App spec + main spec) <!-- verified 2026-06-10 -->
 - [ ] `npm start` launches an Electron window showing "Dota 2 Announcer" heading <!-- blocked: no network to download Electron binary -->
 - [ ] `npm run build` produces a Windows executable in `dist/` <!-- blocked: no network for Electron binary + not on Windows -->
+
+## Changelog
+
+- 2026-06-10: Fixed (FIX-001) — Added GPU cache switches to `src/main/main.ts` to prevent black screen on Windows due to disk cache access errors

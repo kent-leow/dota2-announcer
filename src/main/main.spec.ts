@@ -18,6 +18,8 @@ jest.mock('electron', () => {
       whenReady: jest.fn().mockResolvedValue(undefined),
       on: mockOn,
       quit: jest.fn(),
+      commandLine: { appendSwitch: jest.fn() },
+      getPath: jest.fn().mockReturnValue('/tmp/mock-user-data'),
     },
     BrowserWindow: mockBrowserWindow,
   };
