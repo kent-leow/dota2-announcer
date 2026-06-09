@@ -23,20 +23,27 @@ export function UpcomingEvents() {
   }, []);
 
   if (events.length === 0) {
-    return <div data-testid="upcoming-events-empty">No upcoming events</div>;
+    return (
+      <div data-testid="upcoming-events-empty" className="bg-dota-dark rounded-lg p-4 text-center text-dota-grey/60 text-sm">
+        No upcoming events
+      </div>
+    );
   }
 
   return (
-    <div data-testid="upcoming-events">
-      <h3>Upcoming Events</h3>
-      <ul>
+    <div data-testid="upcoming-events" className="bg-dota-dark rounded-lg p-4">
+      <h3 className="text-dota-gold text-sm font-semibold mb-3 uppercase tracking-wide">Upcoming Events</h3>
+      <ul className="space-y-1">
         {events.map((event, idx) => (
-          <li key={`${event.eventId}-${event.fireAtMs}-${idx}`} data-testid="upcoming-event-row">
-            <span data-testid="event-name">{event.eventName}</span>
-            {' — '}
-            <span data-testid="event-countdown">
-              {formatCountdown(event.fireAtMs, elapsed)}
-            </span>
+          <li
+            key={`${event.eventId}-${event.fireAtMs}-${idx}`}
+            data-testid="upcoming-event-row"
+            className={`flex items-center justify-between px-3 py-2 rounded text-sm ${
+              idx % 2 === 0 ? 'bg-dota-black/40' : 'bg-dota-black/20'
+            }`}
+          >
+            <span data-testid="event-name" className="text-dota-grey font-medium">{event.eventName}</span>
+            <span data-testid="event-countdown" className="font-mono text-dota-amber">{formatCountdown(event.fireAtMs, elapsed)}</span>
           </li>
         ))}
       </ul>

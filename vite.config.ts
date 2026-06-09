@@ -7,6 +7,9 @@ export default defineConfig({
   build: {
     outDir: resolve(__dirname, 'dist/renderer'),
     emptyOutDir: true,
+    rollupOptions: {
+      external: ['electron', 'fs', 'path', 'child_process'],
+    },
   },
   resolve: {
     alias: {
@@ -16,12 +19,17 @@ export default defineConfig({
   plugins: [
     electron([
       {
-        entry: 'src/main/main.ts',
+        entry: resolve(__dirname, 'src/main/main.ts'),
         vite: {
           build: {
-            outDir: 'dist/main',
+            outDir: resolve(__dirname, 'dist/main'),
             rollupOptions: {
               external: ['electron'],
+            },
+          },
+          resolve: {
+            alias: {
+              src: resolve(__dirname, 'src'),
             },
           },
         },

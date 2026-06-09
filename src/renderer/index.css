@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-dota-black text-dota-grey font-sans m-0 p-0 min-h-screen;
+}
