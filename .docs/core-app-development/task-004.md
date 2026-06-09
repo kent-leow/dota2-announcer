@@ -6,7 +6,7 @@ Synthesize Dota-specific announcements via Windows Speech API with clean text fo
 ## Prerequisites
 - [x] task-001.md completed (events loaded → scheduler feeds TTS engine via config/events interface) <!-- verified 2026-06-10 -->
 - [ ] task-003.md completed (scheduler fires callback tokens consumed here)
-- [ ] task-002.md completed (main UI layout from MainDock.tsx available to wire buttons into data layers)
+- [x] task-002.md completed (main UI layout from MainDock.tsx available to wire buttons into data layers) <!-- verified 2026-06-10 -->
 
 ## Tasks
 
