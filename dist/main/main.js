@@ -1,1 +1,55 @@
-"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});const t=require("electron"),l=require("path");function c(n){const r=Object.create(null,{[Symbol.toStringTag]:{value:"Module"}});if(n){for(const o in n)if(o!=="default"){const a=Object.getOwnPropertyDescriptor(n,o);Object.defineProperty(r,o,a.get?a:{enumerable:!0,get:()=>n[o]})}}return r.default=n,Object.freeze(r)}const s=c(l);let e=null;function i(){return e=new t.BrowserWindow({width:400,height:600,webPreferences:{nodeIntegration:!1,contextIsolation:!0}}),process.env.VITE_DEV_SERVER_URL?e.loadURL(process.env.VITE_DEV_SERVER_URL):e.loadFile(s.join(__dirname,"../renderer/index.html")),e.on("closed",()=>{e=null}),e}t.app.whenReady().then(()=>{i(),t.app.on("activate",()=>{t.BrowserWindow.getAllWindows().length===0&&i()})});t.app.on("window-all-closed",()=>{process.platform!=="darwin"&&t.app.quit()});exports.createWindow=i;
+"use strict";
+Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
+const electron = require("electron");
+const path = require("path");
+function _interopNamespaceDefault(e) {
+  const n = Object.create(null, { [Symbol.toStringTag]: { value: "Module" } });
+  if (e) {
+    for (const k in e) {
+      if (k !== "default") {
+        const d = Object.getOwnPropertyDescriptor(e, k);
+        Object.defineProperty(n, k, d.get ? d : {
+          enumerable: true,
+          get: () => e[k]
+        });
+      }
+    }
+  }
+  n.default = e;
+  return Object.freeze(n);
+}
+const path__namespace = /* @__PURE__ */ _interopNamespaceDefault(path);
+let mainWindow = null;
+function createWindow() {
+  mainWindow = new electron.BrowserWindow({
+    width: 400,
+    height: 600,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true
+    }
+  });
+  if (process.env.VITE_DEV_SERVER_URL) {
+    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+  } else {
+    mainWindow.loadFile(path__namespace.join(__dirname, "../renderer/index.html"));
+  }
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
+  return mainWindow;
+}
+electron.app.whenReady().then(() => {
+  createWindow();
+  electron.app.on("activate", () => {
+    if (electron.BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
+});
+electron.app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
+    electron.app.quit();
+  }
+});
+exports.createWindow = createWindow;
