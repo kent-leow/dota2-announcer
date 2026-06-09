@@ -4,7 +4,7 @@
 Create the config subsystem: schema validation, file loader with reload capability, default event definitions for all Dota 2 objects in AC6, and a basic UI panel showing loaded events. Verified by inspecting the loaded-events view after launch — all entries present and structurally correct.
 
 ## Prerequisites
-- None (foundational slice)
+- [x] task-000.md completed (project scaffolding, Electron shell, test runner) <!-- verified 2026-06-10 -->
 
 ## Tasks
 

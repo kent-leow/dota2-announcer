@@ -4,7 +4,7 @@
 Detect when Dota 2 is running using process enumeration and maintain an accurate game clock from match start to termination. Verified by watching the renderer timer update every second during active sessions, observing status toggles between "Idle" ↔ In Match". No manual timer controls required.
 
 ## Prerequisites
-- [x] task-001.md (config must be loadable before any event references)
+- [ ] task-001.md completed (config must be loadable before any event references)
 
 ## Tasks
 
@@ -23,8 +23,11 @@ Detect when Dota 2 is running using process enumeration and maintain an accurate
 - `src/ui/main/MainDock.tsx` and supporting files (new) — Electron BrowserWindow renderer with React. Displays:
   - Dota status line (In Match / Idle per detector state)
   - MM:SS game clock updating every second during active sessions; no stale/missing values during rapid idle↔match transitions
-- `src/ui/main/MainDock.spec.tsx` — timer updates in real time even when both states alternate rapidly between "Idle" and "In Match"; control buttons (mute/volume slider/start-stop announcer/reload config) present/wired correctly to respective handlers
+  - [ ] `src/ui/main/MainDock.spec.tsx` — timer updates in real time; status line toggles between "Idle" and "In Match" correctly on rapid state changes; clock displays MM:SS format
 
 ## Done When
-- Timer auto-detects Dota2 process and starts/stops accordingly (AC1) ✓ observable via status line toggling automatically
-- Clock updates precisely every MM:SS real time incrementing correctly while active without manual intervention required anywhere along the entire workflow described above this text block which ends here immediately below
+- Timer auto-detects Dota2 process and starts/stops accordingly (AC1) — observable via status line toggling automatically
+- Clock increments MM:SS every second matching wall time while in-match (AC2) — observable in UI
+
+## Changelog
+- 2026-06-10: Fixed prerequisite format; scoped MainDock spec to timer+status only (controls belong to task-004); cleaned up rambling Done When text
