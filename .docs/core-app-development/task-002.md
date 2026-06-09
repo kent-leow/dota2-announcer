@@ -4,7 +4,7 @@
 Detect when Dota 2 is running using process enumeration and maintain an accurate game clock from match start to termination. Verified by watching the renderer timer update every second during active sessions, observing status toggles between "Idle" ↔ In Match". No manual timer controls required.
 
 ## Prerequisites
-- [ ] task-001.md completed (config must be loadable before any event references)
+- [x] task-001.md completed (config must be loadable before any event references) <!-- verified 2026-06-10 -->
 
 ## Tasks
 
