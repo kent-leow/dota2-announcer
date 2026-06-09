@@ -4,7 +4,7 @@
 Schedule events from config against clock ticks and fire TTS at exact warning offsets sorted descending; verify one-time fires once per cycle, repeating fires repeatedly at intervals. No duplicate announcements. Verified by setting a test config with one-time + repeating event, advancing the clock to each scheduled offset in an integration spec run — verifications execute against scheduler's callback invocations without reading any code.
 
 ## Prerequisites
-- [ ] task-002.md completed (consumes `gameTimer.getElapsedMillis()` and config events from task-001)
+- [x] task-002.md completed (consumes `gameTimer.getElapsedMillis()` and config events from task-001) <!-- verified 2026-06-10 -->
 
 ## Tasks
 
