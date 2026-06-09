@@ -14,7 +14,10 @@ const config: Config = {
     {
       displayName: 'renderer',
       testEnvironment: 'jsdom',
-      testMatch: ['<rootDir>/src/renderer/**/*.spec.{ts,tsx}'],
+      testMatch: [
+        '<rootDir>/src/renderer/**/*.spec.{ts,tsx}',
+        '<rootDir>/src/ui/**/*.spec.{ts,tsx}',
+      ],
       preset: 'ts-jest',
       moduleNameMapper: {
         '^src/(.*)$': '<rootDir>/src/$1',
@@ -25,7 +28,7 @@ const config: Config = {
       displayName: 'services',
       testEnvironment: 'node',
       testMatch: ['<rootDir>/src/**/*.spec.ts'],
-      testPathIgnorePatterns: ['/src/main/', '/src/renderer/'],
+      testPathIgnorePatterns: ['/src/main/', '/src/renderer/', '/src/ui/'],
       preset: 'ts-jest',
       moduleNameMapper: {
         '^src/(.*)$': '<rootDir>/src/$1',
