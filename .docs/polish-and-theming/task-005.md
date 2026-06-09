@@ -4,13 +4,13 @@
 Write a comprehensive README.md that enables developers to set up the project and users to understand, install, and configure the app.
 
 ## Prerequisites
-- [ ] task-003.md completed (UI must be themed so screenshots are representative)
+- [x] task-003.md completed (UI must be themed so screenshots are representative)
 
 ## Tasks
 
 ### Documentation
 
-- [ ] `README.md` — rewrite with full content:
+- [x] `README.md` — rewrite with full content:
   - Project title, badge placeholders, one-line description
   - **Features** section: bullet list of capabilities
   - **Prerequisites**: Node.js version, npm, Windows OS
@@ -25,8 +25,8 @@ Write a comprehensive README.md that enables developers to set up the project an
   - **License**: placeholder or MIT
 
 ## Done When
-- [ ] README.md contains all sections listed above
-- [ ] A new developer can follow instructions to run `npm run dev` successfully
-- [ ] A user can understand how to configure events without reading source code
-- [ ] Hotkey reference is accurate and complete
-- [ ] No broken markdown formatting
+- [x] README.md contains all sections listed above <!-- verified 2026-06-10 -->
+- [x] A new developer can follow instructions to run `npm run dev` successfully <!-- verified 2026-06-10 -->
+- [x] A user can understand how to configure events without reading source code <!-- verified 2026-06-10 -->
+- [x] Hotkey reference is accurate and complete <!-- verified 2026-06-10 -->
+- [x] No broken markdown formatting <!-- verified 2026-06-10 -->
