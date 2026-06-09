@@ -1,4 +1,4 @@
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 let stateChangeCallback: ((state: 'in-match' | 'idle') => void) | null = null;
@@ -22,8 +22,30 @@ jest.mock('src/timer/gameTimer', () => ({
   }),
 }));
 
+jest.mock('src/tts/muteManager', () => ({
+  isMuted: jest.fn(() => false),
+  toggleMute: jest.fn(() => true),
+}));
+
+jest.mock('src/tts/volumeController', () => ({
+  getVolume: jest.fn(() => 100),
+  setVolume: jest.fn(),
+}));
+
+jest.mock('src/config/eventsLoader', () => ({
+  reload: jest.fn(),
+}));
+
+jest.mock('src/scheduler/eventScheduler', () => ({
+  loadSchedule: jest.fn(),
+}));
+
 import { MainDock } from './MainDock';
 import * as gameTimer from 'src/timer/gameTimer';
+import * as muteManager from 'src/tts/muteManager';
+import * as volumeController from 'src/tts/volumeController';
+import * as eventsLoader from 'src/config/eventsLoader';
+import * as eventScheduler from 'src/scheduler/eventScheduler';
 
 describe('MainDock', () => {
   beforeEach(() => {
@@ -107,5 +129,68 @@ describe('MainDock', () => {
     });
 
     expect(screen.getByTestId('game-clock')).toHaveTextContent('61:01');
+  });
+
+  describe('UI controls', () => {
+    it('mute toggle button present and toggles state', () => {
+      render(<MainDock />);
+      const btn = screen.getByTestId('mute-toggle');
+      expect(btn).toHaveTextContent('Mute');
+
+      act(() => {
+        fireEvent.click(btn);
+      });
+
+      expect(muteManager.toggleMute).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('mute-toggle')).toHaveTextContent('Unmute');
+    });
+
+    it('volume slider updates value live showing correct percentage', () => {
+      render(<MainDock />);
+      const slider = screen.getByTestId('volume-slider') as HTMLInputElement;
+      const valueDisplay = screen.getByTestId('volume-value');
+
+      expect(valueDisplay).toHaveTextContent('100%');
+
+      act(() => {
+        fireEvent.change(slider, { target: { value: '50' } });
+      });
+
+      expect(volumeController.setVolume).toHaveBeenCalledWith(50);
+      expect(screen.getByTestId('volume-value')).toHaveTextContent('50%');
+    });
+
+    it('reload config button reloads without crash', () => {
+      render(<MainDock />);
+
+      act(() => {
+        stateChangeCallback?.('in-match');
+      });
+      act(() => {
+        tickCallback?.(30000);
+      });
+
+      const reloadBtn = screen.getByTestId('reload-config');
+      act(() => {
+        fireEvent.click(reloadBtn);
+      });
+
+      expect(eventsLoader.reload).toHaveBeenCalled();
+      expect(eventScheduler.loadSchedule).toHaveBeenCalled();
+      expect(screen.getByTestId('game-clock')).toHaveTextContent('00:30');
+      expect(screen.getByTestId('status-line')).toHaveTextContent('In Match');
+    });
+
+    it('start/stop button toggles announcer state', () => {
+      render(<MainDock />);
+      const btn = screen.getByTestId('start-stop');
+      expect(btn).toHaveTextContent('Stop');
+
+      act(() => {
+        fireEvent.click(btn);
+      });
+
+      expect(btn).toHaveTextContent('Start');
+    });
   });
 });
