@@ -16,7 +16,7 @@ Schedule events from config against clock ticks and fire TTS at exact warning of
 ### Event scheduler core
 
 - `src/scheduler/eventScheduler.ts` — new; subscribes to game clock ticks and loaded config events from task-001/002; computes fire times per `spawnTime` + `repeatEvery`; fires TTS callbacks sorted by descending offset order per `warnings` array; tracks fired IDs via TTL (expires when clock advances past `offset+1s` or game resets) for deduplication.
-  - [ ] `src/scheduler/eventScheduler.spec.ts` — test blocks:
+  - [x] `src/scheduler/eventScheduler.spec.ts` — test blocks:
     - One-time event fires exactly once at its spawn time ±0 ticks, producing only one announcement token/callback invocation
     - Repeating event with `[60,30]` warnings fires two tokens per occurrence in descending order; repeats correctly across cycles when `repeatEvery > 0`
     - Dedup guard suppresses double-fire when multiple tick callbacks land at the same offset simultaneously
@@ -26,14 +26,14 @@ Schedule events from config against clock ticks and fire TTS at exact warning of
 ### Upcoming events UI panel (AC8)
 
 - `src/ui/main/UpcomingEvents.tsx` (new) — Subscribes to scheduler state; renders list of next events sorted by nearest fire time. Each row shows event name + countdown. Refreshes every tick.
-  - [ ] `src/ui/main/UpcomingEvents.spec.tsx` — renders events sorted by nearest spawn time; updates ordering as clock advances; shows empty state when no events pending
+  - [x] `src/ui/main/UpcomingEvents.spec.tsx` — renders events sorted by nearest spawn time; updates ordering as clock advances; shows empty state when no events pending
 
 ## Done When
-- One-time event fires exactly once per match phase when clock reaches spawnTime (AC4 verified by scheduler callback invocations)
-- Repeating events fire at correct intervals with multiple warnings in descending order, each firing once per occurrence (AC5 verified via spec assertions on invocation counts)
-- Upcoming events list visible in UI, ordered by nearest spawn time, updating in real time (AC8)
-- All new and modified tests pass
-- No existing tests broken
+- [x] One-time event fires exactly once per match phase when clock reaches spawnTime (AC4 verified by scheduler callback invocations) <!-- verified 2026-06-10 -->
+- [x] Repeating events fire at correct intervals with multiple warnings in descending order, each firing once per occurrence (AC5 verified via spec assertions on invocation counts) <!-- verified 2026-06-10 -->
+- [x] Upcoming events list visible in UI, ordered by nearest spawn time, updating in real time (AC8) <!-- verified 2026-06-10 -->
+- [x] All new and modified tests pass <!-- verified 2026-06-10 -->
+- [x] No existing tests broken <!-- verified 2026-06-10 -->
 
 ## Changelog
 - 2026-06-10: Added UpcomingEvents.tsx UI panel + spec to cover AC8 (was unassigned); updated title and Done When
