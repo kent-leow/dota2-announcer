@@ -1,4 +1,9 @@
 node_modules
 dist
+dist/
 build
 coverage
+dist/main/main.js
+dist/renderer/index.html
+dist/renderer/assets/index-8uXdil1H.js
+dist/renderer/assets/index-D-4S2RIh.css
