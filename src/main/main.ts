@@ -19,9 +19,9 @@ let isQuitting = false;
 
 function getAppIconPath(): string {
   if (process.env.VITE_DEV_SERVER_URL) {
-    return path.join(__dirname, '../../assets/icon.png');
+    return path.join(__dirname, '../../assets/dota2-announcer.png');
   }
-  return path.join(app.getAppPath(), 'assets/icon.png');
+  return path.join(app.getAppPath(), 'assets/dota2-announcer.png');
 }
 
 function createWindow(): BrowserWindow {
@@ -71,11 +71,10 @@ function createWindow(): BrowserWindow {
 }
 
 function getTrayIconPath(): string {
-  const iconName = process.platform === 'darwin' ? 'tray-iconTemplate.png' : 'tray-icon.png';
   if (process.env.VITE_DEV_SERVER_URL) {
-    return path.join(__dirname, '../../assets', iconName);
+    return path.join(__dirname, '../../assets/dota2-announcer.png');
   }
-  return path.join(app.getAppPath(), 'assets', iconName);
+  return path.join(app.getAppPath(), 'assets/dota2-announcer.png');
 }
 
 function createTray(): void {
@@ -84,6 +83,11 @@ function createTray(): void {
     icon = nativeImage.createFromPath(getTrayIconPath());
     if (icon.isEmpty()) {
       icon = nativeImage.createEmpty();
+    } else {
+      icon = icon.resize({ width: 22, height: 22 });
+      if (process.platform === 'darwin') {
+        icon.setTemplateImage(true);
+      }
     }
   } catch {
     icon = nativeImage.createEmpty();

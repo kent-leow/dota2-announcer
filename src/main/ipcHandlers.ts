@@ -76,6 +76,15 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
   ipcMain.handle('audio:getVolume', () => volumeController.getVolume());
   ipcMain.handle('config:getEvents', () => eventsLoader.getEvents());
   ipcMain.handle('config:reloadEvents', () => eventsLoader.reload());
+  ipcMain.handle('config:saveEvents', (_event, config: { events: unknown[] }) => {
+    const { eventsConfigSchema } = require('src/config/events.schema');
+    const parsed = eventsConfigSchema.safeParse(config);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.message };
+    }
+    eventsLoader.saveEvents(parsed.data);
+    return { success: true, config: parsed.data };
+  });
 
   ipcMain.handle('audio:getIncludeTimeSuffix', () => readAppState().includeTimeSuffix);
   ipcMain.handle('audio:setIncludeTimeSuffix', (_event, value: boolean) => {

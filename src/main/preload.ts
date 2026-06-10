@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getVolume: () => ipcRenderer.invoke('audio:getVolume'),
   getEvents: () => ipcRenderer.invoke('config:getEvents'),
   reloadEvents: () => ipcRenderer.invoke('config:reloadEvents'),
+  saveEvents: (config: unknown) => ipcRenderer.invoke('config:saveEvents', config),
   getIncludeTimeSuffix: () => ipcRenderer.invoke('audio:getIncludeTimeSuffix'),
   setIncludeTimeSuffix: (value: boolean) => ipcRenderer.invoke('audio:setIncludeTimeSuffix', value),
   getRate: () => ipcRenderer.invoke('audio:getRate'),
