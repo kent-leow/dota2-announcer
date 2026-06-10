@@ -59,3 +59,6 @@ Initialize a working Electron + React + TypeScript project with test runner conf
 ## Changelog
 
 - 2026-06-10: Fixed (FIX-001) — Added GPU cache switches to `src/main/main.ts` to prevent black screen on Windows due to disk cache access errors
+- 2026-06-10: Fixed (FIX-002) — Added `show: false` + `ready-to-show` to prevent black flash before renderer loads
+- 2026-06-10: Fixed (FIX-003) — Added single instance lock to prevent duplicate app instances
+- 2026-06-10: Fixed (FIX-005) — Added `uncaughtException` handler in main process
