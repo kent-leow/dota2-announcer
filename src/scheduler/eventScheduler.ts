@@ -26,10 +26,13 @@ function computeFiresForEvent(event: GameEvent, currentMs: number, windowMs: num
 
   if (event.repeatEvery) {
     const repeatMs = event.repeatEvery * 1000;
+    const maxOcc = event.maxOccurrences ?? Infinity;
     let occurrence = spawnTimeMs;
-    while (occurrence <= lookAhead) {
+    let count = 0;
+    while (occurrence <= lookAhead && count < maxOcc) {
       occurrences.push(occurrence);
       occurrence += repeatMs;
+      count++;
     }
   } else {
     occurrences.push(spawnTimeMs);

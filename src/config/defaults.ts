@@ -10,17 +10,13 @@ export const DEFAULT_EVENTS: EventsConfig = {
       repeatEvery: 180,
       warnings: [{ offsetSeconds: 60 }, { offsetSeconds: 30 }],
     },
-    // Water Runes — spawn at 2:00 and 4:00 (one-time events)
+    // Water Runes — spawn at 2:00, repeat every 2 min, only 2 times
     {
-      id: 'water-rune-first',
+      id: 'water-rune',
       name: 'Water Rune',
       spawnTime: 120,
-      warnings: [{ offsetSeconds: 30 }],
-    },
-    {
-      id: 'water-rune-second',
-      name: 'Water Rune',
-      spawnTime: 240,
+      repeatEvery: 120,
+      maxOccurrences: 2,
       warnings: [{ offsetSeconds: 30 }],
     },
     // Power Runes — spawn at 6:00, repeat every 2 minutes
@@ -97,8 +93,7 @@ export const DEFAULT_EVENTS: EventsConfig = {
 
 export const EVENT_GROUP_IDS = [
   'bounty-rune',
-  'water-rune-first',
-  'water-rune-second',
+  'water-rune',
   'power-rune',
   'wisdom-rune',
   'lotus-pool',
