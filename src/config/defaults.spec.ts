@@ -10,13 +10,12 @@ describe('defaults', () => {
       'water-rune',
       'power-rune',
       'wisdom-rune',
-      'lotus-pool',
-      'first-night',
-      'day-night-cycle',
-      'neutral-camps-phase1',
-      'neutral-camps-phase2',
+      'lotus-rune',
+      'night',
+      'day',
+      'neutral-camp',
       'tormentor',
-      'roshan-reminder',
+      'aghanim-shard',
     ];
 
     for (const group of expectedGroups) {
