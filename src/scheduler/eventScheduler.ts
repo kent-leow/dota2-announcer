@@ -1,5 +1,4 @@
-import { GameEvent } from 'src/config/events.schema';
-import { getEvents } from 'src/config/eventsLoader';
+import { GameEvent, EventsConfig } from 'src/config/events.schema';
 import {
   ScheduledFire,
   UpcomingEvent,
@@ -55,8 +54,10 @@ function computeFiresForEvent(event: GameEvent, currentMs: number, windowMs: num
 }
 
 
-export function loadSchedule(): void {
-  currentEvents = getEvents().events;
+export function loadSchedule(config?: EventsConfig): void {
+  if (config) {
+    currentEvents = config.events;
+  }
   firedIds = new Set();
 }
 

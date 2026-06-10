@@ -6,10 +6,7 @@ import {
   getUpcoming,
   _resetForTesting,
 } from './eventScheduler';
-import * as eventsLoader from 'src/config/eventsLoader';
-
-jest.mock('src/config/eventsLoader');
-const mockedGetEvents = eventsLoader.getEvents as jest.Mock;
+import { EventsConfig } from 'src/config/events.schema';
 
 describe('eventScheduler', () => {
   beforeEach(() => {
@@ -19,7 +16,7 @@ describe('eventScheduler', () => {
 
   describe('one-time event', () => {
     it('fires exactly once at spawn time', () => {
-      mockedGetEvents.mockReturnValue({
+      const config: EventsConfig = {
         events: [
           {
             id: 'first-night',
@@ -28,13 +25,12 @@ describe('eventScheduler', () => {
             warnings: [{ offsetSeconds: 60 }],
           },
         ],
-      });
+      };
 
       const callback = jest.fn();
       onAnnouncement(callback);
-      loadSchedule();
+      loadSchedule(config);
 
-      // Fire at 300 - 60 = 240s = 240000ms
       tick(239_000);
       expect(callback).not.toHaveBeenCalled();
 
@@ -42,7 +38,6 @@ describe('eventScheduler', () => {
       expect(callback).toHaveBeenCalledTimes(1);
       expect(callback).toHaveBeenCalledWith('First Night', 60);
 
-      // Same tick again should not fire (dedup)
       tick(240_000);
       expect(callback).toHaveBeenCalledTimes(1);
     });
@@ -50,7 +45,7 @@ describe('eventScheduler', () => {
 
   describe('repeating event with multiple warnings', () => {
     it('fires warnings in descending offset order per occurrence', () => {
-      mockedGetEvents.mockReturnValue({
+      const config: EventsConfig = {
         events: [
           {
             id: 'bounty-rune',
@@ -60,13 +55,12 @@ describe('eventScheduler', () => {
             warnings: [{ offsetSeconds: 60 }, { offsetSeconds: 30 }],
           },
         ],
-      });
+      };
 
       const callback = jest.fn();
       onAnnouncement(callback);
-      loadSchedule();
+      loadSchedule(config);
 
-      // First occurrence at 180s: warnings at 120s and 150s
       tick(120_000);
       expect(callback).toHaveBeenCalledTimes(1);
       expect(callback).toHaveBeenCalledWith('Bounty Rune', 60);
@@ -75,7 +69,6 @@ describe('eventScheduler', () => {
       expect(callback).toHaveBeenCalledTimes(2);
       expect(callback).toHaveBeenCalledWith('Bounty Rune', 30);
 
-      // Second occurrence at 360s: warnings at 300s and 330s
       tick(300_000);
       expect(callback).toHaveBeenCalledTimes(3);
       expect(callback).toHaveBeenCalledWith('Bounty Rune', 60);
@@ -86,7 +79,7 @@ describe('eventScheduler', () => {
     });
 
     it('fires both warnings at once if tick jumps past both', () => {
-      mockedGetEvents.mockReturnValue({
+      const config: EventsConfig = {
         events: [
           {
             id: 'test',
@@ -95,17 +88,15 @@ describe('eventScheduler', () => {
             warnings: [{ offsetSeconds: 60 }, { offsetSeconds: 30 }],
           },
         ],
-      });
+      };
 
       const calls: [string, number][] = [];
       onAnnouncement((name, offset) => calls.push([name, offset]));
-      loadSchedule();
+      loadSchedule(config);
 
-      // Jump past both fire points (60s and 90s)
       tick(95_000);
 
       expect(calls).toHaveLength(2);
-      // Descending offset order
       expect(calls[0]).toEqual(['Test', 60]);
       expect(calls[1]).toEqual(['Test', 30]);
     });
@@ -113,7 +104,7 @@ describe('eventScheduler', () => {
 
   describe('dedup guard', () => {
     it('suppresses double-fire when tick called at same offset', () => {
-      mockedGetEvents.mockReturnValue({
+      const config: EventsConfig = {
         events: [
           {
             id: 'test',
@@ -122,11 +113,11 @@ describe('eventScheduler', () => {
             warnings: [{ offsetSeconds: 15 }],
           },
         ],
-      });
+      };
 
       const callback = jest.fn();
       onAnnouncement(callback);
-      loadSchedule();
+      loadSchedule(config);
 
       tick(45_000);
       tick(45_000);
@@ -138,7 +129,7 @@ describe('eventScheduler', () => {
 
   describe('reload config', () => {
     it('clears fired state so events re-announce in new cycle', () => {
-      mockedGetEvents.mockReturnValue({
+      const config: EventsConfig = {
         events: [
           {
             id: 'test',
@@ -147,17 +138,16 @@ describe('eventScheduler', () => {
             warnings: [{ offsetSeconds: 15 }],
           },
         ],
-      });
+      };
 
       const callback = jest.fn();
       onAnnouncement(callback);
-      loadSchedule();
+      loadSchedule(config);
 
       tick(45_000);
       expect(callback).toHaveBeenCalledTimes(1);
 
-      // Reload clears state
-      loadSchedule();
+      loadSchedule(config);
       tick(45_000);
       expect(callback).toHaveBeenCalledTimes(2);
     });
@@ -165,7 +155,7 @@ describe('eventScheduler', () => {
 
   describe('game reset', () => {
     it('clears all pending and fired fire history', () => {
-      mockedGetEvents.mockReturnValue({
+      const config: EventsConfig = {
         events: [
           {
             id: 'test',
@@ -174,11 +164,11 @@ describe('eventScheduler', () => {
             warnings: [{ offsetSeconds: 15 }],
           },
         ],
-      });
+      };
 
       const callback = jest.fn();
       onAnnouncement(callback);
-      loadSchedule();
+      loadSchedule(config);
 
       tick(45_000);
       expect(callback).toHaveBeenCalledTimes(1);
@@ -191,7 +181,7 @@ describe('eventScheduler', () => {
 
   describe('getUpcoming', () => {
     it('returns upcoming events sorted by nearest fire time', () => {
-      mockedGetEvents.mockReturnValue({
+      const config: EventsConfig = {
         events: [
           {
             id: 'far',
@@ -206,9 +196,9 @@ describe('eventScheduler', () => {
             warnings: [{ offsetSeconds: 30 }],
           },
         ],
-      });
+      };
 
-      loadSchedule();
+      loadSchedule(config);
       const upcoming = getUpcoming(0);
 
       expect(upcoming.length).toBeGreaterThanOrEqual(2);

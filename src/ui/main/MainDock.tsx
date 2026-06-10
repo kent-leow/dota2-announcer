@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { DotaState, getState, onStateChange } from 'src/dota/processDetector';
 import * as gameTimer from 'src/timer/gameTimer';
-import * as muteManager from 'src/tts/muteManager';
-import * as volumeController from 'src/tts/volumeController';
-import * as eventsLoader from 'src/config/eventsLoader';
 import * as eventScheduler from 'src/scheduler/eventScheduler';
+
+type DotaState = 'in-match' | 'idle';
 
 function formatTime(ms: number): string {
   const totalSeconds = Math.floor(ms / 1000);
@@ -14,16 +12,22 @@ function formatTime(ms: number): string {
 }
 
 export function MainDock() {
-  const [status, setStatus] = useState<DotaState>(getState());
+  const [status, setStatus] = useState<DotaState>('idle');
   const [elapsed, setElapsed] = useState<number>(0);
-  const [muted, setMuted] = useState<boolean>(muteManager.isMuted());
-  const [volume, setVolume] = useState<number>(volumeController.getVolume());
+  const [muted, setMuted] = useState<boolean>(false);
+  const [volume, setVolume] = useState<number>(100);
   const [announcing, setAnnouncing] = useState<boolean>(true);
 
   useEffect(() => {
-    const unsubState = onStateChange((newState) => {
-      setStatus(newState);
-      if (newState === 'in-match') {
+    window.electronAPI.getState().then((s) => setStatus(s as DotaState));
+    window.electronAPI.isMuted().then(setMuted);
+    window.electronAPI.getVolume().then(setVolume);
+    window.electronAPI.getEvents().then((config) => eventScheduler.loadSchedule(config));
+
+    const unsubState = window.electronAPI.onStateChange((newState) => {
+      const state = newState as DotaState;
+      setStatus(state);
+      if (state === 'in-match') {
         gameTimer.reset();
         gameTimer.start();
       } else {
@@ -42,13 +46,12 @@ export function MainDock() {
   }, []);
 
   const handleMuteToggle = useCallback(() => {
-    const next = muteManager.toggleMute();
-    setMuted(next);
+    window.electronAPI.toggleMute().then(setMuted);
   }, []);
 
   const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
-    volumeController.setVolume(val);
+    window.electronAPI.setVolume(val);
     setVolume(val);
   }, []);
 
@@ -57,8 +60,7 @@ export function MainDock() {
   }, []);
 
   const handleReload = useCallback(() => {
-    eventsLoader.reload();
-    eventScheduler.loadSchedule();
+    window.electronAPI.reloadEvents().then((config) => eventScheduler.loadSchedule(config));
   }, []);
 
   return (

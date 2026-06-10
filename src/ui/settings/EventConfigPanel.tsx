@@ -1,13 +1,15 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { GameEvent, EventsConfig } from 'src/config/events.schema';
-import { getEvents, reload } from 'src/config/eventsLoader';
 
 export function EventConfigPanel() {
-  const [config, setConfig] = useState<EventsConfig>(getEvents);
+  const [config, setConfig] = useState<EventsConfig>({ events: [] });
+
+  useEffect(() => {
+    window.electronAPI.getEvents().then(setConfig);
+  }, []);
 
   const handleReload = useCallback(() => {
-    const updated = reload();
-    setConfig(updated);
+    window.electronAPI.reloadEvents().then(setConfig);
   }, []);
 
   return (
