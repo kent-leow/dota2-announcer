@@ -15,6 +15,13 @@ jest.mock('src/timer/gameTimer', () => ({
 
 jest.mock('src/scheduler/eventScheduler', () => ({
   loadSchedule: jest.fn(),
+  onAnnouncement: jest.fn(),
+  tick: jest.fn(),
+}));
+
+jest.mock('src/tts/announcer', () => ({
+  speak: jest.fn(),
+  formatMessage: jest.fn((name: string, offset: number) => `${name} in ${offset} seconds`),
 }));
 
 let stateChangeHandler: ((state: string) => void) | null = null;
@@ -39,6 +46,7 @@ const mockElectronAPI = {
 import { MainDock } from './MainDock';
 import * as gameTimer from 'src/timer/gameTimer';
 import * as eventScheduler from 'src/scheduler/eventScheduler';
+import * as announcer from 'src/tts/announcer';
 
 describe('MainDock', () => {
   beforeEach(() => {
@@ -76,7 +84,7 @@ describe('MainDock', () => {
     expect(screen.getByTestId('status-line')).toHaveTextContent('In Match');
   });
 
-  it('starts timer on in-match detection', async () => {
+  it('updates status display on state change without direct timer control', async () => {
     render(<MainDock />);
     await waitFor(() => expect(stateChangeHandler).not.toBeNull());
 
@@ -84,11 +92,12 @@ describe('MainDock', () => {
       stateChangeHandler?.('in-match');
     });
 
-    expect(gameTimer.reset).toHaveBeenCalled();
-    expect(gameTimer.start).toHaveBeenCalled();
+    expect(screen.getByTestId('status-line')).toHaveTextContent('In Match');
+    expect(gameTimer.reset).not.toHaveBeenCalled();
+    expect(gameTimer.start).not.toHaveBeenCalled();
   });
 
-  it('stops timer when state goes idle', async () => {
+  it('displays idle status without stopping timer directly', async () => {
     render(<MainDock />);
     await waitFor(() => expect(stateChangeHandler).not.toBeNull());
 
@@ -99,7 +108,7 @@ describe('MainDock', () => {
       stateChangeHandler?.('idle');
     });
 
-    expect(gameTimer.stop).toHaveBeenCalled();
+    expect(gameTimer.stop).not.toHaveBeenCalled();
     expect(screen.getByTestId('status-line')).toHaveTextContent('Idle');
   });
 
@@ -183,6 +192,37 @@ describe('MainDock', () => {
       });
 
       expect(screen.getByTestId('start-stop')).toHaveTextContent('Start');
+    });
+  });
+
+  describe('TTS wiring', () => {
+    it('registers onAnnouncement callback on mount', async () => {
+      render(<MainDock />);
+      await waitFor(() => expect(eventScheduler.onAnnouncement).toHaveBeenCalledWith(expect.any(Function)));
+    });
+
+    it('calls eventScheduler.tick on each gameTimer tick', async () => {
+      render(<MainDock />);
+      await waitFor(() => expect(tickCallback).not.toBeNull());
+
+      act(() => {
+        tickCallback?.(5000);
+      });
+
+      expect(eventScheduler.tick).toHaveBeenCalledWith(5000);
+    });
+
+    it('calls announcer.speak when scheduler fires an announcement', async () => {
+      render(<MainDock />);
+      await waitFor(() => expect(eventScheduler.onAnnouncement).toHaveBeenCalled());
+
+      const announcementCb = (eventScheduler.onAnnouncement as jest.Mock).mock.calls[0][0];
+      act(() => {
+        announcementCb('Bounty Rune', 30);
+      });
+
+      expect(announcer.formatMessage).toHaveBeenCalledWith('Bounty Rune', 30);
+      expect(announcer.speak).toHaveBeenCalledWith('Bounty Rune in 30 seconds');
     });
   });
 });

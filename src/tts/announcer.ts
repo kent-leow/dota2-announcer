@@ -11,6 +11,7 @@ function getSynthesis(): SpeechSynthesis | null {
   if (typeof window !== 'undefined' && window.speechSynthesis) {
     return window.speechSynthesis;
   }
+  console.warn('[announcer] SpeechSynthesis not available');
   return null;
 }
 

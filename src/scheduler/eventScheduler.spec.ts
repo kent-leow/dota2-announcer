@@ -179,6 +179,53 @@ describe('eventScheduler', () => {
     });
   });
 
+  describe('tick idempotency', () => {
+    it('tick triggers announcementCallback with correct name+offset', () => {
+      const config: EventsConfig = {
+        events: [
+          {
+            id: 'rune',
+            name: 'Power Rune',
+            spawnTime: 120,
+            warnings: [{ offsetSeconds: 30 }],
+          },
+        ],
+      };
+
+      const callback = jest.fn();
+      onAnnouncement(callback);
+      loadSchedule(config);
+
+      tick(90_000);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith('Power Rune', 30);
+    });
+
+    it('duplicate tick at same ms does not re-fire', () => {
+      const config: EventsConfig = {
+        events: [
+          {
+            id: 'rune',
+            name: 'Power Rune',
+            spawnTime: 120,
+            warnings: [{ offsetSeconds: 30 }],
+          },
+        ],
+      };
+
+      const callback = jest.fn();
+      onAnnouncement(callback);
+      loadSchedule(config);
+
+      tick(90_000);
+      tick(90_000);
+      tick(90_000);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('getUpcoming', () => {
     it('returns upcoming events sorted by nearest fire time', () => {
       const config: EventsConfig = {

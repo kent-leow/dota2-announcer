@@ -94,4 +94,18 @@ describe('announcer', () => {
       expect(isSpeaking()).toBe(false);
     });
   });
+
+  describe('null synthesis', () => {
+    it('speak no-ops when getSynthesis returns null', () => {
+      const origWindow = (global as any).window;
+      (global as any).window = {};
+
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      speak('should not crash');
+      expect(mockSpeak).not.toHaveBeenCalled();
+      warnSpy.mockRestore();
+
+      (global as any).window = origWindow;
+    });
+  });
 });

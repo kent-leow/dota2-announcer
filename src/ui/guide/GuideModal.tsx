@@ -70,6 +70,20 @@ export function GuideModal({ open, onClose }: GuideModalProps) {
 
           <hr className="border-dota-gold/10" />
 
+          <section data-testid="section-gsi-setup">
+            <h3 className="text-dota-gold font-semibold mb-2">GSI Setup</h3>
+            <p className="text-dota-grey leading-relaxed mb-2">
+              To enable automatic game detection, install the Game State Integration config file:
+            </p>
+            <ol className="text-dota-grey space-y-1.5 list-decimal list-inside">
+              <li>Find <code className="text-dota-amber bg-dota-black/40 px-1 rounded">config/gamestate_integration_announcer.cfg</code> in the app directory</li>
+              <li>Copy it to your Dota 2 config folder: <code className="text-dota-amber bg-dota-black/40 px-1 rounded">steamapps/common/dota 2 beta/game/dota/cfg/gamestate_integration/</code></li>
+              <li>Restart Dota 2 for the config to take effect</li>
+            </ol>
+          </section>
+
+          <hr className="border-dota-gold/10" />
+
           <section data-testid="section-config">
             <h3 className="text-dota-gold font-semibold mb-2">Event Configuration</h3>
             <p className="text-dota-grey leading-relaxed mb-2">
