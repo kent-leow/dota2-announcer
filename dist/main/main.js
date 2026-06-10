@@ -19,6 +19,8 @@ function _interopNamespaceDefault(e) {
   return Object.freeze(n);
 }
 const path__namespace = /* @__PURE__ */ _interopNamespaceDefault(path);
+electron.app.commandLine.appendSwitch("disable-gpu-shader-disk-cache");
+electron.app.commandLine.appendSwitch("disk-cache-dir", path__namespace.join(electron.app.getPath("userData"), "Cache"));
 let mainWindow = null;
 function createWindow() {
   mainWindow = new electron.BrowserWindow({
