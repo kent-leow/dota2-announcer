@@ -132,7 +132,7 @@ export function TimingConfig() {
   }, []);
 
   return (
-    <div className="bg-dota-dark rounded-lg p-4 space-y-4">
+    <div className="bg-dota-dark rounded-lg p-4 space-y-4 flex-1 flex flex-col min-h-0">
       <div className="flex items-center justify-between">
         <h2 className="text-dota-gold text-sm font-semibold uppercase tracking-wide">Event Timings</h2>
         <div className="flex gap-2">
@@ -187,7 +187,7 @@ export function TimingConfig() {
         </div>
       )}
 
-      <div className="space-y-2 max-h-[55vh] overflow-y-auto">
+      <div className="space-y-2 flex-1 overflow-y-auto min-h-0">
         {events.map((event, idx) => (
           <div
             key={event.id}
