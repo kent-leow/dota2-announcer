@@ -29,7 +29,7 @@ export const DEFAULT_EVENTS: EventsConfig = {
       name: 'Wisdom Rune',
       spawnTime: 420,
       repeatEvery: 420,
-      warnings: [{ offsetSeconds: 20 }],
+      warnings: [{ offsetSeconds: 30 }],
     },
     {
       id: 'lotus-rune',
@@ -41,15 +41,15 @@ export const DEFAULT_EVENTS: EventsConfig = {
     {
       id: 'night',
       name: 'Night',
-      spawnTime: 360,
-      repeatEvery: 720,
+      spawnTime: 300,
+      repeatEvery: 600,
       warnings: [{ offsetSeconds: 30 }],
     },
     {
       id: 'day',
       name: 'Day',
       spawnTime: 0,
-      repeatEvery: 720,
+      repeatEvery: 600,
       warnings: [{ offsetSeconds: 30 }],
     },
     {
@@ -57,7 +57,7 @@ export const DEFAULT_EVENTS: EventsConfig = {
       name: 'Neutral Camp',
       spawnTime: 60,
       repeatEvery: 60,
-      warnings: [{ offsetSeconds: 15 }],
+      warnings: [{ offsetSeconds: 20 }, { offsetSeconds: 6 }],
     },
     {
       id: 'tormentor',
