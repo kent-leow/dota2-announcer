@@ -3,12 +3,17 @@ import '@testing-library/jest-dom';
 
 let tickCallback: ((ms: number) => void) | null = null;
 
-jest.mock('src/timer/gameTimer', () => ({
-  onTick: jest.fn((cb: (ms: number) => void) => {
+const mockElectronAPI = {
+  onClockTick: jest.fn((cb: (ms: number) => void) => {
     tickCallback = cb;
     return () => { tickCallback = null; };
   }),
-}));
+};
+
+(window as any).electronAPI = {
+  ...(window as any).electronAPI,
+  ...mockElectronAPI,
+};
 
 const mockGetUpcoming = jest.fn();
 jest.mock('src/scheduler/eventScheduler', () => ({

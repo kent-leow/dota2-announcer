@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import * as gameTimer from 'src/timer/gameTimer';
 import * as eventScheduler from 'src/scheduler/eventScheduler';
 import * as announcer from 'src/tts/announcer';
 
@@ -21,6 +20,7 @@ export function MainDock() {
 
   useEffect(() => {
     window.electronAPI.getState().then((s) => setStatus(s as DotaState));
+    window.electronAPI.getElapsed().then(setElapsed);
     window.electronAPI.isMuted().then(setMuted);
     window.electronAPI.getVolume().then(setVolume);
     window.electronAPI.getEvents().then((config) => eventScheduler.loadSchedule(config));
@@ -31,9 +31,12 @@ export function MainDock() {
 
     const unsubState = window.electronAPI.onStateChange((newState) => {
       setStatus(newState as DotaState);
+      if (newState === 'idle') {
+        eventScheduler.resetScheduler();
+      }
     });
 
-    const unsubTick = gameTimer.onTick((ms) => {
+    const unsubTick = window.electronAPI.onClockTick((ms) => {
       setElapsed(ms);
       eventScheduler.tick(ms);
     });

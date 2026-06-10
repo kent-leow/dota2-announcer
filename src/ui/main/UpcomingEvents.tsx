@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getUpcoming } from 'src/scheduler/eventScheduler';
 import { UpcomingEvent } from 'src/scheduler/eventSchedulerTypes';
-import * as gameTimer from 'src/timer/gameTimer';
 
 function formatCountdown(fireAtMs: number, currentMs: number): string {
   const remainingSeconds = Math.max(0, Math.floor((fireAtMs - currentMs) / 1000));
@@ -15,7 +14,7 @@ export function UpcomingEvents() {
   const [elapsed, setElapsed] = useState<number>(0);
 
   useEffect(() => {
-    const unsub = gameTimer.onTick((ms) => {
+    const unsub = window.electronAPI.onClockTick((ms) => {
       setElapsed(ms);
       setEvents(getUpcoming(ms));
     });
