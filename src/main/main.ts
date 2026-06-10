@@ -17,12 +17,28 @@ let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let isQuitting = false;
 
+function getAppIconPath(): string {
+  if (process.env.VITE_DEV_SERVER_URL) {
+    return path.join(__dirname, '../../assets/icon.png');
+  }
+  return path.join(app.getAppPath(), 'assets/icon.png');
+}
+
 function createWindow(): BrowserWindow {
+  let appIcon: Electron.NativeImage | undefined;
+  try {
+    appIcon = nativeImage.createFromPath(getAppIconPath());
+    if (appIcon.isEmpty()) appIcon = undefined;
+  } catch {
+    appIcon = undefined;
+  }
+
   mainWindow = new BrowserWindow({
     width: 400,
-    height: 600,
+    height: 700,
     show: false,
     backgroundColor: '#0d1117',
+    icon: appIcon,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -54,8 +70,25 @@ function createWindow(): BrowserWindow {
   return mainWindow;
 }
 
+function getTrayIconPath(): string {
+  const iconName = process.platform === 'darwin' ? 'tray-iconTemplate.png' : 'tray-icon.png';
+  if (process.env.VITE_DEV_SERVER_URL) {
+    return path.join(__dirname, '../../assets', iconName);
+  }
+  return path.join(app.getAppPath(), 'assets', iconName);
+}
+
 function createTray(): void {
-  const icon = nativeImage.createEmpty();
+  let icon: Electron.NativeImage;
+  try {
+    icon = nativeImage.createFromPath(getTrayIconPath());
+    if (icon.isEmpty()) {
+      icon = nativeImage.createEmpty();
+    }
+  } catch {
+    icon = nativeImage.createEmpty();
+  }
+
   tray = new Tray(icon);
   tray.setToolTip('Dota 2 Announcer');
 

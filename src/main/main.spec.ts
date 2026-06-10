@@ -40,7 +40,10 @@ jest.mock('electron', () => {
     BrowserWindow: mockBrowserWindow,
     Tray: mockTray,
     Menu: { buildFromTemplate: jest.fn().mockReturnValue({}) },
-    nativeImage: { createEmpty: jest.fn().mockReturnValue({}) },
+    nativeImage: {
+      createEmpty: jest.fn().mockReturnValue({ isEmpty: () => true }),
+      createFromPath: jest.fn().mockReturnValue({ isEmpty: () => true }),
+    },
     ipcMain: {
       handle: jest.fn(),
     },
@@ -103,7 +106,7 @@ describe('main process', () => {
     expect(BrowserWindow).toHaveBeenCalledWith(
       expect.objectContaining({
         width: 400,
-        height: 600,
+        height: 700,
       })
     );
     expect(win).toBeDefined();

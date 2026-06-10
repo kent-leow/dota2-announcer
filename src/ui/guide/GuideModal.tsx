@@ -1,26 +1,9 @@
-import { useState } from 'react';
-
 interface GuideModalProps {
   open: boolean;
   onClose: () => void;
 }
 
 export function GuideModal({ open, onClose }: GuideModalProps) {
-  const [installing, setInstalling] = useState(false);
-  const [installResult, setInstallResult] = useState<string | null>(null);
-
-  const handleInstallGsi = async () => {
-    setInstalling(true);
-    setInstallResult(null);
-    const result = await window.electronAPI.gsiInstall();
-    setInstalling(false);
-    if (result.success) {
-      setInstallResult(`Installed to: ${result.path}`);
-    } else {
-      setInstallResult(`Error: ${result.error}`);
-    }
-  };
-
   if (!open) return null;
 
   return (
@@ -83,33 +66,6 @@ export function GuideModal({ open, onClose }: GuideModalProps) {
                 </tr>
               </tbody>
             </table>
-          </section>
-
-          <hr className="border-dota-gold/10" />
-
-          <section data-testid="section-gsi-setup">
-            <h3 className="text-dota-gold font-semibold mb-2">GSI Setup</h3>
-            <p className="text-dota-grey leading-relaxed mb-2">
-              To enable automatic game detection, install the Game State Integration config file:
-            </p>
-            <ol className="text-dota-grey space-y-1.5 list-decimal list-inside mb-3">
-              <li>Click the button below to auto-install, or manually copy the config file</li>
-              <li>Target: <code className="text-dota-amber bg-dota-black/40 px-1 rounded">steamapps/common/dota 2 beta/game/dota/cfg/gamestate_integration/</code></li>
-              <li>Restart Dota 2 for the config to take effect</li>
-            </ol>
-            <button
-              data-testid="gsi-install-btn"
-              onClick={handleInstallGsi}
-              disabled={installing}
-              className="px-4 py-2 rounded font-medium text-sm bg-dota-gold/20 text-dota-gold border border-dota-gold/40 hover:bg-dota-gold/30 transition-colors disabled:opacity-50"
-            >
-              {installing ? 'Installing...' : 'Install GSI Config'}
-            </button>
-            {installResult && (
-              <p data-testid="gsi-install-result" className={`mt-2 text-xs ${installResult.startsWith('Error') ? 'text-red-400' : 'text-green-400'}`}>
-                {installResult}
-              </p>
-            )}
           </section>
 
           <hr className="border-dota-gold/10" />

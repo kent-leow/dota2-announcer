@@ -13,6 +13,11 @@ jest.mock('src/tts/announcer', () => ({
   speak: jest.fn(),
   formatMessage: jest.fn((name: string, offset: number) => `${name} in ${offset} seconds`),
   setIncludeTimeSuffix: jest.fn(),
+  setVolume: jest.fn(),
+  setMuted: jest.fn(),
+  setRate: jest.fn(),
+  setVoice: jest.fn(),
+  getAvailableVoices: jest.fn(() => []),
 }));
 
 const mockElectronAPI = {
@@ -25,6 +30,10 @@ const mockElectronAPI = {
   isMuted: jest.fn(() => Promise.resolve(false)),
   setVolume: jest.fn(() => Promise.resolve()),
   getVolume: jest.fn(() => Promise.resolve(100)),
+  getRate: jest.fn(() => Promise.resolve(1.0)),
+  setRate: jest.fn((v: number) => Promise.resolve(v)),
+  getVoiceUri: jest.fn(() => Promise.resolve('')),
+  setVoiceUri: jest.fn((v: string) => Promise.resolve(v)),
   getEvents: jest.fn(() => Promise.resolve({ events: [] })),
   reloadEvents: jest.fn(() => Promise.resolve({ events: [] })),
   isPaused: jest.fn(() => Promise.resolve(false)),
@@ -32,6 +41,9 @@ const mockElectronAPI = {
   getIncludeTimeSuffix: jest.fn(() => Promise.resolve(true)),
   setIncludeTimeSuffix: jest.fn((v: boolean) => Promise.resolve(v)),
   gsiInstall: jest.fn(() => Promise.resolve({ success: true, path: '/test' })),
+  gsiUninstall: jest.fn(() => Promise.resolve({ success: true })),
+  gsiIsInstalled: jest.fn(() => Promise.resolve(false)),
+  gsiIsConnected: jest.fn(() => Promise.resolve(false)),
   gsiGetInstallPath: jest.fn(() => Promise.resolve(null)),
 };
 

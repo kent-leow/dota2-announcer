@@ -3,10 +3,12 @@ export type SpeakPriority = 'normal' | 'high';
 export type SpeakFunction = (text: string, priority?: SpeakPriority) => void;
 
 let volume = 100;
+let rate = 1.0;
 let muted = false;
 let speaking = false;
 let currentUtterance: SpeechSynthesisUtterance | null = null;
 let includeTimeSuffix = true;
+let selectedVoiceUri: string | null = null;
 
 function getSynthesis(): SpeechSynthesis | null {
   if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -41,6 +43,14 @@ export function speak(text: string, priority: SpeakPriority = 'normal'): void {
 
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.volume = volume / 100;
+  utterance.rate = rate;
+
+  if (selectedVoiceUri) {
+    const voices = synth.getVoices();
+    const voice = voices.find((v) => v.voiceURI === selectedVoiceUri);
+    if (voice) utterance.voice = voice;
+  }
+
   utterance.onstart = () => { speaking = true; };
   utterance.onend = () => { speaking = false; currentUtterance = null; };
   utterance.onerror = () => { speaking = false; currentUtterance = null; };
@@ -79,10 +89,34 @@ export function getMuted(): boolean {
   return muted;
 }
 
+export function setRate(r: number): void {
+  rate = Math.max(0.5, Math.min(3.0, r));
+}
+
+export function getRate(): number {
+  return rate;
+}
+
+export function setVoice(voiceUri: string | null): void {
+  selectedVoiceUri = voiceUri;
+}
+
+export function getSelectedVoice(): string | null {
+  return selectedVoiceUri;
+}
+
+export function getAvailableVoices(): SpeechSynthesisVoice[] {
+  const synth = getSynthesis();
+  if (!synth) return [];
+  return synth.getVoices();
+}
+
 export function _resetForTesting(): void {
   volume = 100;
+  rate = 1.0;
   muted = false;
   speaking = false;
   currentUtterance = null;
   includeTimeSuffix = true;
+  selectedVoiceUri = null;
 }

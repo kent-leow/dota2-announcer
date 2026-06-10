@@ -5,6 +5,8 @@ export interface AppState {
   volume: number;
   muted: boolean;
   includeTimeSuffix: boolean;
+  rate: number;
+  voiceUri: string;
 }
 
 function getStatePath(): string {
@@ -24,9 +26,11 @@ export function readAppState(): AppState {
       volume: typeof parsed.volume === 'number' ? parsed.volume : 100,
       muted: typeof parsed.muted === 'boolean' ? parsed.muted : false,
       includeTimeSuffix: typeof parsed.includeTimeSuffix === 'boolean' ? parsed.includeTimeSuffix : true,
+      rate: typeof parsed.rate === 'number' ? parsed.rate : 1.0,
+      voiceUri: typeof parsed.voiceUri === 'string' ? parsed.voiceUri : '',
     };
   } catch {
-    return { volume: 100, muted: false, includeTimeSuffix: true };
+    return { volume: 100, muted: false, includeTimeSuffix: true, rate: 1.0, voiceUri: '' };
   }
 }
 
