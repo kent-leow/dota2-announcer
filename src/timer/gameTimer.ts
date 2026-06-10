@@ -17,8 +17,7 @@ function tick(): void {
 export function start(): void {
   if (running) return;
   running = true;
-  startTime = Date.now();
-  elapsed = 0;
+  startTime = Date.now() - elapsed;
   tickTimer = setInterval(tick, TICK_INTERVAL_MS);
 }
 

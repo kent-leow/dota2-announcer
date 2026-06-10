@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, Tray, Menu, nativeImage } from 'electron';
 import * as path from 'path';
 import { registerIpcHandlers } from './ipcHandlers';
 import { loadEvents } from 'src/config/eventsLoader';
@@ -14,6 +14,8 @@ if (!gotLock) {
 }
 
 let mainWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
+let isQuitting = false;
 
 function createWindow(): BrowserWindow {
   mainWindow = new BrowserWindow({
@@ -38,11 +40,33 @@ function createWindow(): BrowserWindow {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
 
+  mainWindow.on('close', (event) => {
+    if (!isQuitting) {
+      event.preventDefault();
+      mainWindow?.hide();
+    }
+  });
+
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 
   return mainWindow;
+}
+
+function createTray(): void {
+  const icon = nativeImage.createEmpty();
+  tray = new Tray(icon);
+  tray.setToolTip('Dota 2 Announcer');
+
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Show', click: () => mainWindow?.show() },
+    { type: 'separator' },
+    { label: 'Quit', click: () => { isQuitting = true; app.quit(); } },
+  ]);
+
+  tray.setContextMenu(contextMenu);
+  tray.on('click', () => mainWindow?.show());
 }
 
 app.whenReady().then(() => {
@@ -51,10 +75,13 @@ app.whenReady().then(() => {
   loadVolume();
   registerIpcHandlers(() => mainWindow);
   createWindow();
+  createTray();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
+    } else {
+      mainWindow?.show();
     }
   });
 });
@@ -64,6 +91,10 @@ app.on('second-instance', () => {
     if (mainWindow.isMinimized()) mainWindow.restore();
     mainWindow.focus();
   }
+});
+
+app.on('before-quit', () => {
+  isQuitting = true;
 });
 
 app.on('window-all-closed', () => {

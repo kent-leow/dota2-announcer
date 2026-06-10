@@ -14,16 +14,23 @@ function formatTime(ms: number): string {
 export function MainDock() {
   const [status, setStatus] = useState<DotaState>('idle');
   const [elapsed, setElapsed] = useState<number>(0);
+  const [gamePaused, setGamePaused] = useState<boolean>(false);
   const [muted, setMuted] = useState<boolean>(false);
   const [volume, setVolume] = useState<number>(100);
   const [announcing, setAnnouncing] = useState<boolean>(true);
+  const [timeSuffix, setTimeSuffix] = useState<boolean>(true);
 
   useEffect(() => {
     window.electronAPI.getState().then((s) => setStatus(s as DotaState));
     window.electronAPI.getElapsed().then(setElapsed);
+    window.electronAPI.isPaused().then(setGamePaused);
     window.electronAPI.isMuted().then(setMuted);
     window.electronAPI.getVolume().then(setVolume);
     window.electronAPI.getEvents().then((config) => eventScheduler.loadSchedule(config));
+    window.electronAPI.getIncludeTimeSuffix().then((v) => {
+      setTimeSuffix(v);
+      announcer.setIncludeTimeSuffix(v);
+    });
 
     eventScheduler.onAnnouncement((name, offset) => {
       announcer.speak(announcer.formatMessage(name, offset));
@@ -41,9 +48,14 @@ export function MainDock() {
       eventScheduler.tick(ms);
     });
 
+    const unsubPause = window.electronAPI.onPauseChange((isPaused) => {
+      setGamePaused(isPaused);
+    });
+
     return () => {
       unsubState();
       unsubTick();
+      unsubPause();
     };
   }, []);
 
@@ -60,6 +72,13 @@ export function MainDock() {
   const handleStartStop = useCallback(() => {
     setAnnouncing((prev) => !prev);
   }, []);
+
+  const handleTimeSuffixToggle = useCallback(() => {
+    const newVal = !timeSuffix;
+    setTimeSuffix(newVal);
+    announcer.setIncludeTimeSuffix(newVal);
+    window.electronAPI.setIncludeTimeSuffix(newVal);
+  }, [timeSuffix]);
 
   const handleReload = useCallback(() => {
     window.electronAPI.reloadEvents().then((config) => eventScheduler.loadSchedule(config));
@@ -78,6 +97,7 @@ export function MainDock() {
 
       <div data-testid="game-clock" className="text-center text-5xl font-mono font-bold text-white tracking-wider">
         {formatTime(elapsed)}
+        {gamePaused && <span className="block text-sm text-dota-red font-sans mt-1">PAUSED</span>}
       </div>
 
       <div data-testid="controls" className="flex flex-wrap items-center gap-3 justify-center">
@@ -103,6 +123,18 @@ export function MainDock() {
           }`}
         >
           {announcing ? 'Stop' : 'Start'}
+        </button>
+
+        <button
+          data-testid="time-suffix-toggle"
+          onClick={handleTimeSuffixToggle}
+          className={`px-4 py-2 rounded font-medium text-sm transition-colors ${
+            timeSuffix
+              ? 'bg-dota-green/20 text-dota-green border border-dota-green/40 hover:bg-dota-green/30'
+              : 'bg-dota-gold/20 text-dota-gold border border-dota-gold/40 hover:bg-dota-gold/30'
+          }`}
+        >
+          {timeSuffix ? 'Time: On' : 'Time: Off'}
         </button>
 
         <button
