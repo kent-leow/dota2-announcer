@@ -3,20 +3,11 @@ import '@testing-library/jest-dom';
 
 let tickCallback: ((ms: number) => void) | null = null;
 
-jest.mock('src/timer/gameTimer', () => ({
-  start: jest.fn(),
-  stop: jest.fn(),
-  reset: jest.fn(),
-  onTick: jest.fn((cb: (ms: number) => void) => {
-    tickCallback = cb;
-    return () => { tickCallback = null; };
-  }),
-}));
-
 jest.mock('src/scheduler/eventScheduler', () => ({
   loadSchedule: jest.fn(),
   onAnnouncement: jest.fn(),
   tick: jest.fn(),
+  resetScheduler: jest.fn(),
 }));
 
 jest.mock('src/tts/announcer', () => ({
@@ -28,9 +19,14 @@ let stateChangeHandler: ((state: string) => void) | null = null;
 
 const mockElectronAPI = {
   getState: jest.fn(() => Promise.resolve('idle')),
+  getElapsed: jest.fn(() => Promise.resolve(0)),
   onStateChange: jest.fn((cb: (state: string) => void) => {
     stateChangeHandler = cb;
     return () => { stateChangeHandler = null; };
+  }),
+  onClockTick: jest.fn((cb: (ms: number) => void) => {
+    tickCallback = cb;
+    return () => { tickCallback = null; };
   }),
   toggleMute: jest.fn(() => Promise.resolve(true)),
   setMuted: jest.fn(() => Promise.resolve()),
@@ -44,7 +40,6 @@ const mockElectronAPI = {
 (window as any).electronAPI = mockElectronAPI;
 
 import { MainDock } from './MainDock';
-import * as gameTimer from 'src/timer/gameTimer';
 import * as eventScheduler from 'src/scheduler/eventScheduler';
 import * as announcer from 'src/tts/announcer';
 
@@ -54,6 +49,7 @@ describe('MainDock', () => {
     tickCallback = null;
     jest.clearAllMocks();
     mockElectronAPI.getState.mockResolvedValue('idle');
+    mockElectronAPI.getElapsed.mockResolvedValue(0);
     mockElectronAPI.isMuted.mockResolvedValue(false);
     mockElectronAPI.getVolume.mockResolvedValue(100);
     mockElectronAPI.getEvents.mockResolvedValue({ events: [] });
@@ -84,7 +80,7 @@ describe('MainDock', () => {
     expect(screen.getByTestId('status-line')).toHaveTextContent('In Match');
   });
 
-  it('updates status display on state change without direct timer control', async () => {
+  it('updates status display on state change', async () => {
     render(<MainDock />);
     await waitFor(() => expect(stateChangeHandler).not.toBeNull());
 
@@ -93,11 +89,9 @@ describe('MainDock', () => {
     });
 
     expect(screen.getByTestId('status-line')).toHaveTextContent('In Match');
-    expect(gameTimer.reset).not.toHaveBeenCalled();
-    expect(gameTimer.start).not.toHaveBeenCalled();
   });
 
-  it('displays idle status without stopping timer directly', async () => {
+  it('resets scheduler on idle transition', async () => {
     render(<MainDock />);
     await waitFor(() => expect(stateChangeHandler).not.toBeNull());
 
@@ -108,7 +102,7 @@ describe('MainDock', () => {
       stateChangeHandler?.('idle');
     });
 
-    expect(gameTimer.stop).not.toHaveBeenCalled();
+    expect(eventScheduler.resetScheduler).toHaveBeenCalled();
     expect(screen.getByTestId('status-line')).toHaveTextContent('Idle');
   });
 

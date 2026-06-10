@@ -1,18 +1,12 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-jest.mock('src/timer/gameTimer', () => ({
-  start: jest.fn(),
-  stop: jest.fn(),
-  reset: jest.fn(),
-  onTick: jest.fn(() => () => {}),
-}));
-
 jest.mock('src/scheduler/eventScheduler', () => ({
   loadSchedule: jest.fn(),
   onAnnouncement: jest.fn(),
   tick: jest.fn(),
   getUpcoming: jest.fn(() => []),
+  resetScheduler: jest.fn(),
 }));
 
 jest.mock('src/tts/announcer', () => ({
@@ -22,7 +16,9 @@ jest.mock('src/tts/announcer', () => ({
 
 const mockElectronAPI = {
   getState: jest.fn(() => Promise.resolve('idle')),
+  getElapsed: jest.fn(() => Promise.resolve(0)),
   onStateChange: jest.fn(() => () => {}),
+  onClockTick: jest.fn(() => () => {}),
   toggleMute: jest.fn(() => Promise.resolve(true)),
   setMuted: jest.fn(() => Promise.resolve()),
   isMuted: jest.fn(() => Promise.resolve(false)),
@@ -30,6 +26,8 @@ const mockElectronAPI = {
   getVolume: jest.fn(() => Promise.resolve(100)),
   getEvents: jest.fn(() => Promise.resolve({ events: [] })),
   reloadEvents: jest.fn(() => Promise.resolve({ events: [] })),
+  gsiInstall: jest.fn(() => Promise.resolve({ success: true, path: '/test' })),
+  gsiGetInstallPath: jest.fn(() => Promise.resolve(null)),
 };
 
 (window as any).electronAPI = mockElectronAPI;

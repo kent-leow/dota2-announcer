@@ -15,7 +15,7 @@ Replace the process-detection-based state machine with GSI-driven match lifecycl
 
 ### IPC Integration
 
-- [x] `src/main/ipcHandlers.ts` — replace `processDetector.startDetection()` with GSI server start + matchStateManager; update `dota:getState` handler to return GSI-derived state; emit `dota:stateChanged` from matchStateManager transitions
+- [x] `src/main/ipcHandlers.ts` — replace `processDetector.startDetection()` with GSI server start + matchStateManager; update `dota:getState` handler to return GSI-derived state; emit `dota:stateChanged` from matchStateManager transitions; bridge gameTimer ticks via `dota:clockTick` IPC channel; add GSI auto-install handlers <!-- re-opened: FIX-001 2026-06-10 --> <!-- fixed: 2026-06-10 -->
   - [x] `src/main/main.spec.ts` — verify IPC handlers register correctly with new GSI-based detection
 
 ### Timer Sync
@@ -25,8 +25,9 @@ Replace the process-detection-based state machine with GSI-driven match lifecycl
 
 ### UI State Contract
 
-- [x] `src/ui/main/MainDock.tsx` — remove direct `gameTimer.start()`/`gameTimer.stop()` calls from `onStateChange` callback; timer is now controlled by matchStateManager via IPC, UI only displays
-  - [x] `src/ui/main/MainDock.spec.tsx` — verify timer display updates from IPC state changes; no direct timer control in component
+- [x] `src/ui/main/MainDock.tsx` — remove direct `gameTimer` import entirely; use `window.electronAPI.onClockTick` for timer display and scheduler ticks <!-- re-opened: FIX-001 2026-06-10 --> <!-- fixed: 2026-06-10 -->
+  - [x] `src/ui/main/MainDock.spec.tsx` — verify timer display updates from IPC clock ticks; no direct timer module dependency
+- [x] `src/ui/main/UpcomingEvents.tsx` — replace `gameTimer.onTick` with `window.electronAPI.onClockTick` <!-- re-opened: FIX-001 2026-06-10 --> <!-- fixed: 2026-06-10 -->
 
 ## Done When
 - [x] Timer starts only when GSI reports `DOTA_GAMERULES_STATE_GAME_IN_PROGRESS` <!-- verified 2026-06-10 -->
@@ -35,3 +36,6 @@ Replace the process-detection-based state machine with GSI-driven match lifecycl
 - [x] Game clock stays synced with GSI `clock_time` (±1s tolerance) <!-- verified 2026-06-10 -->
 - [x] All new and modified tests pass <!-- verified 2026-06-10 -->
 - [x] No existing tests broken <!-- verified 2026-06-10 -->
+
+## Changelog
+- 2026-06-10: Fixed (FIX-001) — Renderer was importing gameTimer directly creating a disconnected instance. Bridged clock via IPC `dota:clockTick` channel from main process. Also added GSI auto-install IPC handlers.

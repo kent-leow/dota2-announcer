@@ -2,10 +2,16 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   getState: () => ipcRenderer.invoke('dota:getState'),
+  getElapsed: () => ipcRenderer.invoke('dota:getElapsed'),
   onStateChange: (callback: (state: string) => void) => {
     const handler = (_event: unknown, state: string) => callback(state);
     ipcRenderer.on('dota:stateChanged', handler);
     return () => { ipcRenderer.removeListener('dota:stateChanged', handler); };
+  },
+  onClockTick: (callback: (elapsedMs: number) => void) => {
+    const handler = (_event: unknown, elapsedMs: number) => callback(elapsedMs);
+    ipcRenderer.on('dota:clockTick', handler);
+    return () => { ipcRenderer.removeListener('dota:clockTick', handler); };
   },
   toggleMute: () => ipcRenderer.invoke('audio:toggleMute'),
   setMuted: (muted: boolean) => ipcRenderer.invoke('audio:setMuted', muted),
@@ -14,4 +20,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getVolume: () => ipcRenderer.invoke('audio:getVolume'),
   getEvents: () => ipcRenderer.invoke('config:getEvents'),
   reloadEvents: () => ipcRenderer.invoke('config:reloadEvents'),
+  gsiInstall: () => ipcRenderer.invoke('gsi:install'),
+  gsiGetInstallPath: () => ipcRenderer.invoke('gsi:getInstallPath'),
 });
