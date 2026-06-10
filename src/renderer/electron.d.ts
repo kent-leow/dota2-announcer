@@ -18,11 +18,18 @@ export interface ElectronAPI {
   isMuted: () => Promise<boolean>;
   setVolume: (value: number) => Promise<void>;
   getVolume: () => Promise<number>;
+  getRate: () => Promise<number>;
+  setRate: (value: number) => Promise<number>;
+  getVoiceUri: () => Promise<string>;
+  setVoiceUri: (uri: string) => Promise<string>;
   getEvents: () => Promise<EventsConfig>;
   reloadEvents: () => Promise<EventsConfig>;
   getIncludeTimeSuffix: () => Promise<boolean>;
   setIncludeTimeSuffix: (value: boolean) => Promise<boolean>;
   gsiInstall: () => Promise<GsiInstallResult>;
+  gsiUninstall: () => Promise<GsiInstallResult>;
+  gsiIsInstalled: () => Promise<boolean>;
+  gsiIsConnected: () => Promise<boolean>;
   gsiGetInstallPath: () => Promise<string | null>;
 }
 

@@ -1,12 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-(window as any).electronAPI = {
-  ...(window as any).electronAPI,
-  gsiInstall: jest.fn(() => Promise.resolve({ success: true, path: '/test' })),
-  gsiGetInstallPath: jest.fn(() => Promise.resolve(null)),
-};
-
 import { GuideModal } from './GuideModal';
 
 describe('GuideModal', () => {
@@ -20,21 +14,12 @@ describe('GuideModal', () => {
     expect(screen.getByTestId('guide-modal')).toBeInTheDocument();
   });
 
-  it('displays all five guide sections', () => {
+  it('displays guide sections', () => {
     render(<GuideModal open={true} onClose={jest.fn()} />);
     expect(screen.getByTestId('section-overview')).toBeInTheDocument();
     expect(screen.getByTestId('section-controls')).toBeInTheDocument();
     expect(screen.getByTestId('section-hotkeys')).toBeInTheDocument();
-    expect(screen.getByTestId('section-gsi-setup')).toBeInTheDocument();
     expect(screen.getByTestId('section-config')).toBeInTheDocument();
-  });
-
-  it('GSI setup section contains install button and restart instructions', () => {
-    render(<GuideModal open={true} onClose={jest.fn()} />);
-    const section = screen.getByTestId('section-gsi-setup');
-    expect(section).toHaveTextContent('steamapps/common/dota 2 beta/game/dota/cfg/gamestate_integration/');
-    expect(section).toHaveTextContent('Restart Dota 2');
-    expect(screen.getByTestId('gsi-install-btn')).toBeInTheDocument();
   });
 
   it('close button calls onClose', () => {

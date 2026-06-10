@@ -72,26 +72,37 @@ describe('matchStateManager', () => {
     expect(eventScheduler.resetScheduler).toHaveBeenCalled();
   });
 
-  it('ignores HERO_SELECTION — stays idle', () => {
+  it('transitions to hero-pick on HERO_SELECTION', () => {
     startListening();
     const phaseCb = jest.fn();
     onPhaseChange(phaseCb);
 
     gsiCallback?.(makeState(GAME_STATES.HERO_SELECTION, 0));
 
-    expect(getPhase()).toBe('idle');
-    expect(phaseCb).not.toHaveBeenCalled();
+    expect(getPhase()).toBe('hero-pick');
+    expect(phaseCb).toHaveBeenCalledWith('hero-pick');
   });
 
-  it('ignores STRATEGY_TIME — stays idle', () => {
+  it('transitions to hero-pick on STRATEGY_TIME', () => {
     startListening();
     const phaseCb = jest.fn();
     onPhaseChange(phaseCb);
 
     gsiCallback?.(makeState(GAME_STATES.STRATEGY_TIME, 0));
 
-    expect(getPhase()).toBe('idle');
-    expect(phaseCb).not.toHaveBeenCalled();
+    expect(getPhase()).toBe('hero-pick');
+    expect(phaseCb).toHaveBeenCalledWith('hero-pick');
+  });
+
+  it('transitions to pre-game on PRE_GAME', () => {
+    startListening();
+    const phaseCb = jest.fn();
+    onPhaseChange(phaseCb);
+
+    gsiCallback?.(makeState(GAME_STATES.PRE_GAME, 0));
+
+    expect(getPhase()).toBe('pre-game');
+    expect(phaseCb).toHaveBeenCalledWith('pre-game');
   });
 
   it('syncs timer on each GAME_IN_PROGRESS tick', () => {

@@ -3,7 +3,7 @@ import * as gameTimer from 'src/timer/gameTimer';
 import * as eventScheduler from 'src/scheduler/eventScheduler';
 import { ParsedGameState, GAME_STATES } from './gsiTypes';
 
-export type MatchPhase = 'idle' | 'in-match';
+export type MatchPhase = 'idle' | 'hero-pick' | 'pre-game' | 'in-match';
 export type MatchPhaseCallback = (phase: MatchPhase) => void;
 export type PauseCallback = (paused: boolean) => void;
 
@@ -31,7 +31,15 @@ function setPaused(value: boolean): void {
 }
 
 function handleGsiState(state: ParsedGameState): void {
-  if (state.gameState === GAME_STATES.GAME_IN_PROGRESS) {
+  if (state.gameState === GAME_STATES.HERO_SELECTION || state.gameState === GAME_STATES.STRATEGY_TIME) {
+    if (currentPhase !== 'hero-pick') {
+      setPhase('hero-pick');
+    }
+  } else if (state.gameState === GAME_STATES.PRE_GAME) {
+    if (currentPhase !== 'pre-game') {
+      setPhase('pre-game');
+    }
+  } else if (state.gameState === GAME_STATES.GAME_IN_PROGRESS) {
     if (currentPhase !== 'in-match') {
       setPhase('in-match');
       paused = false;
@@ -48,7 +56,7 @@ function handleGsiState(state: ParsedGameState): void {
     state.gameState === GAME_STATES.POST_GAME ||
     state.gameState === GAME_STATES.DISCONNECT
   ) {
-    if (currentPhase === 'in-match') {
+    if (currentPhase !== 'idle') {
       gameTimer.reset();
       eventScheduler.resetScheduler();
       paused = false;

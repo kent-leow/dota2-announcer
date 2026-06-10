@@ -85,6 +85,22 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     return value;
   });
 
+  ipcMain.handle('audio:getRate', () => readAppState().rate);
+  ipcMain.handle('audio:setRate', (_event, value: number) => {
+    const state = readAppState();
+    state.rate = Math.max(0.5, Math.min(3.0, value));
+    writeAppState(state);
+    return state.rate;
+  });
+
+  ipcMain.handle('audio:getVoiceUri', () => readAppState().voiceUri);
+  ipcMain.handle('audio:setVoiceUri', (_event, uri: string) => {
+    const state = readAppState();
+    state.voiceUri = uri;
+    writeAppState(state);
+    return uri;
+  });
+
   ipcMain.handle('gsi:getInstallPath', () => findDotaGsiPath());
   ipcMain.handle('gsi:install', () => {
     const targetDir = findDotaGsiPath();
@@ -103,5 +119,33 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
       const message = err instanceof Error ? err.message : String(err);
       return { success: false, error: message };
     }
+  });
+
+  ipcMain.handle('gsi:uninstall', () => {
+    const targetDir = findDotaGsiPath();
+    if (!targetDir) {
+      return { success: false, error: 'Could not find Dota 2 installation.' };
+    }
+    const cfgFile = path.join(targetDir, 'gamestate_integration_announcer.cfg');
+    try {
+      if (fs.existsSync(cfgFile)) {
+        fs.unlinkSync(cfgFile);
+      }
+      return { success: true };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      return { success: false, error: message };
+    }
+  });
+
+  ipcMain.handle('gsi:isInstalled', () => {
+    const targetDir = findDotaGsiPath();
+    if (!targetDir) return false;
+    return fs.existsSync(path.join(targetDir, 'gamestate_integration_announcer.cfg'));
+  });
+
+  ipcMain.handle('gsi:isConnected', () => {
+    const last = gsiServer.getLastState();
+    return last !== null;
   });
 }

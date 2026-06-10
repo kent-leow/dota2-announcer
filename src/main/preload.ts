@@ -28,6 +28,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   reloadEvents: () => ipcRenderer.invoke('config:reloadEvents'),
   getIncludeTimeSuffix: () => ipcRenderer.invoke('audio:getIncludeTimeSuffix'),
   setIncludeTimeSuffix: (value: boolean) => ipcRenderer.invoke('audio:setIncludeTimeSuffix', value),
+  getRate: () => ipcRenderer.invoke('audio:getRate'),
+  setRate: (value: number) => ipcRenderer.invoke('audio:setRate', value),
+  getVoiceUri: () => ipcRenderer.invoke('audio:getVoiceUri'),
+  setVoiceUri: (uri: string) => ipcRenderer.invoke('audio:setVoiceUri', uri),
   gsiInstall: () => ipcRenderer.invoke('gsi:install'),
+  gsiUninstall: () => ipcRenderer.invoke('gsi:uninstall'),
+  gsiIsInstalled: () => ipcRenderer.invoke('gsi:isInstalled'),
+  gsiIsConnected: () => ipcRenderer.invoke('gsi:isConnected'),
   gsiGetInstallPath: () => ipcRenderer.invoke('gsi:getInstallPath'),
 });
