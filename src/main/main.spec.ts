@@ -63,6 +63,20 @@ jest.mock('src/dota/processDetector', () => ({
   onStateChange: jest.fn(() => () => {}),
 }));
 
+jest.mock('src/dota/gsiServer', () => ({
+  start: jest.fn(() => Promise.resolve()),
+  stop: jest.fn(() => Promise.resolve()),
+  onStateChange: jest.fn(() => () => {}),
+  getLastState: jest.fn(() => null),
+}));
+
+jest.mock('src/dota/matchStateManager', () => ({
+  startListening: jest.fn(),
+  stopListening: jest.fn(),
+  getPhase: jest.fn(() => 'idle'),
+  onPhaseChange: jest.fn(() => () => {}),
+}));
+
 describe('main process', () => {
   beforeEach(() => {
     jest.clearAllMocks();

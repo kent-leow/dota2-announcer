@@ -10,7 +10,14 @@ jest.mock('src/timer/gameTimer', () => ({
 
 jest.mock('src/scheduler/eventScheduler', () => ({
   loadSchedule: jest.fn(),
+  onAnnouncement: jest.fn(),
+  tick: jest.fn(),
   getUpcoming: jest.fn(() => []),
+}));
+
+jest.mock('src/tts/announcer', () => ({
+  speak: jest.fn(),
+  formatMessage: jest.fn((name: string, offset: number) => `${name} in ${offset} seconds`),
 }));
 
 const mockElectronAPI = {

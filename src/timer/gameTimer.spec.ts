@@ -2,6 +2,7 @@ import {
   start,
   stop,
   reset,
+  syncTo,
   getElapsedMillis,
   isRunning,
   onTick,
@@ -102,5 +103,33 @@ describe('gameTimer', () => {
     const elapsed = getElapsedMillis();
     expect(elapsed).toBeGreaterThanOrEqual(200_000);
     expect(elapsed).toBeLessThanOrEqual(201_000);
+  });
+
+  describe('syncTo', () => {
+    it('adjusts elapsed time to match GSI clock', () => {
+      start();
+      jest.advanceTimersByTime(5000);
+
+      syncTo(10000);
+
+      const elapsed = getElapsedMillis();
+      expect(elapsed).toBeGreaterThanOrEqual(10000);
+      expect(elapsed).toBeLessThanOrEqual(11000);
+    });
+
+    it('no-ops when not running', () => {
+      syncTo(5000);
+      expect(getElapsedMillis()).toBe(0);
+    });
+
+    it('handles negative clock by no-op', () => {
+      start();
+      jest.advanceTimersByTime(3000);
+
+      syncTo(-5000);
+
+      const elapsed = getElapsedMillis();
+      expect(elapsed).toBeGreaterThanOrEqual(3000);
+    });
   });
 });

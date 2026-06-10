@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import * as gameTimer from 'src/timer/gameTimer';
 import * as eventScheduler from 'src/scheduler/eventScheduler';
+import * as announcer from 'src/tts/announcer';
 
 type DotaState = 'in-match' | 'idle';
 
@@ -24,19 +25,17 @@ export function MainDock() {
     window.electronAPI.getVolume().then(setVolume);
     window.electronAPI.getEvents().then((config) => eventScheduler.loadSchedule(config));
 
+    eventScheduler.onAnnouncement((name, offset) => {
+      announcer.speak(announcer.formatMessage(name, offset));
+    });
+
     const unsubState = window.electronAPI.onStateChange((newState) => {
-      const state = newState as DotaState;
-      setStatus(state);
-      if (state === 'in-match') {
-        gameTimer.reset();
-        gameTimer.start();
-      } else {
-        gameTimer.stop();
-      }
+      setStatus(newState as DotaState);
     });
 
     const unsubTick = gameTimer.onTick((ms) => {
       setElapsed(ms);
+      eventScheduler.tick(ms);
     });
 
     return () => {

@@ -13,12 +13,21 @@ describe('GuideModal', () => {
     expect(screen.getByTestId('guide-modal')).toBeInTheDocument();
   });
 
-  it('displays all four guide sections', () => {
+  it('displays all five guide sections', () => {
     render(<GuideModal open={true} onClose={jest.fn()} />);
     expect(screen.getByTestId('section-overview')).toBeInTheDocument();
     expect(screen.getByTestId('section-controls')).toBeInTheDocument();
     expect(screen.getByTestId('section-hotkeys')).toBeInTheDocument();
+    expect(screen.getByTestId('section-gsi-setup')).toBeInTheDocument();
     expect(screen.getByTestId('section-config')).toBeInTheDocument();
+  });
+
+  it('GSI setup section contains path and restart instructions', () => {
+    render(<GuideModal open={true} onClose={jest.fn()} />);
+    const section = screen.getByTestId('section-gsi-setup');
+    expect(section).toHaveTextContent('gamestate_integration_announcer.cfg');
+    expect(section).toHaveTextContent('steamapps/common/dota 2 beta/game/dota/cfg/gamestate_integration/');
+    expect(section).toHaveTextContent('Restart Dota 2');
   });
 
   it('close button calls onClose', () => {

@@ -37,6 +37,13 @@ export function reset(): void {
   listeners.forEach((cb) => cb(0));
 }
 
+export function syncTo(clockMs: number): void {
+  if (!running) return;
+  if (clockMs < 0) return;
+  startTime = Date.now() - clockMs;
+  elapsed = clockMs;
+}
+
 export function getElapsedMillis(): number {
   if (running && startTime !== null) {
     return Date.now() - startTime;
