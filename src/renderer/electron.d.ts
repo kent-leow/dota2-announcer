@@ -24,6 +24,7 @@ export interface ElectronAPI {
   setVoiceUri: (uri: string) => Promise<string>;
   getEvents: () => Promise<EventsConfig>;
   reloadEvents: () => Promise<EventsConfig>;
+  saveEvents: (config: EventsConfig) => Promise<{ success: boolean; error?: string; config?: EventsConfig }>;
   getIncludeTimeSuffix: () => Promise<boolean>;
   setIncludeTimeSuffix: (value: boolean) => Promise<boolean>;
   gsiInstall: () => Promise<GsiInstallResult>;

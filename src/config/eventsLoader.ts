@@ -36,6 +36,16 @@ export function reload(filePath: string = getConfigPath()): EventsConfig {
   return loadEvents(filePath);
 }
 
+export function saveEvents(config: EventsConfig, filePath: string = getConfigPath()): EventsConfig {
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  fs.writeFileSync(filePath, JSON.stringify(config, null, 2), 'utf-8');
+  cachedConfig = config;
+  return cachedConfig;
+}
+
 export function getEvents(): EventsConfig {
   return cachedConfig;
 }
