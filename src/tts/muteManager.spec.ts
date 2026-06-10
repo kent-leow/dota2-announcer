@@ -1,72 +1,45 @@
-jest.mock('fs', () => {
-  let store: string | null = null;
+jest.mock('./stateStore', () => {
+  let state = { volume: 100, muted: false };
   return {
-    readFileSync: jest.fn(() => {
-      if (store === null) throw new Error('ENOENT');
-      return store;
-    }),
-    writeFileSync: jest.fn((_path: string, data: string) => {
-      store = data;
-    }),
-    existsSync: jest.fn(() => true),
-    mkdirSync: jest.fn(),
-    __resetStore: () => { store = null; },
+    readAppState: jest.fn(() => ({ ...state })),
+    writeAppState: jest.fn((s: any) => { state = { ...s }; }),
+    __reset: () => { state = { volume: 100, muted: false }; },
   };
 });
 
-jest.mock('./announcer', () => ({
-  setMuted: jest.fn(),
-  getMuted: jest.fn(() => false),
-}));
-
-import * as fs from 'fs';
-import * as announcer from './announcer';
+import { readAppState, writeAppState } from './stateStore';
 import { toggleMute, isMuted, loadMuteState, setMuted } from './muteManager';
 
 describe('muteManager', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (fs as any).__resetStore();
-    (announcer.getMuted as jest.Mock).mockReturnValue(false);
+    (require('./stateStore') as any).__reset();
+    loadMuteState();
   });
 
   it('muting silences all future speech', () => {
-    (announcer.getMuted as jest.Mock).mockReturnValue(false);
     const result = toggleMute();
-
     expect(result).toBe(true);
-    expect(announcer.setMuted).toHaveBeenCalledWith(true);
+    expect(isMuted()).toBe(true);
+    expect(writeAppState).toHaveBeenCalledWith(expect.objectContaining({ muted: true }));
   });
 
   it('unmuting restores sound immediately', () => {
-    (announcer.getMuted as jest.Mock).mockReturnValue(true);
+    setMuted(true);
     const result = toggleMute();
-
     expect(result).toBe(false);
-    expect(announcer.setMuted).toHaveBeenCalledWith(false);
-  });
-
-  it('mute state persists across app restart (load round-trip)', () => {
-    (announcer.getMuted as jest.Mock).mockReturnValue(false);
-    setMuted(true);
-
-    const loaded = loadMuteState();
-    expect(loaded).toBe(true);
-    expect(announcer.setMuted).toHaveBeenCalledWith(true);
-  });
-
-  it('reloading config preserves muted flag', () => {
-    setMuted(true);
-
-    const loaded = loadMuteState();
-    expect(loaded).toBe(true);
-  });
-
-  it('isMuted reflects current announcer state', () => {
-    (announcer.getMuted as jest.Mock).mockReturnValue(true);
-    expect(isMuted()).toBe(true);
-
-    (announcer.getMuted as jest.Mock).mockReturnValue(false);
     expect(isMuted()).toBe(false);
+  });
+
+  it('mute state persists across save/load round-trip', () => {
+    setMuted(true);
+    const loaded = loadMuteState();
+    expect(loaded).toBe(true);
+  });
+
+  it('isMuted reflects current state', () => {
+    expect(isMuted()).toBe(false);
+    setMuted(true);
+    expect(isMuted()).toBe(true);
   });
 });

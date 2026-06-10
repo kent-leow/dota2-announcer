@@ -14,7 +14,8 @@ jest.mock('electron', () => {
     isMinimized: jest.fn().mockReturnValue(false),
     restore: jest.fn(),
     focus: jest.fn(),
-    webContents: { openDevTools: jest.fn() },
+    isDestroyed: jest.fn().mockReturnValue(false),
+    webContents: { openDevTools: jest.fn(), send: jest.fn() },
   }));
 
   (mockBrowserWindow as any).getAllWindows = jest.fn().mockReturnValue([]);
@@ -26,11 +27,41 @@ jest.mock('electron', () => {
       quit: jest.fn(),
       commandLine: { appendSwitch: jest.fn() },
       getPath: jest.fn().mockReturnValue('/tmp/mock-user-data'),
+      getAppPath: jest.fn().mockReturnValue('/tmp/mock-app'),
       requestSingleInstanceLock: jest.fn().mockReturnValue(true),
     },
     BrowserWindow: mockBrowserWindow,
+    ipcMain: {
+      handle: jest.fn(),
+    },
   };
 });
+
+jest.mock('src/config/eventsLoader', () => ({
+  loadEvents: jest.fn(),
+  getEvents: jest.fn(() => ({ events: [] })),
+  reload: jest.fn(() => ({ events: [] })),
+}));
+
+jest.mock('src/tts/muteManager', () => ({
+  loadMuteState: jest.fn(() => false),
+  toggleMute: jest.fn(() => true),
+  setMuted: jest.fn(),
+  isMuted: jest.fn(() => false),
+}));
+
+jest.mock('src/tts/volumeController', () => ({
+  loadVolume: jest.fn(() => 100),
+  setVolume: jest.fn(),
+  getVolume: jest.fn(() => 100),
+}));
+
+jest.mock('src/dota/processDetector', () => ({
+  startDetection: jest.fn(),
+  stopDetection: jest.fn(),
+  getState: jest.fn(() => 'idle'),
+  onStateChange: jest.fn(() => () => {}),
+}));
 
 describe('main process', () => {
   beforeEach(() => {
