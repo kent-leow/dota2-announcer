@@ -7,9 +7,6 @@ export default defineConfig({
   build: {
     outDir: resolve(__dirname, 'dist/renderer'),
     emptyOutDir: true,
-    rollupOptions: {
-      external: ['electron', 'fs', 'path', 'child_process'],
-    },
   },
   resolve: {
     alias: {
@@ -30,6 +27,20 @@ export default defineConfig({
           resolve: {
             alias: {
               src: resolve(__dirname, 'src'),
+            },
+          },
+        },
+      },
+      {
+        entry: resolve(__dirname, 'src/main/preload.ts'),
+        onstart(args) {
+          args.reload();
+        },
+        vite: {
+          build: {
+            outDir: resolve(__dirname, 'dist/main'),
+            rollupOptions: {
+              external: ['electron'],
             },
           },
         },

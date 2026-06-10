@@ -1,10 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-
-jest.mock('src/dota/processDetector', () => ({
-  getState: jest.fn(() => 'idle'),
-  onStateChange: jest.fn(() => () => {}),
-}));
 
 jest.mock('src/timer/gameTimer', () => ({
   start: jest.fn(),
@@ -13,61 +8,69 @@ jest.mock('src/timer/gameTimer', () => ({
   onTick: jest.fn(() => () => {}),
 }));
 
-jest.mock('src/tts/muteManager', () => ({
-  isMuted: jest.fn(() => false),
-  toggleMute: jest.fn(() => true),
-}));
-
-jest.mock('src/tts/volumeController', () => ({
-  getVolume: jest.fn(() => 100),
-  setVolume: jest.fn(),
-}));
-
-jest.mock('src/config/eventsLoader', () => ({
-  reload: jest.fn(),
-}));
-
 jest.mock('src/scheduler/eventScheduler', () => ({
   loadSchedule: jest.fn(),
   getUpcoming: jest.fn(() => []),
 }));
 
+const mockElectronAPI = {
+  getState: jest.fn(() => Promise.resolve('idle')),
+  onStateChange: jest.fn(() => () => {}),
+  toggleMute: jest.fn(() => Promise.resolve(true)),
+  setMuted: jest.fn(() => Promise.resolve()),
+  isMuted: jest.fn(() => Promise.resolve(false)),
+  setVolume: jest.fn(() => Promise.resolve()),
+  getVolume: jest.fn(() => Promise.resolve(100)),
+  getEvents: jest.fn(() => Promise.resolve({ events: [] })),
+  reloadEvents: jest.fn(() => Promise.resolve({ events: [] })),
+};
+
+(window as any).electronAPI = mockElectronAPI;
+
 import { App } from './App';
 
 describe('App', () => {
-  it('mounts without crash', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('mounts without crash', async () => {
     const { container } = render(<App />);
     expect(container).toBeTruthy();
   });
 
-  it('renders heading text', () => {
+  it('renders heading text', async () => {
     render(<App />);
     expect(screen.getByRole('heading', { name: /dota 2 announcer/i })).toBeInTheDocument();
   });
 
-  it('renders MainDock section', () => {
+  it('renders MainDock section', async () => {
     render(<App />);
-    expect(screen.getByTestId('status-line')).toBeInTheDocument();
-    expect(screen.getByTestId('game-clock')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('status-line')).toBeInTheDocument();
+      expect(screen.getByTestId('game-clock')).toBeInTheDocument();
+    });
   });
 
-  it('renders UpcomingEvents section', () => {
+  it('renders UpcomingEvents section', async () => {
     render(<App />);
-    expect(screen.getByTestId('upcoming-events-empty')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('upcoming-events-empty')).toBeInTheDocument();
+    });
   });
 
-  it('renders help button', () => {
+  it('renders help button', async () => {
     render(<App />);
     expect(screen.getByTestId('help-button')).toBeInTheDocument();
   });
 
-  it('clicking help button shows GuideModal', () => {
+  it('clicking help button shows GuideModal', async () => {
     render(<App />);
     fireEvent.click(screen.getByTestId('help-button'));
     expect(screen.getByTestId('guide-modal')).toBeInTheDocument();
   });
 
-  it('closing guide modal hides it', () => {
+  it('closing guide modal hides it', async () => {
     render(<App />);
     fireEvent.click(screen.getByTestId('help-button'));
     expect(screen.getByTestId('guide-modal')).toBeInTheDocument();

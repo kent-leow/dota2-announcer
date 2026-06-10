@@ -1,5 +1,9 @@
 import { app, BrowserWindow } from 'electron';
 import * as path from 'path';
+import { registerIpcHandlers } from './ipcHandlers';
+import { loadEvents } from 'src/config/eventsLoader';
+import { loadMuteState } from 'src/tts/muteManager';
+import { loadVolume } from 'src/tts/volumeController';
 
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
 app.commandLine.appendSwitch('disk-cache-dir', path.join(app.getPath('userData'), 'Cache'));
@@ -20,6 +24,7 @@ function createWindow(): BrowserWindow {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
     },
   });
 
@@ -41,6 +46,10 @@ function createWindow(): BrowserWindow {
 }
 
 app.whenReady().then(() => {
+  loadEvents();
+  loadMuteState();
+  loadVolume();
+  registerIpcHandlers(() => mainWindow);
   createWindow();
 
   app.on('activate', () => {
