@@ -11,6 +11,7 @@ export const eventSchema = z.object({
   name: z.string().min(1),
   spawnTime: z.number().nonnegative(),
   repeatEvery: positiveNumber.optional(),
+  maxOccurrences: z.number().int().positive().optional(),
   warnings: z.array(warningSchema).optional(),
 });
 

@@ -7,8 +7,7 @@ describe('defaults', () => {
 
     const expectedGroups = [
       'bounty-rune',
-      'water-rune-first',
-      'water-rune-second',
+      'water-rune',
       'power-rune',
       'wisdom-rune',
       'lotus-pool',
