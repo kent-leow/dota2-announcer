@@ -39,3 +39,4 @@ Replace the process-detection-based state machine with GSI-driven match lifecycl
 
 ## Changelog
 - 2026-06-10: Fixed (FIX-001) — Renderer was importing gameTimer directly creating a disconnected instance. Bridged clock via IPC `dota:clockTick` channel from main process. Also added GSI auto-install IPC handlers.
+- 2026-06-10: Fixed (FIX-001) — Added game pause detection via GSI `paused` field; timer stops/resumes on pause/unpause; `dota:pauseChanged` IPC channel added.

@@ -13,6 +13,7 @@ jest.mock('src/scheduler/eventScheduler', () => ({
 jest.mock('src/tts/announcer', () => ({
   speak: jest.fn(),
   formatMessage: jest.fn((name: string, offset: number) => `${name} in ${offset} seconds`),
+  setIncludeTimeSuffix: jest.fn(),
 }));
 
 let stateChangeHandler: ((state: string) => void) | null = null;
@@ -35,6 +36,10 @@ const mockElectronAPI = {
   getVolume: jest.fn(() => Promise.resolve(100)),
   getEvents: jest.fn(() => Promise.resolve({ events: [] })),
   reloadEvents: jest.fn(() => Promise.resolve({ events: [] })),
+  isPaused: jest.fn(() => Promise.resolve(false)),
+  onPauseChange: jest.fn(() => () => {}),
+  getIncludeTimeSuffix: jest.fn(() => Promise.resolve(true)),
+  setIncludeTimeSuffix: jest.fn((v: boolean) => Promise.resolve(v)),
 };
 
 (window as any).electronAPI = mockElectronAPI;

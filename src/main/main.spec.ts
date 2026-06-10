@@ -11,6 +11,7 @@ jest.mock('electron', () => {
     on: mockWindowOn,
     once: mockWindowOnce,
     show: jest.fn(),
+    hide: jest.fn(),
     isMinimized: jest.fn().mockReturnValue(false),
     restore: jest.fn(),
     focus: jest.fn(),
@@ -19,6 +20,12 @@ jest.mock('electron', () => {
   }));
 
   (mockBrowserWindow as any).getAllWindows = jest.fn().mockReturnValue([]);
+
+  const mockTray = jest.fn().mockImplementation(() => ({
+    setToolTip: jest.fn(),
+    setContextMenu: jest.fn(),
+    on: jest.fn(),
+  }));
 
   return {
     app: {
@@ -31,6 +38,9 @@ jest.mock('electron', () => {
       requestSingleInstanceLock: jest.fn().mockReturnValue(true),
     },
     BrowserWindow: mockBrowserWindow,
+    Tray: mockTray,
+    Menu: { buildFromTemplate: jest.fn().mockReturnValue({}) },
+    nativeImage: { createEmpty: jest.fn().mockReturnValue({}) },
     ipcMain: {
       handle: jest.fn(),
     },
@@ -74,7 +84,9 @@ jest.mock('src/dota/matchStateManager', () => ({
   startListening: jest.fn(),
   stopListening: jest.fn(),
   getPhase: jest.fn(() => 'idle'),
+  isPaused: jest.fn(() => false),
   onPhaseChange: jest.fn(() => () => {}),
+  onPauseChange: jest.fn(() => () => {}),
 }));
 
 describe('main process', () => {

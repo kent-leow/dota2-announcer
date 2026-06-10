@@ -4,6 +4,7 @@ import * as path from 'path';
 export interface AppState {
   volume: number;
   muted: boolean;
+  includeTimeSuffix: boolean;
 }
 
 function getStatePath(): string {
@@ -22,9 +23,10 @@ export function readAppState(): AppState {
     return {
       volume: typeof parsed.volume === 'number' ? parsed.volume : 100,
       muted: typeof parsed.muted === 'boolean' ? parsed.muted : false,
+      includeTimeSuffix: typeof parsed.includeTimeSuffix === 'boolean' ? parsed.includeTimeSuffix : true,
     };
   } catch {
-    return { volume: 100, muted: false };
+    return { volume: 100, muted: false, includeTimeSuffix: true };
   }
 }
 

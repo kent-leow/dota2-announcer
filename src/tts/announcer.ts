@@ -6,6 +6,7 @@ let volume = 100;
 let muted = false;
 let speaking = false;
 let currentUtterance: SpeechSynthesisUtterance | null = null;
+let includeTimeSuffix = true;
 
 function getSynthesis(): SpeechSynthesis | null {
   if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -16,7 +17,16 @@ function getSynthesis(): SpeechSynthesis | null {
 }
 
 export function formatMessage(eventName: string, offsetSeconds: number): string {
+  if (!includeTimeSuffix) return eventName;
   return `${eventName} in ${offsetSeconds} seconds`;
+}
+
+export function setIncludeTimeSuffix(value: boolean): void {
+  includeTimeSuffix = value;
+}
+
+export function getIncludeTimeSuffix(): boolean {
+  return includeTimeSuffix;
 }
 
 export function speak(text: string, priority: SpeakPriority = 'normal'): void {
@@ -74,4 +84,5 @@ export function _resetForTesting(): void {
   muted = false;
   speaking = false;
   currentUtterance = null;
+  includeTimeSuffix = true;
 }

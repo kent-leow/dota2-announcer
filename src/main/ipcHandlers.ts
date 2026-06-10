@@ -7,6 +7,7 @@ import * as gameTimer from 'src/timer/gameTimer';
 import * as muteManager from 'src/tts/muteManager';
 import * as volumeController from 'src/tts/volumeController';
 import * as eventsLoader from 'src/config/eventsLoader';
+import { readAppState, writeAppState } from 'src/tts/stateStore';
 
 function findDotaGsiPath(): string | null {
   const platform = process.platform;
@@ -51,6 +52,13 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     }
   });
 
+  matchStateManager.onPauseChange((isPaused) => {
+    const win = getWindow();
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('dota:pauseChanged', isPaused);
+    }
+  });
+
   gameTimer.onTick((elapsedMs) => {
     const win = getWindow();
     if (win && !win.isDestroyed()) {
@@ -60,6 +68,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
 
   ipcMain.handle('dota:getState', () => matchStateManager.getPhase());
   ipcMain.handle('dota:getElapsed', () => gameTimer.getElapsedMillis());
+  ipcMain.handle('dota:isPaused', () => matchStateManager.isPaused());
   ipcMain.handle('audio:toggleMute', () => muteManager.toggleMute());
   ipcMain.handle('audio:setMuted', (_event, muted: boolean) => muteManager.setMuted(muted));
   ipcMain.handle('audio:isMuted', () => muteManager.isMuted());
@@ -67,6 +76,14 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
   ipcMain.handle('audio:getVolume', () => volumeController.getVolume());
   ipcMain.handle('config:getEvents', () => eventsLoader.getEvents());
   ipcMain.handle('config:reloadEvents', () => eventsLoader.reload());
+
+  ipcMain.handle('audio:getIncludeTimeSuffix', () => readAppState().includeTimeSuffix);
+  ipcMain.handle('audio:setIncludeTimeSuffix', (_event, value: boolean) => {
+    const state = readAppState();
+    state.includeTimeSuffix = value;
+    writeAppState(state);
+    return value;
+  });
 
   ipcMain.handle('gsi:getInstallPath', () => findDotaGsiPath());
   ipcMain.handle('gsi:install', () => {
