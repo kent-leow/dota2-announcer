@@ -57,11 +57,22 @@ function computeFiresForEvent(event: GameEvent, currentMs: number, windowMs: num
 }
 
 
-export function loadSchedule(config?: EventsConfig): void {
+export function loadSchedule(config?: EventsConfig, currentElapsedMs?: number): void {
   if (config) {
     currentEvents = config.events;
   }
   firedIds = new Set();
+
+  if (currentElapsedMs != null && currentElapsedMs > 0) {
+    for (const event of currentEvents) {
+      const fires = computeFiresForEvent(event, currentElapsedMs, 0);
+      for (const fire of fires) {
+        if (fire.fireAtMs <= currentElapsedMs) {
+          firedIds.add(fire.fireId);
+        }
+      }
+    }
+  }
 }
 
 export function onAnnouncement(callback: AnnouncementCallback): void {

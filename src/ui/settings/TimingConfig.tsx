@@ -118,15 +118,17 @@ export function TimingConfig() {
     };
     const result = await window.electronAPI.saveEvents(config);
     if (result.success) {
-      eventScheduler.loadSchedule(config);
+      const ms = await window.electronAPI.getElapsed();
+      eventScheduler.loadSchedule(config, ms);
       setDirty(false);
     }
   }, [events]);
 
   const handleReload = useCallback(() => {
-    window.electronAPI.reloadEvents().then((config) => {
+    window.electronAPI.reloadEvents().then(async (config) => {
       setEvents(config.events.map((e) => ({ ...e, enabled: true })));
-      eventScheduler.loadSchedule(config);
+      const ms = await window.electronAPI.getElapsed();
+      eventScheduler.loadSchedule(config, ms);
       setDirty(false);
     });
   }, []);

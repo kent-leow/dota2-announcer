@@ -35,7 +35,9 @@ export function MainDock() {
       setVolume(v);
       announcer.setVolume(v);
     });
-    window.electronAPI.getEvents().then((config) => eventScheduler.loadSchedule(config));
+    window.electronAPI.getEvents().then((config) => {
+      window.electronAPI.getElapsed().then((ms) => eventScheduler.loadSchedule(config, ms));
+    });
     window.electronAPI.getIncludeTimeSuffix().then((v) => {
       setTimeSuffix(v);
       announcer.setIncludeTimeSuffix(v);
@@ -122,7 +124,9 @@ export function MainDock() {
   }, []);
 
   const handleReload = useCallback(() => {
-    window.electronAPI.reloadEvents().then((config) => eventScheduler.loadSchedule(config));
+    window.electronAPI.reloadEvents().then((config) => {
+      window.electronAPI.getElapsed().then((ms) => eventScheduler.loadSchedule(config, ms));
+    });
   }, []);
 
   return (

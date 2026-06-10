@@ -2,6 +2,7 @@ import { globalShortcut, app } from 'electron';
 import * as muteManager from 'src/tts/muteManager';
 import { reload } from 'src/config/eventsLoader';
 import { loadSchedule } from 'src/scheduler/eventScheduler';
+import { getElapsedMillis } from 'src/timer/gameTimer';
 
 const DEBOUNCE_MS = 200;
 
@@ -30,8 +31,8 @@ function handleReloadConfig(): void {
   const now = Date.now();
   if (now - lastReloadTime < DEBOUNCE_MS) return;
   lastReloadTime = now;
-  reload();
-  loadSchedule();
+  const config = reload();
+  loadSchedule(config, getElapsedMillis());
   actionCallback?.('reload-config');
 }
 
