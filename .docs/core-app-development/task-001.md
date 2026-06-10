@@ -31,3 +31,7 @@ Create the config subsystem: schema validation, file loader with reload capabili
 ## Done When
 - [x] Config auto-loads on startup and via UI refresh (AC3) <!-- verified 2026-06-10 -->
 - [x] All Dota objects in AC6 are default-loaded (visible in DevTools after launch, confirmed by inspecting rendered entries) <!-- verified 2026-06-10 -->
+
+## Changelog
+
+- 2026-06-10: Fixed (FIX-004) — Replaced `process.cwd()` with `app.getAppPath()` in eventsLoader.ts for reliable path resolution in packaged builds

@@ -2,12 +2,18 @@ const mockOn = jest.fn();
 const mockLoadFile = jest.fn();
 const mockLoadURL = jest.fn();
 const mockWindowOn = jest.fn();
+const mockWindowOnce = jest.fn();
 
 jest.mock('electron', () => {
   const mockBrowserWindow = jest.fn().mockImplementation(() => ({
     loadFile: mockLoadFile,
     loadURL: mockLoadURL,
     on: mockWindowOn,
+    once: mockWindowOnce,
+    show: jest.fn(),
+    isMinimized: jest.fn().mockReturnValue(false),
+    restore: jest.fn(),
+    focus: jest.fn(),
     webContents: { openDevTools: jest.fn() },
   }));
 
@@ -20,6 +26,7 @@ jest.mock('electron', () => {
       quit: jest.fn(),
       commandLine: { appendSwitch: jest.fn() },
       getPath: jest.fn().mockReturnValue('/tmp/mock-user-data'),
+      requestSingleInstanceLock: jest.fn().mockReturnValue(true),
     },
     BrowserWindow: mockBrowserWindow,
   };

@@ -55,4 +55,6 @@ Synthesize Dota-specific announcements via Windows Speech API with clean text fo
 - [x] No existing tests broken <!-- verified 2026-06-10 -->
 
 ## Changelog
+
 - 2026-06-10: Implemented TTS announcer, volume controller, mute manager, UI controls wireup, global hotkeys with all tests passing
+- 2026-06-10: Fixed (FIX-004) — Replaced `process.cwd()` with `app.getPath('userData')` in muteManager.ts and volumeController.ts for reliable state persistence in packaged builds

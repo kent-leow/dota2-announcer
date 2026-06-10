@@ -4,16 +4,27 @@ import * as path from 'path';
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
 app.commandLine.appendSwitch('disk-cache-dir', path.join(app.getPath('userData'), 'Cache'));
 
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
+}
+
 let mainWindow: BrowserWindow | null = null;
 
 function createWindow(): BrowserWindow {
   mainWindow = new BrowserWindow({
     width: 400,
     height: 600,
+    show: false,
+    backgroundColor: '#0d1117',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
     },
+  });
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow?.show();
   });
 
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -39,10 +50,21 @@ app.whenReady().then(() => {
   });
 });
 
+app.on('second-instance', () => {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  }
+});
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception in main process:', error);
 });
 
 export { createWindow };
