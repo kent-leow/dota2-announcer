@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MainDock } from 'src/ui/main/MainDock';
 import { UpcomingEvents } from 'src/ui/main/UpcomingEvents';
 import { GsiStatus } from 'src/ui/main/GsiStatus';
+import { GameStatusPanel } from 'src/ui/main/GameStatusPanel';
 import { TimingConfig } from 'src/ui/settings/TimingConfig';
 import { GuideModal } from 'src/ui/guide/GuideModal';
 
@@ -50,11 +51,16 @@ export function App() {
 
       <main className="flex-1 flex flex-col gap-4 p-4 overflow-y-auto">
         {activeTab === 'main' && (
-          <>
-            <MainDock />
-            <GsiStatus />
-            <UpcomingEvents />
-          </>
+          <div data-testid="main-layout" className="flex flex-col lg:flex-row gap-4">
+            <div data-testid="main-left" className="flex-1 flex flex-col gap-4 min-w-0">
+              <MainDock />
+              <GsiStatus />
+              <UpcomingEvents />
+            </div>
+            <div data-testid="main-right" className="flex-1 min-w-0">
+              <GameStatusPanel />
+            </div>
+          </div>
         )}
         {activeTab === 'settings' && (
           <TimingConfig />

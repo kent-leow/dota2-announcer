@@ -9,6 +9,14 @@ jest.mock('src/scheduler/eventScheduler', () => ({
   resetScheduler: jest.fn(),
 }));
 
+jest.mock('src/tracker/gameStatusTracker', () => ({
+  logEvent: jest.fn(),
+  clearEvent: jest.fn(),
+  clearAll: jest.fn(),
+  getStatus: jest.fn(() => ({ roshan: null, buyback: null, glyph: null })),
+  _resetForTesting: jest.fn(),
+}));
+
 jest.mock('src/tts/announcer', () => ({
   speak: jest.fn(),
   formatMessage: jest.fn((name: string, offset: number) => `${name} in ${offset} seconds`),
@@ -99,5 +107,37 @@ describe('App', () => {
 
     fireEvent.click(screen.getByTestId('guide-close'));
     expect(screen.queryByTestId('guide-modal')).not.toBeInTheDocument();
+  });
+
+  it('main tab renders two-column layout with left and right sections', async () => {
+    render(<App />);
+    await waitFor(() => {
+      expect(screen.getByTestId('main-layout')).toBeInTheDocument();
+      expect(screen.getByTestId('main-left')).toBeInTheDocument();
+      expect(screen.getByTestId('main-right')).toBeInTheDocument();
+    });
+  });
+
+  it('GameStatusPanel present in right column', async () => {
+    render(<App />);
+    await waitFor(() => {
+      expect(screen.getByTestId('game-status-panel')).toBeInTheDocument();
+    });
+  });
+
+  it('settings tab unchanged - no two-column layout', async () => {
+    render(<App />);
+    fireEvent.click(screen.getByText('Settings'));
+    expect(screen.queryByTestId('main-layout')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('game-status-panel')).not.toBeInTheDocument();
+  });
+
+  it('responsive class applied for narrow viewports', async () => {
+    render(<App />);
+    await waitFor(() => {
+      const layout = screen.getByTestId('main-layout');
+      expect(layout.className).toContain('flex-col');
+      expect(layout.className).toContain('lg:flex-row');
+    });
   });
 });
