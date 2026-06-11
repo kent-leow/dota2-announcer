@@ -69,6 +69,9 @@ describe('gsiServer', () => {
       clockTime: 180,
       matchId: '456',
       paused: false,
+      daytime: true,
+      roshanState: 'alive',
+      roshanStateEndSeconds: 0,
     });
   });
 

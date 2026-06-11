@@ -1,5 +1,12 @@
 import { EventsConfig } from 'src/config/events.schema';
 
+export interface GsiStatusUpdate {
+  daytime: boolean;
+  roshanState: string;
+  roshanStateEndSeconds: number;
+  clockTime: number;
+}
+
 export interface GsiInstallResult {
   success: boolean;
   path?: string;
@@ -32,6 +39,7 @@ export interface ElectronAPI {
   gsiIsInstalled: () => Promise<boolean>;
   gsiIsConnected: () => Promise<boolean>;
   gsiGetInstallPath: () => Promise<string | null>;
+  onGsiStatusUpdate: (callback: (status: GsiStatusUpdate) => void) => () => void;
 }
 
 declare global {

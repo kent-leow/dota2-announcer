@@ -1,14 +1,14 @@
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { _resetForTesting } from 'src/tracker/gameStatusTracker';
 
-let tickCallback: ((ms: number) => void) | null = null;
+let gsiCallback: ((status: { daytime: boolean; roshanState: string; roshanStateEndSeconds: number; clockTime: number }) => void) | null = null;
 let stateCallback: ((state: string) => void) | null = null;
 
 const mockElectronAPI = {
-  onClockTick: jest.fn((cb: (ms: number) => void) => {
-    tickCallback = cb;
-    return () => { tickCallback = null; };
+  onGsiStatusUpdate: jest.fn((cb) => {
+    gsiCallback = cb;
+    return () => { gsiCallback = null; };
   }),
   onStateChange: jest.fn((cb: (state: string) => void) => {
     stateCallback = cb;
@@ -26,71 +26,60 @@ import { GameStatusPanel } from './GameStatusPanel';
 describe('GameStatusPanel', () => {
   beforeEach(() => {
     _resetForTesting();
-    tickCallback = null;
+    gsiCallback = null;
     stateCallback = null;
     jest.clearAllMocks();
   });
 
-  it('renders all three event sections in idle state', () => {
+  it('renders daytime and roshan status', () => {
     render(<GameStatusPanel />);
-    expect(screen.getByTestId('status-row-roshan')).toBeInTheDocument();
-    expect(screen.getByTestId('status-row-buyback')).toBeInTheDocument();
-    expect(screen.getByTestId('status-row-glyph')).toBeInTheDocument();
+    expect(screen.getByTestId('game-status-panel')).toBeInTheDocument();
+    expect(screen.getByText('Daytime')).toBeInTheDocument();
+    expect(screen.getByText('Alive')).toBeInTheDocument();
   });
 
-  it('clicking Log records current elapsed time and shows deadlines', () => {
+  it('updates daytime from GSI', () => {
     render(<GameStatusPanel />);
 
-    act(() => { tickCallback?.(120000); });
-    fireEvent.click(screen.getByTestId('log-btn-roshan'));
+    act(() => {
+      gsiCallback?.({ daytime: false, roshanState: 'alive', roshanStateEndSeconds: 0, clockTime: 300 });
+    });
 
-    expect(screen.getByText(/Roshan killed at 02:00/)).toBeInTheDocument();
-    expect(screen.getByText(/May respawn at 10:00/)).toBeInTheDocument();
+    expect(screen.getByText('Nighttime')).toBeInTheDocument();
   });
 
-  it('countdown updates on clock tick', () => {
+  it('shows roshan respawn countdown', () => {
     render(<GameStatusPanel />);
 
-    act(() => { tickCallback?.(60000); });
-    fireEvent.click(screen.getByTestId('log-btn-buyback'));
+    act(() => {
+      gsiCallback?.({ daytime: true, roshanState: 'respawn_base', roshanStateEndSeconds: 600, clockTime: 120 });
+    });
 
-    act(() => { tickCallback?.(120000); });
-
-    const countdowns = screen.getAllByTestId('countdown-buyback');
-    expect(countdowns[0]).toHaveTextContent('07:00');
+    expect(screen.getByText('May respawn')).toBeInTheDocument();
+    expect(screen.getByText('08:00')).toBeInTheDocument();
   });
 
-  it('clicking Clear resets to unlogged', () => {
+  it('shows confirmed respawn state', () => {
     render(<GameStatusPanel />);
 
-    act(() => { tickCallback?.(60000); });
-    fireEvent.click(screen.getByTestId('log-btn-glyph'));
-    expect(screen.getByTestId('clear-btn-glyph')).toBeInTheDocument();
+    act(() => {
+      gsiCallback?.({ daytime: true, roshanState: 'respawn_extra', roshanStateEndSeconds: 780, clockTime: 600 });
+    });
 
-    fireEvent.click(screen.getByTestId('clear-btn-glyph'));
-    expect(screen.getByTestId('log-btn-glyph')).toBeInTheDocument();
+    expect(screen.getByText('Will respawn')).toBeInTheDocument();
+    expect(screen.getByText('03:00')).toBeInTheDocument();
   });
 
-  it('state change to idle clears all', () => {
+  it('resets on idle state change', () => {
     render(<GameStatusPanel />);
 
-    act(() => { tickCallback?.(60000); });
-    fireEvent.click(screen.getByTestId('log-btn-roshan'));
-    expect(screen.getByTestId('clear-btn-roshan')).toBeInTheDocument();
+    act(() => {
+      gsiCallback?.({ daytime: false, roshanState: 'respawn_base', roshanStateEndSeconds: 600, clockTime: 300 });
+    });
+    expect(screen.getByText('Nighttime')).toBeInTheDocument();
 
     act(() => { stateCallback?.('idle'); });
-    expect(screen.getByTestId('log-btn-roshan')).toBeInTheDocument();
-  });
-
-  it('Roshan row shows color transition when past may-respawn time', () => {
-    render(<GameStatusPanel />);
-
-    act(() => { tickCallback?.(60000); });
-    fireEvent.click(screen.getByTestId('log-btn-roshan'));
-
-    act(() => { tickCallback?.(600000); });
-
-    const row = screen.getByTestId('status-row-roshan');
-    expect(row).toHaveClass('text-dota-amber');
+    expect(screen.getByText('Daytime')).toBeInTheDocument();
+    expect(screen.getByText('Alive')).toBeInTheDocument();
   });
 });

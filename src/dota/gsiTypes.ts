@@ -5,6 +5,8 @@ export interface GsiMap {
   game_state: string;
   paused: boolean;
   daytime: boolean;
+  roshan_state: string;
+  roshan_state_end_seconds: number;
 }
 
 export interface GsiPlayer {
@@ -30,6 +32,9 @@ export interface ParsedGameState {
   clockTime: number;
   matchId: string;
   paused: boolean;
+  daytime: boolean;
+  roshanState: string;
+  roshanStateEndSeconds: number;
 }
 
 export const GAME_STATES = {

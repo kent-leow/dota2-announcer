@@ -1,4 +1,1 @@
-export const ROSHAN_MIN_RESPAWN_MS = 480_000;
-export const ROSHAN_MAX_RESPAWN_MS = 660_000;
-export const BUYBACK_COOLDOWN_MS = 480_000;
-export const GLYPH_COOLDOWN_MS = 300_000;
+export const DAY_NIGHT_CYCLE_SECONDS = 300;

@@ -38,4 +38,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   gsiIsInstalled: () => ipcRenderer.invoke('gsi:isInstalled'),
   gsiIsConnected: () => ipcRenderer.invoke('gsi:isConnected'),
   gsiGetInstallPath: () => ipcRenderer.invoke('gsi:getInstallPath'),
+  onGsiStatusUpdate: (callback: (status: { daytime: boolean; roshanState: string; roshanStateEndSeconds: number; clockTime: number }) => void) => {
+    const handler = (_event: unknown, status: { daytime: boolean; roshanState: string; roshanStateEndSeconds: number; clockTime: number }) => callback(status);
+    ipcRenderer.on('dota:gsiStatusUpdate', handler);
+    return () => { ipcRenderer.removeListener('dota:gsiStatusUpdate', handler); };
+  },
 });

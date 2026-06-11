@@ -10,10 +10,9 @@ jest.mock('src/scheduler/eventScheduler', () => ({
 }));
 
 jest.mock('src/tracker/gameStatusTracker', () => ({
-  logEvent: jest.fn(),
-  clearEvent: jest.fn(),
+  updateFromGsi: jest.fn(),
   clearAll: jest.fn(),
-  getStatus: jest.fn(() => ({ roshan: null, buyback: null, glyph: null })),
+  getStatus: jest.fn(() => ({ daytime: true, roshan: { state: 'alive', endSeconds: 0 } })),
   _resetForTesting: jest.fn(),
 }));
 
@@ -53,6 +52,7 @@ const mockElectronAPI = {
   gsiIsInstalled: jest.fn(() => Promise.resolve(false)),
   gsiIsConnected: jest.fn(() => Promise.resolve(false)),
   gsiGetInstallPath: jest.fn(() => Promise.resolve(null)),
+  onGsiStatusUpdate: jest.fn(() => () => {}),
 };
 
 (window as any).electronAPI = mockElectronAPI;
