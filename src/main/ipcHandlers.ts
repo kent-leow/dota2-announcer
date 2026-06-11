@@ -52,6 +52,18 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     }
   });
 
+  gsiServer.onStateChange((state) => {
+    const win = getWindow();
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('dota:gsiStatusUpdate', {
+        daytime: state.daytime,
+        roshanState: state.roshanState,
+        roshanStateEndSeconds: state.roshanStateEndSeconds,
+        clockTime: state.clockTime,
+      });
+    }
+  });
+
   matchStateManager.onPauseChange((isPaused) => {
     const win = getWindow();
     if (win && !win.isDestroyed()) {

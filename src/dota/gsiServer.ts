@@ -19,6 +19,9 @@ function parsePayload(body: string): ParsedGameState | null {
       clockTime: data.map.clock_time,
       matchId: data.map.matchid,
       paused: data.map.paused,
+      daytime: data.map.daytime ?? true,
+      roshanState: data.map.roshan_state ?? 'alive',
+      roshanStateEndSeconds: data.map.roshan_state_end_seconds ?? 0,
     };
   } catch {
     return null;

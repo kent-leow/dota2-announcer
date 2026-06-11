@@ -30,7 +30,7 @@ import * as gameTimer from 'src/timer/gameTimer';
 import * as eventScheduler from 'src/scheduler/eventScheduler';
 
 function makeState(gameState: string, clockTime: number = 0): ParsedGameState {
-  return { gameState, clockTime, matchId: 'test-match', paused: false };
+  return { gameState, clockTime, matchId: 'test-match', paused: false, daytime: true, roshanState: 'alive', roshanStateEndSeconds: 0 };
 }
 
 describe('matchStateManager', () => {

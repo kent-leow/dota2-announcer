@@ -1,49 +1,25 @@
-import {
-  ROSHAN_MIN_RESPAWN_MS,
-  ROSHAN_MAX_RESPAWN_MS,
-  BUYBACK_COOLDOWN_MS,
-  GLYPH_COOLDOWN_MS,
-} from './gameConstants';
-import { TrackedEventType, TrackedEvent, GameStatusState, Deadline } from './gameStatusTypes';
+import { GameStatusState, RoshanStatus } from './gameStatusTypes';
 
 let state: GameStatusState = {
-  roshan: null,
-  buyback: null,
-  glyph: null,
+  daytime: true,
+  roshan: { state: 'alive', endSeconds: 0 },
 };
 
-function computeDeadlines(type: TrackedEventType, loggedAtMs: number): Deadline[] {
-  switch (type) {
-    case 'roshan':
-      return [
-        { label: 'May respawn', timeMs: loggedAtMs + ROSHAN_MIN_RESPAWN_MS },
-        { label: 'Confirmed respawn', timeMs: loggedAtMs + ROSHAN_MAX_RESPAWN_MS },
-      ];
-    case 'buyback':
-      return [{ label: 'Buyback available', timeMs: loggedAtMs + BUYBACK_COOLDOWN_MS }];
-    case 'glyph':
-      return [{ label: 'Glyph available', timeMs: loggedAtMs + GLYPH_COOLDOWN_MS }];
-  }
-}
+export function updateFromGsi(daytime: boolean, roshanState: string, roshanStateEndSeconds: number): void {
+  state.daytime = daytime;
 
-export function logEvent(type: TrackedEventType, currentTimeMs: number): void {
-  state[type] = {
-    type,
-    loggedAtMs: currentTimeMs,
-    deadlines: computeDeadlines(type, currentTimeMs),
-  };
-}
-
-export function clearEvent(type: TrackedEventType): void {
-  state[type] = null;
-}
-
-export function clearAll(): void {
-  state = { roshan: null, buyback: null, glyph: null };
+  const mapped = roshanState === 'respawn_base' ? 'respawn_base'
+    : roshanState === 'respawn_extra' ? 'respawn_extra'
+    : 'alive';
+  state.roshan = { state: mapped, endSeconds: roshanStateEndSeconds };
 }
 
 export function getStatus(): GameStatusState {
-  return { ...state };
+  return { ...state, roshan: { ...state.roshan } };
+}
+
+export function clearAll(): void {
+  state = { daytime: true, roshan: { state: 'alive', endSeconds: 0 } };
 }
 
 export function _resetForTesting(): void {

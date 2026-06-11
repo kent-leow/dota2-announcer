@@ -1,14 +1,9 @@
-export type TrackedEventType = 'roshan' | 'buyback' | 'glyph';
-
-export interface Deadline {
-  label: string;
-  timeMs: number;
+export interface RoshanStatus {
+  state: 'alive' | 'respawn_base' | 'respawn_extra';
+  endSeconds: number;
 }
 
-export interface TrackedEvent {
-  type: TrackedEventType;
-  loggedAtMs: number;
-  deadlines: Deadline[];
+export interface GameStatusState {
+  daytime: boolean;
+  roshan: RoshanStatus;
 }
-
-export type GameStatusState = Record<TrackedEventType, TrackedEvent | null>;

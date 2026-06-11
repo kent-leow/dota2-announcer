@@ -1,94 +1,54 @@
-import { logEvent, clearEvent, clearAll, getStatus, _resetForTesting } from './gameStatusTracker';
-import {
-  ROSHAN_MIN_RESPAWN_MS,
-  ROSHAN_MAX_RESPAWN_MS,
-  BUYBACK_COOLDOWN_MS,
-  GLYPH_COOLDOWN_MS,
-} from './gameConstants';
+import { updateFromGsi, clearAll, getStatus, _resetForTesting } from './gameStatusTracker';
 
 describe('gameStatusTracker', () => {
   beforeEach(() => {
     _resetForTesting();
   });
 
-  it('returns null for all events initially', () => {
+  it('returns default state initially', () => {
     const status = getStatus();
-    expect(status.roshan).toBeNull();
-    expect(status.buyback).toBeNull();
-    expect(status.glyph).toBeNull();
+    expect(status.daytime).toBe(true);
+    expect(status.roshan.state).toBe('alive');
+    expect(status.roshan.endSeconds).toBe(0);
   });
 
-  describe('logEvent - roshan', () => {
-    it('computes may-respawn and confirmed-respawn deadlines', () => {
-      logEvent('roshan', 60000);
-      const status = getStatus();
-      expect(status.roshan).not.toBeNull();
-      expect(status.roshan!.loggedAtMs).toBe(60000);
-      expect(status.roshan!.deadlines).toEqual([
-        { label: 'May respawn', timeMs: 60000 + ROSHAN_MIN_RESPAWN_MS },
-        { label: 'Confirmed respawn', timeMs: 60000 + ROSHAN_MAX_RESPAWN_MS },
-      ]);
+  describe('updateFromGsi', () => {
+    it('updates daytime from GSI', () => {
+      updateFromGsi(false, 'alive', 0);
+      expect(getStatus().daytime).toBe(false);
+
+      updateFromGsi(true, 'alive', 0);
+      expect(getStatus().daytime).toBe(true);
     });
-  });
 
-  describe('logEvent - buyback', () => {
-    it('computes buyback cooldown deadline', () => {
-      logEvent('buyback', 120000);
+    it('updates roshan state from GSI', () => {
+      updateFromGsi(true, 'respawn_base', 540);
       const status = getStatus();
-      expect(status.buyback).not.toBeNull();
-      expect(status.buyback!.loggedAtMs).toBe(120000);
-      expect(status.buyback!.deadlines).toEqual([
-        { label: 'Buyback available', timeMs: 120000 + BUYBACK_COOLDOWN_MS },
-      ]);
+      expect(status.roshan.state).toBe('respawn_base');
+      expect(status.roshan.endSeconds).toBe(540);
     });
-  });
 
-  describe('logEvent - glyph', () => {
-    it('computes glyph cooldown deadline', () => {
-      logEvent('glyph', 90000);
-      const status = getStatus();
-      expect(status.glyph).not.toBeNull();
-      expect(status.glyph!.loggedAtMs).toBe(90000);
-      expect(status.glyph!.deadlines).toEqual([
-        { label: 'Glyph available', timeMs: 90000 + GLYPH_COOLDOWN_MS },
-      ]);
+    it('maps unknown roshan states to alive', () => {
+      updateFromGsi(true, 'some_unknown', 0);
+      expect(getStatus().roshan.state).toBe('alive');
     });
-  });
 
-  describe('clearEvent', () => {
-    it('resets a single event', () => {
-      logEvent('roshan', 60000);
-      logEvent('buyback', 120000);
-      clearEvent('roshan');
-
+    it('handles respawn_extra state', () => {
+      updateFromGsi(true, 'respawn_extra', 660);
       const status = getStatus();
-      expect(status.roshan).toBeNull();
-      expect(status.buyback).not.toBeNull();
+      expect(status.roshan.state).toBe('respawn_extra');
+      expect(status.roshan.endSeconds).toBe(660);
     });
   });
 
   describe('clearAll', () => {
-    it('resets all events', () => {
-      logEvent('roshan', 60000);
-      logEvent('buyback', 120000);
-      logEvent('glyph', 90000);
+    it('resets to default state', () => {
+      updateFromGsi(false, 'respawn_base', 500);
       clearAll();
 
       const status = getStatus();
-      expect(status.roshan).toBeNull();
-      expect(status.buyback).toBeNull();
-      expect(status.glyph).toBeNull();
-    });
-  });
-
-  describe('re-logging', () => {
-    it('overwrites previous event data', () => {
-      logEvent('roshan', 60000);
-      logEvent('roshan', 300000);
-
-      const status = getStatus();
-      expect(status.roshan!.loggedAtMs).toBe(300000);
-      expect(status.roshan!.deadlines[0].timeMs).toBe(300000 + ROSHAN_MIN_RESPAWN_MS);
+      expect(status.daytime).toBe(true);
+      expect(status.roshan.state).toBe('alive');
     });
   });
 });
