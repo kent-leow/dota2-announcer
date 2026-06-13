@@ -45,6 +45,20 @@ export default defineConfig({
           },
         },
       },
+      {
+        entry: resolve(__dirname, 'src/main/overlayPreload.ts'),
+        onstart(args) {
+          args.reload();
+        },
+        vite: {
+          build: {
+            outDir: resolve(__dirname, 'dist/main'),
+            rollupOptions: {
+              external: ['electron'],
+            },
+          },
+        },
+      },
     ]),
   ],
 });

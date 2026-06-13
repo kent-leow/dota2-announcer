@@ -4,6 +4,8 @@ import { registerIpcHandlers } from './ipcHandlers';
 import { loadEvents } from 'src/config/eventsLoader';
 import { loadMuteState } from 'src/tts/muteManager';
 import { loadVolume } from 'src/tts/volumeController';
+import { createOverlayWindow, showOverlay, hideOverlay, destroyOverlay } from './overlayWindow';
+import * as matchStateManager from 'src/dota/matchStateManager';
 
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
 app.commandLine.appendSwitch('disk-cache-dir', path.join(app.getPath('userData'), 'Cache'));
@@ -114,6 +116,15 @@ app.whenReady().then(() => {
   registerIpcHandlers(() => mainWindow);
   createWindow();
   createTray();
+  createOverlayWindow();
+
+  matchStateManager.onPhaseChange((phase) => {
+    if (phase === 'in-match') {
+      showOverlay();
+    } else {
+      hideOverlay();
+    }
+  });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -133,6 +144,7 @@ app.on('second-instance', () => {
 
 app.on('before-quit', () => {
   isQuitting = true;
+  destroyOverlay();
 });
 
 app.on('window-all-closed', () => {
