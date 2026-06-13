@@ -70,6 +70,14 @@ jest.mock('src/tts/volumeController', () => ({
   getVolume: jest.fn(() => 100),
 }));
 
+jest.mock('src/tts/stateStore', () => ({
+  readAppState: jest.fn(() => ({
+    notification: { enabled: true, position: 'right', fontSize: { name: 16, offset: 13 } },
+    persistent: { enabled: false, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5 },
+  })),
+  writeAppState: jest.fn(),
+}));
+
 jest.mock('src/dota/processDetector', () => ({
   startDetection: jest.fn(),
   stopDetection: jest.fn(),

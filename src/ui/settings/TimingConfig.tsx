@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { GameEvent, EventsConfig } from 'src/config/events.schema';
-import * as soundPlayer from 'src/tts/soundPlayer';
-import { SoundAssignment, SoundAssignments } from 'src/renderer/electron.d';
 
 interface EditableEvent extends GameEvent {
   enabled: boolean;
@@ -14,8 +12,7 @@ function nameToId(name: string): string {
     .replace(/^-|-$/g, '');
 }
 
-type OverlayPosition = 'left-center' | 'right-center';
-type OverlayMode = 'notification' | 'persistent';
+import { NotificationOverlayConfig, PersistentOverlayConfig, OverlayPosition } from 'src/renderer/electron.d';
 
 export function TimingConfig() {
   const [events, setEvents] = useState<EditableEvent[]>([]);
@@ -23,28 +20,15 @@ export function TimingConfig() {
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState('');
   const [addError, setAddError] = useState('');
-  const [soundAssignments, setSoundAssignments] = useState<SoundAssignments>({});
-  const [soundDisabled, setSoundDisabled] = useState<Record<string, boolean>>({});
-  const [soundError, setSoundError] = useState('');
-  const [overlayPosition, setOverlayPosition] = useState<OverlayPosition>('right-center');
-  const [fontSizeName, setFontSizeName] = useState(16);
-  const [fontSizeOffset, setFontSizeOffset] = useState(13);
-  const [overlayMode, setOverlayMode] = useState<OverlayMode>('notification');
-  const [overlayEventCount, setOverlayEventCount] = useState(5);
+  const [notifConfig, setNotifConfig] = useState<NotificationOverlayConfig>({ enabled: true, position: 'right', fontSize: { name: 16, offset: 13 } });
+  const [persistConfig, setPersistConfig] = useState<PersistentOverlayConfig>({ enabled: false, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5 });
 
   useEffect(() => {
     window.electronAPI.getEvents().then((config) => {
       setEvents(config.events.map((e) => ({ ...e, enabled: true })));
     });
-    window.electronAPI.getSoundAssignments().then(setSoundAssignments);
-    window.electronAPI.getSoundDisabled().then(setSoundDisabled);
-    window.electronAPI.getOverlayPosition().then(setOverlayPosition);
-    window.electronAPI.getOverlayFontSize().then((fs) => {
-      setFontSizeName(fs.name);
-      setFontSizeOffset(fs.offset);
-    });
-    window.electronAPI.getOverlayMode().then((m) => setOverlayMode(m as OverlayMode));
-    window.electronAPI.getOverlayEventCount().then(setOverlayEventCount);
+    window.electronAPI.getNotificationConfig().then(setNotifConfig);
+    window.electronAPI.getPersistentConfig().then(setPersistConfig);
   }, []);
 
   const handleWarningChange = useCallback((eventIdx: number, value: string) => {
@@ -150,131 +134,118 @@ export function TimingConfig() {
     });
   }, []);
 
-  const handleSoundToggle = useCallback(async (eventId: string) => {
-    const newDisabled = !soundDisabled[eventId];
-    await window.electronAPI.setSoundDisabled(eventId, newDisabled);
-    setSoundDisabled((prev) => ({ ...prev, [eventId]: newDisabled }));
-  }, [soundDisabled]);
-
-  const handleSoundUpload = useCallback(async (eventId: string) => {
-    setSoundError('');
-    const dialogResult = await window.electronAPI.openSoundFileDialog();
-    if (!dialogResult.success || dialogResult.canceled || !dialogResult.filePath) return;
-
-    const result = await window.electronAPI.assignSound(eventId, dialogResult.filePath);
-    if (!result.success) {
-      setSoundError(result.error || 'Failed to assign sound');
-      return;
-    }
-    const updated = await window.electronAPI.getSoundAssignments();
-    setSoundAssignments(updated);
+  const updateNotifConfig = useCallback((patch: Partial<NotificationOverlayConfig>) => {
+    setNotifConfig((prev) => ({ ...prev, ...patch }));
+    window.electronAPI.setNotificationConfig(patch);
   }, []);
 
-  const handleSoundRemove = useCallback(async (eventId: string) => {
-    await window.electronAPI.removeSound(eventId);
-    const updated = await window.electronAPI.getSoundAssignments();
-    setSoundAssignments(updated);
-  }, []);
-
-  const handleSoundPreview = useCallback(async (eventId: string) => {
-    const filePath = await window.electronAPI.getSoundFilePath(eventId);
-    if (filePath) {
-      soundPlayer.playSound(filePath);
-    }
-  }, []);
-
-  const handleOverlayPositionChange = useCallback((pos: OverlayPosition) => {
-    setOverlayPosition(pos);
-    window.electronAPI.setOverlayPosition(pos);
-  }, []);
-
-  const handleFontSizeNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = Number(e.target.value);
-    setFontSizeName(val);
-    window.electronAPI.setOverlayFontSize({ name: val, offset: fontSizeOffset });
-  }, [fontSizeOffset]);
-
-  const handleFontSizeOffsetChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = Number(e.target.value);
-    setFontSizeOffset(val);
-    window.electronAPI.setOverlayFontSize({ name: fontSizeName, offset: val });
-  }, [fontSizeName]);
-
-  const handleOverlayModeChange = useCallback((mode: OverlayMode) => {
-    setOverlayMode(mode);
-    window.electronAPI.setOverlayMode(mode);
-  }, []);
-
-  const handleOverlayEventCountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = Math.max(1, Math.min(10, Number(e.target.value) || 1));
-    setOverlayEventCount(val);
-    window.electronAPI.setOverlayEventCount(val);
+  const updatePersistConfig = useCallback((patch: Partial<PersistentOverlayConfig>) => {
+    setPersistConfig((prev) => ({ ...prev, ...patch }));
+    window.electronAPI.setPersistentConfig(patch);
   }, []);
 
   return (
     <div className="bg-dota-dark rounded-lg p-4 space-y-4 flex-1 flex flex-col min-h-0">
       <div className="space-y-3 border-b border-dota-gold/10 pb-3">
+        <h3 className="text-dota-gold text-xs font-semibold uppercase tracking-wide">Notification Overlay</h3>
         <div className="flex items-center justify-between">
-          <span className="text-xs text-dota-grey/70">Overlay Position</span>
+          <span className="text-xs text-dota-grey/70">Enabled</span>
+          <button
+            data-testid="notif-enabled"
+            onClick={() => updateNotifConfig({ enabled: !notifConfig.enabled })}
+            className={`px-2 py-1 rounded text-xs transition-colors ${
+              notifConfig.enabled
+                ? 'bg-dota-green/30 text-dota-green border border-dota-green/60'
+                : 'bg-dota-black/40 text-dota-grey/60 border border-dota-grey/20'
+            }`}
+          >
+            {notifConfig.enabled ? 'On' : 'Off'}
+          </button>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-dota-grey/70">Position</span>
           <div className="flex gap-1">
-            {(['left-center', 'right-center'] as OverlayPosition[]).map((pos) => (
+            {(['left', 'right'] as OverlayPosition[]).map((pos) => (
               <button
                 key={pos}
-                onClick={() => handleOverlayPositionChange(pos)}
+                data-testid={`notif-pos-${pos}`}
+                onClick={() => updateNotifConfig({ position: pos })}
                 className={`px-2 py-1 rounded text-xs transition-colors ${
-                  overlayPosition === pos
+                  notifConfig.position === pos
                     ? 'bg-dota-gold/30 text-dota-gold border border-dota-gold/60'
                     : 'bg-dota-black/40 text-dota-grey/60 border border-dota-grey/20 hover:border-dota-gold/30'
                 }`}
               >
-                {pos === 'left-center' ? 'Left' : 'Right'}
+                {pos === 'left' ? 'Left' : 'Right'}
               </button>
             ))}
           </div>
         </div>
         <label className="flex items-center gap-3">
           <span className="text-xs text-dota-grey/70 w-24">Event Font</span>
-          <input
-            type="range"
-            min="10"
-            max="32"
-            value={fontSizeName}
-            onChange={handleFontSizeNameChange}
-            className="flex-1 h-1.5 rounded-full appearance-none bg-dota-grey/20 accent-dota-gold cursor-pointer"
-          />
-          <span className="text-xs text-dota-grey w-10 text-right">{fontSizeName}px</span>
+          <input type="range" min="10" max="32" value={notifConfig.fontSize.name}
+            onChange={(e) => updateNotifConfig({ fontSize: { ...notifConfig.fontSize, name: Number(e.target.value) } })}
+            className="flex-1 h-1.5 rounded-full appearance-none bg-dota-grey/20 accent-dota-gold cursor-pointer" />
+          <span className="text-xs text-dota-grey w-10 text-right">{notifConfig.fontSize.name}px</span>
         </label>
         <label className="flex items-center gap-3">
           <span className="text-xs text-dota-grey/70 w-24">Timer Font</span>
-          <input
-            type="range"
-            min="8"
-            max="28"
-            value={fontSizeOffset}
-            onChange={handleFontSizeOffsetChange}
-            className="flex-1 h-1.5 rounded-full appearance-none bg-dota-grey/20 accent-dota-gold cursor-pointer"
-          />
-          <span className="text-xs text-dota-grey w-10 text-right">{fontSizeOffset}px</span>
+          <input type="range" min="8" max="28" value={notifConfig.fontSize.offset}
+            onChange={(e) => updateNotifConfig({ fontSize: { ...notifConfig.fontSize, offset: Number(e.target.value) } })}
+            className="flex-1 h-1.5 rounded-full appearance-none bg-dota-grey/20 accent-dota-gold cursor-pointer" />
+          <span className="text-xs text-dota-grey w-10 text-right">{notifConfig.fontSize.offset}px</span>
         </label>
+      </div>
+
+      <div className="space-y-3 border-b border-dota-gold/10 pb-3">
+        <h3 className="text-dota-gold text-xs font-semibold uppercase tracking-wide">Persistent Overlay</h3>
         <div className="flex items-center justify-between">
-          <span className="text-xs text-dota-grey/70">Overlay Mode</span>
+          <span className="text-xs text-dota-grey/70">Enabled</span>
+          <button
+            data-testid="persist-enabled"
+            onClick={() => updatePersistConfig({ enabled: !persistConfig.enabled })}
+            className={`px-2 py-1 rounded text-xs transition-colors ${
+              persistConfig.enabled
+                ? 'bg-dota-green/30 text-dota-green border border-dota-green/60'
+                : 'bg-dota-black/40 text-dota-grey/60 border border-dota-grey/20'
+            }`}
+          >
+            {persistConfig.enabled ? 'On' : 'Off'}
+          </button>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-dota-grey/70">Position</span>
           <div className="flex gap-1">
-            {(['notification', 'persistent'] as OverlayMode[]).map((m) => (
+            {(['left', 'right'] as OverlayPosition[]).map((pos) => (
               <button
-                key={m}
-                data-testid={`mode-${m}`}
-                onClick={() => handleOverlayModeChange(m)}
+                key={pos}
+                data-testid={`persist-pos-${pos}`}
+                onClick={() => updatePersistConfig({ position: pos })}
                 className={`px-2 py-1 rounded text-xs transition-colors ${
-                  overlayMode === m
+                  persistConfig.position === pos
                     ? 'bg-dota-gold/30 text-dota-gold border border-dota-gold/60'
                     : 'bg-dota-black/40 text-dota-grey/60 border border-dota-grey/20 hover:border-dota-gold/30'
                 }`}
               >
-                {m === 'notification' ? 'Notification' : 'Persistent'}
+                {pos === 'left' ? 'Left' : 'Right'}
               </button>
             ))}
           </div>
         </div>
+        <label className="flex items-center gap-3">
+          <span className="text-xs text-dota-grey/70 w-24">Event Font</span>
+          <input type="range" min="10" max="32" value={persistConfig.fontSize.name}
+            onChange={(e) => updatePersistConfig({ fontSize: { ...persistConfig.fontSize, name: Number(e.target.value) } })}
+            className="flex-1 h-1.5 rounded-full appearance-none bg-dota-grey/20 accent-dota-gold cursor-pointer" />
+          <span className="text-xs text-dota-grey w-10 text-right">{persistConfig.fontSize.name}px</span>
+        </label>
+        <label className="flex items-center gap-3">
+          <span className="text-xs text-dota-grey/70 w-24">Timer Font</span>
+          <input type="range" min="8" max="28" value={persistConfig.fontSize.offset}
+            onChange={(e) => updatePersistConfig({ fontSize: { ...persistConfig.fontSize, offset: Number(e.target.value) } })}
+            className="flex-1 h-1.5 rounded-full appearance-none bg-dota-grey/20 accent-dota-gold cursor-pointer" />
+          <span className="text-xs text-dota-grey w-10 text-right">{persistConfig.fontSize.offset}px</span>
+        </label>
         <label className="flex items-center gap-3">
           <span className="text-xs text-dota-grey/70 w-24">Events Shown</span>
           <input
@@ -282,17 +253,12 @@ export function TimingConfig() {
             type="number"
             min="1"
             max="10"
-            value={overlayEventCount}
-            onChange={handleOverlayEventCountChange}
-            disabled={overlayMode !== 'persistent'}
-            className="w-16 px-2 py-1 rounded text-xs bg-dota-black border border-dota-gold/20 text-dota-grey disabled:opacity-40"
+            value={persistConfig.eventCount}
+            onChange={(e) => updatePersistConfig({ eventCount: Math.max(1, Math.min(10, Number(e.target.value) || 1)) })}
+            className="w-16 px-2 py-1 rounded text-xs bg-dota-black border border-dota-gold/20 text-dota-grey"
           />
-          <span className="text-xs text-dota-grey/50">(persistent mode)</span>
         </label>
       </div>
-      {soundError && (
-        <p data-testid="sound-error" className="text-red-400 text-xs bg-red-400/10 rounded px-3 py-2">{soundError}</p>
-      )}
       <div className="flex items-center justify-between">
         <h2 className="text-dota-gold text-sm font-semibold uppercase tracking-wide">Event Timings</h2>
         <div className="flex gap-2">
@@ -423,54 +389,6 @@ export function TimingConfig() {
                       className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
                     />
                   </label>
-                </div>
-                <div data-testid={`sound-row-${event.id}`} className="mt-2 flex items-center gap-2 text-xs">
-                  <span className="text-dota-grey/70 w-12">Sound</span>
-                  <button
-                    data-testid={`sound-toggle-${event.id}`}
-                    onClick={() => handleSoundToggle(event.id)}
-                    className={`px-2 py-0.5 rounded transition-colors ${
-                      soundDisabled[event.id]
-                        ? 'bg-dota-gold/20 text-dota-gold border border-dota-gold/40'
-                        : 'bg-dota-green/20 text-dota-green border border-dota-green/40'
-                    }`}
-                  >
-                    {soundDisabled[event.id] ? 'TTS' : 'SFX'}
-                  </button>
-                  <span className="text-dota-grey/50 flex-1 truncate">
-                    {soundDisabled[event.id]
-                      ? 'Using TTS announcer'
-                      : soundAssignments[event.id]
-                        ? `${soundAssignments[event.id].filename} ${soundAssignments[event.id].type === 'bundled' ? '(default)' : '(custom)'}`
-                        : 'None (TTS)'}
-                  </span>
-                  {!soundDisabled[event.id] && soundAssignments[event.id] && (
-                    <button
-                      data-testid={`preview-${event.id}`}
-                      onClick={() => handleSoundPreview(event.id)}
-                      className="px-2 py-0.5 rounded bg-dota-gold/20 text-dota-gold border border-dota-gold/40 hover:bg-dota-gold/30 transition-colors"
-                    >
-                      Play
-                    </button>
-                  )}
-                  {!soundDisabled[event.id] && (
-                    <button
-                      data-testid={`upload-${event.id}`}
-                      onClick={() => handleSoundUpload(event.id)}
-                      className="px-2 py-0.5 rounded bg-green-600/20 text-green-400 border border-green-500/40 hover:bg-green-600/30 transition-colors"
-                    >
-                      Upload
-                    </button>
-                  )}
-                  {!soundDisabled[event.id] && soundAssignments[event.id] && soundAssignments[event.id].type === 'custom' && (
-                    <button
-                      data-testid={`remove-${event.id}`}
-                      onClick={() => handleSoundRemove(event.id)}
-                      className="px-2 py-0.5 rounded bg-red-600/20 text-red-400 border border-red-500/40 hover:bg-red-600/30 transition-colors"
-                    >
-                      Remove
-                    </button>
-                  )}
                 </div>
               </>
             )}

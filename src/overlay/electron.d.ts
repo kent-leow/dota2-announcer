@@ -17,16 +17,29 @@ interface UpcomingOccurrence {
   happenTimeMs: number;
 }
 
+interface NotificationOverlayConfig {
+  enabled: boolean;
+  position: 'left' | 'right';
+  fontSize: OverlayFontSize;
+}
+
+interface PersistentOverlayConfig {
+  enabled: boolean;
+  position: 'left' | 'right';
+  fontSize: OverlayFontSize;
+  eventCount: number;
+}
+
+interface OverlayConfigPayload {
+  notification: NotificationOverlayConfig;
+  persistent: PersistentOverlayConfig;
+}
+
 interface OverlayAPI {
   onNotification: (callback: (payload: OverlayNotification) => void) => () => void;
-  onPositionChange: (callback: (position: string) => void) => () => void;
-  getPosition: () => Promise<string>;
-  getFontSize: () => Promise<OverlayFontSize>;
-  onFontSizeChange: (callback: (fontSize: OverlayFontSize) => void) => () => void;
-  getMode: () => Promise<string>;
-  onModeChange: (callback: (mode: string) => void) => () => void;
-  getEventCount: () => Promise<number>;
-  onEventCountChange: (callback: (count: number) => void) => () => void;
+  getNotificationConfig: () => Promise<NotificationOverlayConfig>;
+  getPersistentConfig: () => Promise<PersistentOverlayConfig>;
+  onConfigChange: (callback: (config: OverlayConfigPayload) => void) => () => void;
   onTick: (callback: (elapsedMs: number) => void) => () => void;
   onUpcoming: (callback: (occurrences: UpcomingOccurrence[]) => void) => () => void;
 }

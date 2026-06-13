@@ -13,13 +13,15 @@ let upcomingCallback: ((occ: Array<{ eventId: string; eventName: string; happenT
     upcomingCallback = cb;
     return () => { upcomingCallback = null; };
   }),
-  getPosition: jest.fn(() => Promise.resolve('right-center')),
-  getFontSize: jest.fn(() => Promise.resolve({ name: 16, offset: 13 })),
-  onPositionChange: jest.fn(() => () => {}),
-  onFontSizeChange: jest.fn(() => () => {}),
 };
 
 import { PersistentPanel } from './PersistentPanel';
+
+const defaultProps = {
+  position: 'right' as const,
+  fontSize: { name: 16, offset: 13 },
+  onHeightChange: jest.fn(),
+};
 
 describe('PersistentPanel', () => {
   beforeEach(() => {
@@ -29,7 +31,7 @@ describe('PersistentPanel', () => {
   });
 
   it('renders N events from upcoming feed', () => {
-    render(<PersistentPanel />);
+    render(<PersistentPanel {...defaultProps} />);
     act(() => {
       tickCallback!(60000);
       upcomingCallback!([
@@ -42,7 +44,7 @@ describe('PersistentPanel', () => {
   });
 
   it('updates countdown on tick', () => {
-    render(<PersistentPanel />);
+    render(<PersistentPanel {...defaultProps} />);
     act(() => {
       upcomingCallback!([{ eventId: 'a', eventName: 'Rune', happenTimeMs: 120000 }]);
       tickCallback!(60000);
@@ -56,7 +58,7 @@ describe('PersistentPanel', () => {
   });
 
   it('removes event when countdown reaches 0', () => {
-    render(<PersistentPanel />);
+    render(<PersistentPanel {...defaultProps} />);
     act(() => {
       upcomingCallback!([{ eventId: 'a', eventName: 'Rune', happenTimeMs: 120000 }]);
       tickCallback!(60000);
@@ -69,7 +71,7 @@ describe('PersistentPanel', () => {
   });
 
   it('shows events sorted by nearest time', () => {
-    const { container } = render(<PersistentPanel />);
+    const { container } = render(<PersistentPanel {...defaultProps} />);
     act(() => {
       tickCallback!(0);
       upcomingCallback!([
@@ -83,11 +85,30 @@ describe('PersistentPanel', () => {
   });
 
   it('renders nothing when no upcoming events', () => {
-    const { container } = render(<PersistentPanel />);
+    const { container } = render(<PersistentPanel {...defaultProps} />);
     act(() => {
       tickCallback!(0);
       upcomingCallback!([]);
     });
     expect(container.querySelector('.persistent-panel')).not.toBeInTheDocument();
+  });
+
+  it('calls onHeightChange when events render', () => {
+    const onHeightChange = jest.fn();
+    render(<PersistentPanel {...defaultProps} onHeightChange={onHeightChange} />);
+    act(() => {
+      tickCallback!(0);
+      upcomingCallback!([{ eventId: 'a', eventName: 'Rune', happenTimeMs: 120000 }]);
+    });
+    expect(onHeightChange).toHaveBeenCalled();
+  });
+
+  it('uses position prop for alignment class', () => {
+    const { container } = render(<PersistentPanel {...defaultProps} position="left" />);
+    act(() => {
+      tickCallback!(0);
+      upcomingCallback!([{ eventId: 'a', eventName: 'Rune', happenTimeMs: 120000 }]);
+    });
+    expect(container.querySelector('.persistent-panel--left')).toBeInTheDocument();
   });
 });

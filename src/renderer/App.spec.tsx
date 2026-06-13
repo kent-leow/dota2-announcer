@@ -28,11 +28,6 @@ jest.mock('src/tts/announcer', () => ({
   getAvailableVoices: jest.fn(() => []),
 }));
 
-jest.mock('src/tts/soundPlayer', () => ({
-  playSound: jest.fn(),
-  setVolume: jest.fn(),
-  setMuted: jest.fn(),
-}));
 
 const mockElectronAPI = {
   getState: jest.fn(() => Promise.resolve('idle')),
@@ -60,26 +55,14 @@ const mockElectronAPI = {
   gsiIsConnected: jest.fn(() => Promise.resolve(false)),
   gsiGetInstallPath: jest.fn(() => Promise.resolve(null)),
   onGsiStatusUpdate: jest.fn(() => () => {}),
-  getSoundFilePath: jest.fn((): Promise<string | null> => Promise.resolve(null)),
-  getSoundAssignments: jest.fn(() => Promise.resolve({})),
-  openSoundFileDialog: jest.fn(() => Promise.resolve({ success: false, canceled: true })),
-  assignSound: jest.fn(() => Promise.resolve({ success: true })),
-  removeSound: jest.fn(() => Promise.resolve({ success: true })),
   sendOverlayNotification: jest.fn(),
-  getOverlayPosition: jest.fn(() => Promise.resolve('right-center')),
-  setOverlayPosition: jest.fn(() => Promise.resolve('right-center')),
-  onEventsChanged: jest.fn(() => () => {}),
-  getSoundDisabled: jest.fn(() => Promise.resolve({})),
-  setSoundDisabled: jest.fn(() => Promise.resolve()),
-  getOverlayFontSize: jest.fn(() => Promise.resolve({ name: 16, offset: 13 })),
-  setOverlayFontSize: jest.fn((fs: { name: number; offset: number }) => Promise.resolve(fs)),
-  getOverlayMode: jest.fn(() => Promise.resolve('notification')),
-  setOverlayMode: jest.fn((m: string) => Promise.resolve(m)),
-  getOverlayEventCount: jest.fn(() => Promise.resolve(5)),
-  setOverlayEventCount: jest.fn((c: number) => Promise.resolve(c)),
   sendOverlayUpcoming: jest.fn(),
-  onOverlayModeChanged: jest.fn(() => () => {}),
-  onOverlayEventCountChanged: jest.fn(() => () => {}),
+  onEventsChanged: jest.fn(() => () => {}),
+  getNotificationConfig: jest.fn(() => Promise.resolve({ enabled: true, position: 'right', fontSize: { name: 16, offset: 13 } })),
+  setNotificationConfig: jest.fn((c: unknown) => Promise.resolve(c)),
+  getPersistentConfig: jest.fn(() => Promise.resolve({ enabled: false, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5 })),
+  setPersistentConfig: jest.fn((c: unknown) => Promise.resolve(c)),
+  onOverlayConfigChanged: jest.fn(() => () => {}),
 };
 
 (window as any).electronAPI = mockElectronAPI;

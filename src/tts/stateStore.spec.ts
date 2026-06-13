@@ -12,63 +12,78 @@ describe('stateStore', () => {
   });
 
   describe('readAppState defaults', () => {
-    it('returns default overlayMode as notification', () => {
+    it('returns default notification config', () => {
       (fs.readFileSync as jest.Mock).mockImplementation(() => { throw new Error('no file'); });
       const state = readAppState();
-      expect(state.overlayMode).toBe('notification');
+      expect(state.notification).toEqual({ enabled: true, position: 'right', fontSize: { name: 16, offset: 13 } });
     });
 
-    it('returns default overlayEventCount as 5', () => {
+    it('returns default persistent config', () => {
       (fs.readFileSync as jest.Mock).mockImplementation(() => { throw new Error('no file'); });
       const state = readAppState();
-      expect(state.overlayEventCount).toBe(5);
+      expect(state.persistent).toEqual({ enabled: false, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5 });
     });
   });
 
-  describe('readAppState parsing', () => {
-    it('reads overlayMode from persisted state', () => {
-      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify({ overlayMode: 'persistent' }));
+  describe('migration from legacy state', () => {
+    it('migrates overlayMode persistent to persistent.enabled', () => {
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify({ overlayMode: 'persistent', overlayPosition: 'right-center' }));
       const state = readAppState();
-      expect(state.overlayMode).toBe('persistent');
+      expect(state.persistent.enabled).toBe(true);
+      expect(state.notification.enabled).toBe(false);
     });
 
-    it('falls back to notification for invalid overlayMode', () => {
-      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify({ overlayMode: 'invalid' }));
+    it('migrates overlayMode notification to notification.enabled', () => {
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify({ overlayMode: 'notification', overlayPosition: 'left-center' }));
       const state = readAppState();
-      expect(state.overlayMode).toBe('notification');
+      expect(state.notification.enabled).toBe(true);
+      expect(state.persistent.enabled).toBe(false);
+      expect(state.notification.position).toBe('left');
+      expect(state.persistent.position).toBe('left');
     });
 
-    it('reads overlayEventCount from persisted state', () => {
-      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify({ overlayEventCount: 8 }));
+    it('migrates overlayEventCount to persistent.eventCount', () => {
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify({ overlayMode: 'persistent', overlayEventCount: 8 }));
       const state = readAppState();
-      expect(state.overlayEventCount).toBe(8);
+      expect(state.persistent.eventCount).toBe(8);
     });
 
-    it('clamps overlayEventCount to 1-10 range', () => {
-      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify({ overlayEventCount: 20 }));
+    it('clamps migrated eventCount to 1-10', () => {
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify({ overlayMode: 'persistent', overlayEventCount: 20 }));
       const state = readAppState();
-      expect(state.overlayEventCount).toBe(10);
+      expect(state.persistent.eventCount).toBe(10);
     });
+  });
 
-    it('clamps overlayEventCount minimum to 1', () => {
-      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify({ overlayEventCount: 0 }));
+  describe('readAppState new format', () => {
+    it('reads per-overlay config from new format', () => {
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify({
+        notification: { enabled: false, position: 'left', fontSize: { name: 20, offset: 14 } },
+        persistent: { enabled: true, position: 'right', fontSize: { name: 18, offset: 12 }, eventCount: 7 },
+      }));
       const state = readAppState();
-      expect(state.overlayEventCount).toBe(1);
+      expect(state.notification.enabled).toBe(false);
+      expect(state.notification.position).toBe('left');
+      expect(state.notification.fontSize.name).toBe(20);
+      expect(state.persistent.enabled).toBe(true);
+      expect(state.persistent.eventCount).toBe(7);
     });
   });
 
   describe('writeAppState round-trip', () => {
-    it('persists overlayMode and overlayEventCount', () => {
+    it('persists per-overlay config', () => {
+      (fs.readFileSync as jest.Mock).mockImplementation(() => { throw new Error('no file'); });
       (fs.existsSync as jest.Mock).mockReturnValue(true);
       (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
       const state = readAppState();
-      state.overlayMode = 'persistent';
-      state.overlayEventCount = 3;
+      state.persistent.enabled = true;
+      state.persistent.eventCount = 3;
       writeAppState(state);
 
       const written = JSON.parse((fs.writeFileSync as jest.Mock).mock.calls[0][1]);
-      expect(written.overlayMode).toBe('persistent');
-      expect(written.overlayEventCount).toBe(3);
+      expect(written.persistent.enabled).toBe(true);
+      expect(written.persistent.eventCount).toBe(3);
+      expect(written.notification.enabled).toBe(true);
     });
   });
 });

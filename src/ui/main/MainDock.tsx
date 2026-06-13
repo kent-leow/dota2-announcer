@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import * as eventScheduler from 'src/scheduler/eventScheduler';
 import * as announcer from 'src/tts/announcer';
-import * as soundPlayer from 'src/tts/soundPlayer';
 
 type DotaState = 'idle' | 'hero-pick' | 'pre-game' | 'in-match';
 
@@ -16,12 +15,12 @@ export function MainDock() {
   const [status, setStatus] = useState<DotaState>('idle');
   const [elapsed, setElapsed] = useState<number>(0);
   const elapsedRef = useRef<number>(0);
-  const overlayModeRef = useRef<string>('notification');
-  const overlayEventCountRef = useRef<number>(5);
+  const notificationEnabledRef = useRef<boolean>(true);
+  const persistentEnabledRef = useRef<boolean>(false);
+  const persistentEventCountRef = useRef<number>(5);
   const [gamePaused, setGamePaused] = useState<boolean>(false);
   const [muted, setMuted] = useState<boolean>(false);
   const [volume, setVolume] = useState<number>(100);
-  const [announcing, setAnnouncing] = useState<boolean>(true);
   const [timeSuffix, setTimeSuffix] = useState<boolean>(true);
   const [rate, setRate] = useState<number>(1.0);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -34,18 +33,21 @@ export function MainDock() {
     window.electronAPI.isMuted().then((m) => {
       setMuted(m);
       announcer.setMuted(m);
-      soundPlayer.setMuted(m);
     });
     window.electronAPI.getVolume().then((v) => {
       setVolume(v);
       announcer.setVolume(v);
-      soundPlayer.setVolume(v);
     });
     window.electronAPI.getEvents().then((config) => {
       window.electronAPI.getElapsed().then((ms) => eventScheduler.loadSchedule(config, ms));
     });
-    window.electronAPI.getOverlayMode().then((m) => { overlayModeRef.current = m; });
-    window.electronAPI.getOverlayEventCount().then((c) => { overlayEventCountRef.current = c; });
+    window.electronAPI.getNotificationConfig().then((c) => {
+      notificationEnabledRef.current = c.enabled;
+    });
+    window.electronAPI.getPersistentConfig().then((c) => {
+      persistentEnabledRef.current = c.enabled;
+      persistentEventCountRef.current = c.eventCount;
+    });
     window.electronAPI.getIncludeTimeSuffix().then((v) => {
       setTimeSuffix(v);
       announcer.setIncludeTimeSuffix(v);
@@ -69,20 +71,10 @@ export function MainDock() {
     }
 
     eventScheduler.onAnnouncement((name, offset, eventId) => {
-      window.electronAPI.getSoundDisabled().then((disabled) => {
-        if (disabled[eventId]) {
-          announcer.speak(announcer.formatMessage(name, offset));
-        } else {
-          window.electronAPI.getSoundFilePath(eventId).then((filePath) => {
-            if (filePath) {
-              soundPlayer.playSound(filePath);
-            } else {
-              announcer.speak(announcer.formatMessage(name, offset));
-            }
-          });
-        }
-      });
-      window.electronAPI.sendOverlayNotification({ eventName: name, offsetSeconds: offset, eventId, happenTimeMs: elapsedRef.current + offset * 1000 });
+      announcer.speak(announcer.formatMessage(name, offset));
+      if (notificationEnabledRef.current) {
+        window.electronAPI.sendOverlayNotification({ eventName: name, offsetSeconds: offset, eventId, happenTimeMs: elapsedRef.current + offset * 1000 });
+      }
     });
 
     const unsubState = window.electronAPI.onStateChange((newState) => {
@@ -96,8 +88,8 @@ export function MainDock() {
       elapsedRef.current = ms;
       setElapsed(ms);
       eventScheduler.tick(ms);
-      if (overlayModeRef.current === 'persistent') {
-        const upcoming = eventScheduler.getUpcomingOccurrences(ms, overlayEventCountRef.current);
+      if (persistentEnabledRef.current) {
+        const upcoming = eventScheduler.getUpcomingOccurrences(ms, persistentEventCountRef.current);
         window.electronAPI.sendOverlayUpcoming(upcoming);
       }
     });
@@ -110,11 +102,10 @@ export function MainDock() {
       window.electronAPI.getElapsed().then((ms) => eventScheduler.loadSchedule(config, ms));
     });
 
-    const unsubModeChanged = window.electronAPI.onOverlayModeChanged((mode) => {
-      overlayModeRef.current = mode;
-    });
-    const unsubEventCountChanged = window.electronAPI.onOverlayEventCountChanged((count) => {
-      overlayEventCountRef.current = count;
+    const unsubOverlayConfig = window.electronAPI.onOverlayConfigChanged((config) => {
+      notificationEnabledRef.current = config.notification.enabled;
+      persistentEnabledRef.current = config.persistent.enabled;
+      persistentEventCountRef.current = config.persistent.eventCount;
     });
 
     return () => {
@@ -122,8 +113,7 @@ export function MainDock() {
       unsubTick();
       unsubPause();
       unsubEventsChanged();
-      unsubModeChanged();
-      unsubEventCountChanged();
+      unsubOverlayConfig();
     };
   }, []);
 
@@ -131,7 +121,6 @@ export function MainDock() {
     window.electronAPI.toggleMute().then((m) => {
       setMuted(m);
       announcer.setMuted(m);
-      soundPlayer.setMuted(m);
     });
   }, []);
 
@@ -139,12 +128,7 @@ export function MainDock() {
     const val = Number(e.target.value);
     window.electronAPI.setVolume(val);
     announcer.setVolume(val);
-    soundPlayer.setVolume(val);
     setVolume(val);
-  }, []);
-
-  const handleStartStop = useCallback(() => {
-    setAnnouncing((prev) => !prev);
   }, []);
 
   const handleTimeSuffixToggle = useCallback(() => {
@@ -166,12 +150,6 @@ export function MainDock() {
     setSelectedVoice(uri);
     announcer.setVoice(uri || null);
     window.electronAPI.setVoiceUri(uri);
-  }, []);
-
-  const handleReload = useCallback(() => {
-    window.electronAPI.reloadEvents().then((config) => {
-      window.electronAPI.getElapsed().then((ms) => eventScheduler.loadSchedule(config, ms));
-    });
   }, []);
 
   return (
@@ -217,18 +195,6 @@ export function MainDock() {
         </button>
 
         <button
-          data-testid="start-stop"
-          onClick={handleStartStop}
-          className={`px-4 py-2 rounded font-medium text-sm transition-colors ${
-            announcing
-              ? 'bg-dota-green/20 text-dota-green border border-dota-green/40 hover:bg-dota-green/30'
-              : 'bg-dota-gold/20 text-dota-gold border border-dota-gold/40 hover:bg-dota-gold/30'
-          }`}
-        >
-          {announcing ? 'Stop' : 'Start'}
-        </button>
-
-        <button
           data-testid="time-suffix-toggle"
           onClick={handleTimeSuffixToggle}
           className={`px-4 py-2 rounded font-medium text-sm transition-colors ${
@@ -240,13 +206,6 @@ export function MainDock() {
           {timeSuffix ? 'Time: On' : 'Time: Off'}
         </button>
 
-        <button
-          data-testid="reload-config"
-          onClick={handleReload}
-          className="px-4 py-2 rounded font-medium text-sm bg-dota-gold/20 text-dota-gold border border-dota-gold/40 hover:bg-dota-gold/30 transition-colors"
-        >
-          Reload Config
-        </button>
       </div>
 
       <label data-testid="volume-control" className="flex items-center gap-3 px-2">

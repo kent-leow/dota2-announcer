@@ -11,17 +11,20 @@ interface NotificationItem {
   status: NotificationStatus;
 }
 
+interface NotificationStackProps {
+  position: Align;
+  fontSize: { name: number; offset: number };
+  topOffset: number;
+}
+
 const VISIBLE_DURATION_MS = 5000;
 const ENTER_DURATION_MS = 300;
 const EXIT_DURATION_MS = 400;
 
 let nextId = 0;
 
-export function NotificationStack() {
+export function NotificationStack({ position, fontSize, topOffset }: NotificationStackProps) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [align, setAlign] = useState<Align>('right');
-  const [fontSizeName, setFontSizeName] = useState(16);
-  const [fontSizeOffset, setFontSizeOffset] = useState(13);
   const [gameTimeMs, setGameTimeMs] = useState(0);
   const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
@@ -57,30 +60,14 @@ export function NotificationStack() {
 
   useEffect(() => {
     if (!window.overlayAPI) return;
-    window.overlayAPI.getPosition().then((pos) => {
-      setAlign(pos === 'left-center' ? 'left' : 'right');
-    });
-    window.overlayAPI.getFontSize().then((fs) => {
-      setFontSizeName(fs.name);
-      setFontSizeOffset(fs.offset);
-    });
     const unsubNotify = window.overlayAPI.onNotification((payload) => {
       addNotification(payload.eventName, payload.offsetSeconds, payload.happenTimeMs ?? 0);
-    });
-    const unsubPos = window.overlayAPI.onPositionChange((pos) => {
-      setAlign(pos === 'left-center' ? 'left' : 'right');
-    });
-    const unsubFontSize = window.overlayAPI.onFontSizeChange((fs) => {
-      setFontSizeName(fs.name);
-      setFontSizeOffset(fs.offset);
     });
     const unsubTick = window.overlayAPI.onTick((ms) => {
       setGameTimeMs(ms);
     });
     return () => {
       unsubNotify();
-      unsubPos();
-      unsubFontSize();
       unsubTick();
       timersRef.current.forEach(clearTimeout);
       timersRef.current.clear();
@@ -88,7 +75,10 @@ export function NotificationStack() {
   }, [addNotification]);
 
   return (
-    <div className={`notification-stack notification-stack--${align}`}>
+    <div
+      className={`notification-stack notification-stack--${position}`}
+      style={{ marginTop: `${topOffset}px` }}
+    >
       {notifications.map((n) => (
         <NotificationCard
           key={n.id}
@@ -97,9 +87,9 @@ export function NotificationStack() {
           happenTimeMs={n.happenTimeMs}
           gameTimeMs={gameTimeMs}
           status={n.status}
-          align={align}
-          fontSizeName={fontSizeName}
-          fontSizeOffset={fontSizeOffset}
+          align={position}
+          fontSizeName={fontSize.name}
+          fontSizeOffset={fontSize.offset}
         />
       ))}
     </div>

@@ -6,6 +6,7 @@ import { loadMuteState } from 'src/tts/muteManager';
 import { loadVolume } from 'src/tts/volumeController';
 import { createOverlayWindow, showOverlay, hideOverlay, destroyOverlay } from './overlayWindow';
 import * as matchStateManager from 'src/dota/matchStateManager';
+import { readAppState } from 'src/tts/stateStore';
 
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
 app.commandLine.appendSwitch('disk-cache-dir', path.join(app.getPath('userData'), 'Cache'));
@@ -120,7 +121,10 @@ app.whenReady().then(() => {
 
   matchStateManager.onPhaseChange((phase) => {
     if (phase === 'in-match') {
-      showOverlay();
+      const state = readAppState();
+      if (state.notification.enabled || state.persistent.enabled) {
+        showOverlay();
+      }
     } else {
       hideOverlay();
     }
