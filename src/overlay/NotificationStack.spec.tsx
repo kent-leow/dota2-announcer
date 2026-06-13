@@ -1,13 +1,22 @@
 import { render, screen, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-let notificationCallback: ((payload: { eventName: string; offsetSeconds: number; eventId: string; timestamp: number }) => void) | null = null;
+let notificationCallback: ((payload: { eventName: string; offsetSeconds: number; eventId: string; timestamp: number; happenTimeMs?: number }) => void) | null = null;
+let tickCallback: ((elapsedMs: number) => void) | null = null;
 
 (window as any).overlayAPI = {
   onNotification: jest.fn((cb) => {
     notificationCallback = cb;
     return () => { notificationCallback = null; };
   }),
+  onTick: jest.fn((cb) => {
+    tickCallback = cb;
+    return () => { tickCallback = null; };
+  }),
+  getPosition: jest.fn(() => Promise.resolve('right-center')),
+  getFontSize: jest.fn(() => Promise.resolve({ name: 16, offset: 13 })),
+  onPositionChange: jest.fn(() => () => {}),
+  onFontSizeChange: jest.fn(() => () => {}),
 };
 
 import { NotificationStack } from './NotificationStack';
@@ -16,6 +25,7 @@ describe('NotificationStack', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     notificationCallback = null;
+    tickCallback = null;
     jest.clearAllMocks();
   });
 
@@ -91,5 +101,33 @@ describe('NotificationStack', () => {
     const { unmount } = render(<NotificationStack />);
     unmount();
     expect(notificationCallback).toBeNull();
+  });
+
+  it('subscribes to onTick on mount', () => {
+    render(<NotificationStack />);
+    expect(window.overlayAPI.onTick).toHaveBeenCalled();
+  });
+
+  it('stores happenTimeMs from notification payload', () => {
+    render(<NotificationStack />);
+    act(() => {
+      notificationCallback!({ eventName: 'Rune', offsetSeconds: 60, eventId: 'rune', timestamp: 1000, happenTimeMs: 120000 });
+    });
+    expect(screen.getByText('Rune')).toBeInTheDocument();
+  });
+
+  it('tick updates propagate to card countdown', () => {
+    render(<NotificationStack />);
+    act(() => {
+      tickCallback!(60000);
+    });
+    act(() => {
+      notificationCallback!({ eventName: 'Rune', offsetSeconds: 60, eventId: 'rune', timestamp: 1000, happenTimeMs: 120000 });
+    });
+    expect(screen.getByText('in 60s')).toBeInTheDocument();
+    act(() => {
+      tickCallback!(90000);
+    });
+    expect(screen.getByText('in 30s')).toBeInTheDocument();
   });
 });

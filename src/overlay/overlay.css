@@ -108,3 +108,45 @@
     transform: translateX(-20px);
   }
 }
+
+.persistent-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.persistent-panel--right {
+  align-items: flex-end;
+}
+
+.persistent-panel--left {
+  align-items: flex-start;
+}
+
+.persistent-panel__item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  background: rgba(30, 40, 55, 0.55);
+  border: 1px solid rgba(200, 170, 110, 0.25);
+  border-radius: 6px;
+  padding: 8px 14px;
+  max-width: 320px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  backdrop-filter: blur(4px);
+}
+
+.persistent-panel__name {
+  font-weight: 600;
+  color: #c8aa6e;
+  flex: 1;
+}
+
+.persistent-panel__countdown {
+  color: #b8c0cc;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

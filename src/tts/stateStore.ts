@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export type OverlayPosition = 'left-center' | 'right-center';
+export type OverlayMode = 'notification' | 'persistent';
 
 export interface OverlayFontSize {
   name: number;
@@ -17,6 +18,8 @@ export interface AppState {
   overlayPosition: OverlayPosition;
   soundDisabled: Record<string, boolean>;
   overlayFontSize: OverlayFontSize;
+  overlayMode: OverlayMode;
+  overlayEventCount: number;
 }
 
 function getStatePath(): string {
@@ -33,6 +36,7 @@ export function readAppState(): AppState {
     const raw = fs.readFileSync(getStatePath(), 'utf-8');
     const parsed = JSON.parse(raw);
     const validPositions: OverlayPosition[] = ['left-center', 'right-center'];
+    const validModes: OverlayMode[] = ['notification', 'persistent'];
     return {
       volume: typeof parsed.volume === 'number' ? parsed.volume : 100,
       muted: typeof parsed.muted === 'boolean' ? parsed.muted : false,
@@ -45,9 +49,11 @@ export function readAppState(): AppState {
         name: typeof parsed.overlayFontSize?.name === 'number' ? parsed.overlayFontSize.name : 16,
         offset: typeof parsed.overlayFontSize?.offset === 'number' ? parsed.overlayFontSize.offset : 13,
       },
+      overlayMode: validModes.includes(parsed.overlayMode) ? parsed.overlayMode : 'notification',
+      overlayEventCount: typeof parsed.overlayEventCount === 'number' ? Math.max(1, Math.min(10, parsed.overlayEventCount)) : 5,
     };
   } catch {
-    return { volume: 100, muted: false, includeTimeSuffix: true, rate: 1.0, voiceUri: '', overlayPosition: 'right-center', soundDisabled: {}, overlayFontSize: { name: 16, offset: 13 } };
+    return { volume: 100, muted: false, includeTimeSuffix: true, rate: 1.0, voiceUri: '', overlayPosition: 'right-center', soundDisabled: {}, overlayFontSize: { name: 16, offset: 13 }, overlayMode: 'notification', overlayEventCount: 5 };
   }
 }
 

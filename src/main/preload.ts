@@ -48,7 +48,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   removeSound: (eventId: string) => ipcRenderer.invoke('sound:remove', eventId),
   getSoundFilePath: (eventId: string) => ipcRenderer.invoke('sound:getFilePath', eventId),
   openSoundFileDialog: () => ipcRenderer.invoke('sound:openFileDialog'),
-  sendOverlayNotification: (payload: { eventName: string; offsetSeconds: number; eventId: string }) => ipcRenderer.send('overlay:announcement', payload),
+  sendOverlayNotification: (payload: { eventName: string; offsetSeconds: number; eventId: string; happenTimeMs: number }) => ipcRenderer.send('overlay:announcement', payload),
   getOverlayPosition: () => ipcRenderer.invoke('overlay:getPosition'),
   setOverlayPosition: (position: string) => ipcRenderer.invoke('overlay:setPosition', position),
   onEventsChanged: (callback: (config: unknown) => void) => {
@@ -60,4 +60,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setSoundDisabled: (eventId: string, disabled: boolean) => ipcRenderer.invoke('sound:setDisabled', eventId, disabled),
   getOverlayFontSize: () => ipcRenderer.invoke('overlay:getFontSize'),
   setOverlayFontSize: (fontSize: { name: number; offset: number }) => ipcRenderer.invoke('overlay:setFontSize', fontSize),
+  getOverlayMode: () => ipcRenderer.invoke('overlay:getMode'),
+  setOverlayMode: (mode: string) => ipcRenderer.invoke('overlay:setMode', mode),
+  getOverlayEventCount: () => ipcRenderer.invoke('overlay:getEventCount'),
+  setOverlayEventCount: (count: number) => ipcRenderer.invoke('overlay:setEventCount', count),
 });

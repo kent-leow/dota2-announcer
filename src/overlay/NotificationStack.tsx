@@ -7,6 +7,7 @@ interface NotificationItem {
   id: number;
   eventName: string;
   offsetSeconds: number;
+  happenTimeMs: number;
   status: NotificationStatus;
 }
 
@@ -21,6 +22,7 @@ export function NotificationStack() {
   const [align, setAlign] = useState<Align>('right');
   const [fontSizeName, setFontSizeName] = useState(16);
   const [fontSizeOffset, setFontSizeOffset] = useState(13);
+  const [gameTimeMs, setGameTimeMs] = useState(0);
   const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
   const scheduleTimer = useCallback((fn: () => void, delay: number) => {
@@ -32,9 +34,9 @@ export function NotificationStack() {
     return timer;
   }, []);
 
-  const addNotification = useCallback((eventName: string, offsetSeconds: number) => {
+  const addNotification = useCallback((eventName: string, offsetSeconds: number, happenTimeMs: number) => {
     const id = nextId++;
-    setNotifications((prev) => [...prev, { id, eventName, offsetSeconds, status: 'entering' }]);
+    setNotifications((prev) => [...prev, { id, eventName, offsetSeconds, happenTimeMs, status: 'entering' }]);
 
     scheduleTimer(() => {
       setNotifications((prev) =>
@@ -63,7 +65,7 @@ export function NotificationStack() {
       setFontSizeOffset(fs.offset);
     });
     const unsubNotify = window.overlayAPI.onNotification((payload) => {
-      addNotification(payload.eventName, payload.offsetSeconds);
+      addNotification(payload.eventName, payload.offsetSeconds, payload.happenTimeMs ?? 0);
     });
     const unsubPos = window.overlayAPI.onPositionChange((pos) => {
       setAlign(pos === 'left-center' ? 'left' : 'right');
@@ -72,10 +74,14 @@ export function NotificationStack() {
       setFontSizeName(fs.name);
       setFontSizeOffset(fs.offset);
     });
+    const unsubTick = window.overlayAPI.onTick((ms) => {
+      setGameTimeMs(ms);
+    });
     return () => {
       unsubNotify();
       unsubPos();
       unsubFontSize();
+      unsubTick();
       timersRef.current.forEach(clearTimeout);
       timersRef.current.clear();
     };
@@ -88,6 +94,8 @@ export function NotificationStack() {
           key={n.id}
           eventName={n.eventName}
           offsetSeconds={n.offsetSeconds}
+          happenTimeMs={n.happenTimeMs}
+          gameTimeMs={gameTimeMs}
           status={n.status}
           align={align}
           fontSizeName={fontSizeName}

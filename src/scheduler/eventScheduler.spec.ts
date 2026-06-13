@@ -4,6 +4,7 @@ import {
   tick,
   resetScheduler,
   getUpcoming,
+  getUpcomingOccurrences,
   _resetForTesting,
 } from './eventScheduler';
 import { EventsConfig } from 'src/config/events.schema';
@@ -251,6 +252,73 @@ describe('eventScheduler', () => {
       expect(upcoming.length).toBeGreaterThanOrEqual(2);
       expect(upcoming[0].eventName).toBe('Near Event');
       expect(upcoming[1].eventName).toBe('Far Event');
+    });
+  });
+
+  describe('getUpcomingOccurrences', () => {
+    it('returns occurrences sorted by happen time', () => {
+      const config: EventsConfig = {
+        events: [
+          { id: 'far', name: 'Far', spawnTime: 600, warnings: [{ offsetSeconds: 30 }] },
+          { id: 'near', name: 'Near', spawnTime: 120, warnings: [{ offsetSeconds: 60 }] },
+        ],
+      };
+      loadSchedule(config);
+      const occ = getUpcomingOccurrences(0, 5);
+      expect(occ[0].eventName).toBe('Near');
+      expect(occ[0].happenTimeMs).toBe(120000);
+      expect(occ[1].eventName).toBe('Far');
+      expect(occ[1].happenTimeMs).toBe(600000);
+    });
+
+    it('deduplicates by occurrence (same event+time = one entry)', () => {
+      const config: EventsConfig = {
+        events: [
+          { id: 'rune', name: 'Rune', spawnTime: 120, warnings: [{ offsetSeconds: 60 }, { offsetSeconds: 30 }] },
+        ],
+      };
+      loadSchedule(config);
+      const occ = getUpcomingOccurrences(0, 10);
+      expect(occ.length).toBe(1);
+      expect(occ[0].happenTimeMs).toBe(120000);
+    });
+
+    it('respects limit parameter', () => {
+      const config: EventsConfig = {
+        events: [
+          { id: 'a', name: 'A', spawnTime: 60, repeatEvery: 60, warnings: [{ offsetSeconds: 10 }] },
+        ],
+      };
+      loadSchedule(config);
+      const occ = getUpcomingOccurrences(0, 3);
+      expect(occ.length).toBe(3);
+    });
+
+    it('excludes past occurrences', () => {
+      const config: EventsConfig = {
+        events: [
+          { id: 'past', name: 'Past', spawnTime: 60, warnings: [{ offsetSeconds: 10 }] },
+          { id: 'future', name: 'Future', spawnTime: 120, warnings: [{ offsetSeconds: 10 }] },
+        ],
+      };
+      loadSchedule(config);
+      const occ = getUpcomingOccurrences(90000, 5);
+      expect(occ.every((o) => o.happenTimeMs > 90000)).toBe(true);
+      expect(occ[0].eventName).toBe('Future');
+    });
+
+    it('handles repeating events producing multiple future entries', () => {
+      const config: EventsConfig = {
+        events: [
+          { id: 'bounty', name: 'Bounty', spawnTime: 180, repeatEvery: 180, warnings: [{ offsetSeconds: 30 }] },
+        ],
+      };
+      loadSchedule(config);
+      const occ = getUpcomingOccurrences(0, 5);
+      expect(occ.length).toBe(5);
+      expect(occ[0].happenTimeMs).toBe(180000);
+      expect(occ[1].happenTimeMs).toBe(360000);
+      expect(occ[2].happenTimeMs).toBe(540000);
     });
   });
 });

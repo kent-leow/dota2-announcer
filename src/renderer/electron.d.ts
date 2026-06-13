@@ -52,7 +52,7 @@ export interface ElectronAPI {
   removeSound: (eventId: string) => Promise<{ success: boolean }>;
   getSoundFilePath: (eventId: string) => Promise<string | null>;
   openSoundFileDialog: () => Promise<{ success: boolean; canceled?: boolean; filePath?: string }>;
-  sendOverlayNotification: (payload: { eventName: string; offsetSeconds: number; eventId: string }) => void;
+  sendOverlayNotification: (payload: { eventName: string; offsetSeconds: number; eventId: string; happenTimeMs: number }) => void;
   getOverlayPosition: () => Promise<'left-center' | 'right-center'>;
   setOverlayPosition: (position: 'left-center' | 'right-center') => Promise<string>;
   onEventsChanged: (callback: (config: EventsConfig) => void) => () => void;
@@ -60,6 +60,10 @@ export interface ElectronAPI {
   setSoundDisabled: (eventId: string, disabled: boolean) => Promise<void>;
   getOverlayFontSize: () => Promise<{ name: number; offset: number }>;
   setOverlayFontSize: (fontSize: { name: number; offset: number }) => Promise<{ name: number; offset: number }>;
+  getOverlayMode: () => Promise<string>;
+  setOverlayMode: (mode: string) => Promise<string>;
+  getOverlayEventCount: () => Promise<number>;
+  setOverlayEventCount: (count: number) => Promise<number>;
 }
 
 declare global {

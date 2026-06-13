@@ -72,6 +72,10 @@ const mockElectronAPI = {
   setSoundDisabled: jest.fn(() => Promise.resolve()),
   getOverlayFontSize: jest.fn(() => Promise.resolve({ name: 16, offset: 13 })),
   setOverlayFontSize: jest.fn((fs: { name: number; offset: number }) => Promise.resolve(fs)),
+  getOverlayMode: jest.fn(() => Promise.resolve('notification')),
+  setOverlayMode: jest.fn((m: string) => Promise.resolve(m)),
+  getOverlayEventCount: jest.fn(() => Promise.resolve(5)),
+  setOverlayEventCount: jest.fn((c: number) => Promise.resolve(c)),
 };
 
 (window as any).electronAPI = mockElectronAPI;

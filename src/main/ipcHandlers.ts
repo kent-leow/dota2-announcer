@@ -7,11 +7,12 @@ import * as gameTimer from 'src/timer/gameTimer';
 import * as muteManager from 'src/tts/muteManager';
 import * as volumeController from 'src/tts/volumeController';
 import * as eventsLoader from 'src/config/eventsLoader';
+import * as eventScheduler from 'src/scheduler/eventScheduler';
 import { readAppState, writeAppState } from 'src/tts/stateStore';
 import * as soundStore from 'src/tts/soundStore';
 import * as soundFileManager from 'src/tts/soundFileManager';
 import { getOverlayWindow, setOverlayPosition, getOverlayPosition } from './overlayWindow';
-import { OverlayPosition, OverlayFontSize } from 'src/tts/stateStore';
+import { OverlayPosition, OverlayFontSize, OverlayMode } from 'src/tts/stateStore';
 
 function findDotaGsiPath(): string | null {
   const platform = process.platform;
@@ -79,6 +80,15 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     const win = getWindow();
     if (win && !win.isDestroyed()) {
       win.webContents.send('dota:clockTick', elapsedMs);
+    }
+    const overlay = getOverlayWindow();
+    if (overlay && !overlay.isDestroyed()) {
+      overlay.webContents.send('overlay:tick', elapsedMs);
+      const state = readAppState();
+      if (state.overlayMode === 'persistent') {
+        const occurrences = eventScheduler.getUpcomingOccurrences(elapsedMs, state.overlayEventCount);
+        overlay.webContents.send('overlay:upcoming', occurrences);
+      }
     }
   });
 
@@ -248,7 +258,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     return { success: true, filePath: result.filePaths[0] };
   });
 
-  ipcMain.on('overlay:announcement', (_event, payload: { eventName: string; offsetSeconds: number; eventId: string }) => {
+  ipcMain.on('overlay:announcement', (_event, payload: { eventName: string; offsetSeconds: number; eventId: string; happenTimeMs?: number }) => {
     const overlay = getOverlayWindow();
     if (!overlay || overlay.isDestroyed()) return;
     overlay.webContents.send('overlay:notify', {
@@ -280,5 +290,29 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
       overlay.webContents.send('overlay:fontSize', state.overlayFontSize);
     }
     return state.overlayFontSize;
+  });
+
+  ipcMain.handle('overlay:getMode', () => readAppState().overlayMode);
+  ipcMain.handle('overlay:setMode', (_event, mode: OverlayMode) => {
+    const state = readAppState();
+    state.overlayMode = mode;
+    writeAppState(state);
+    const overlay = getOverlayWindow();
+    if (overlay && !overlay.isDestroyed()) {
+      overlay.webContents.send('overlay:mode', mode);
+    }
+    return mode;
+  });
+
+  ipcMain.handle('overlay:getEventCount', () => readAppState().overlayEventCount);
+  ipcMain.handle('overlay:setEventCount', (_event, count: number) => {
+    const state = readAppState();
+    state.overlayEventCount = Math.max(1, Math.min(10, count));
+    writeAppState(state);
+    const overlay = getOverlayWindow();
+    if (overlay && !overlay.isDestroyed()) {
+      overlay.webContents.send('overlay:eventCount', state.overlayEventCount);
+    }
+    return state.overlayEventCount;
   });
 }
