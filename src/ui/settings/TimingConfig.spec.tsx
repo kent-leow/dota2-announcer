@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 const mockElectronAPI = {
-  getEvents: jest.fn(() => Promise.resolve({ events: [] })),
+  getEvents: jest.fn(() => Promise.resolve({ events: [{ id: 'bounty', name: 'Bounty Rune', spawnTime: 0, repeatEvery: 180, warnings: [{ offsetSeconds: 30 }] }] })),
   reloadEvents: jest.fn(() => Promise.resolve({ events: [] })),
   saveEvents: jest.fn(() => Promise.resolve({ success: true })),
   getNotificationConfig: jest.fn(() => Promise.resolve({ enabled: true, position: 'right', fontSize: { name: 16, offset: 13 } })),
@@ -62,4 +62,13 @@ describe('TimingConfig — Per-Overlay Configuration', () => {
     fireEvent.change(screen.getByTestId('event-count'), { target: { value: '3' } });
     expect(mockElectronAPI.setPersistentConfig).toHaveBeenCalledWith({ eventCount: 3 });
   });
+
+  it('event toggle calls saveEvents immediately', async () => {
+    render(<TimingConfig />);
+    await waitFor(() => expect(screen.getByText('Bounty Rune')).toBeInTheDocument());
+    const checkbox = screen.getByRole('checkbox');
+    fireEvent.click(checkbox);
+    expect(mockElectronAPI.saveEvents).toHaveBeenCalledWith({ events: [] });
+  });
+
 });

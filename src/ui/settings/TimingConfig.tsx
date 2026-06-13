@@ -30,7 +30,7 @@ export function TimingConfig() {
     window.electronAPI.getPersistentConfig().then(setPersistConfig);
   }, []);
 
-  const persistEvents = useCallback((updated: EditableEvent[]) => {
+  const saveEvents = useCallback((updated: EditableEvent[]) => {
     const enabledEvents = updated.filter((e) => e.enabled);
     const config: EventsConfig = {
       events: enabledEvents.map(({ enabled: _e, ...rest }) => rest),
@@ -38,64 +38,47 @@ export function TimingConfig() {
     window.electronAPI.saveEvents(config);
   }, []);
 
-  const handleWarningChange = useCallback((eventIdx: number, value: string) => {
+  const commitField = useCallback((eventIdx: number, field: string, value: string) => {
     setEvents((prev) => {
       const updated = [...prev];
-      const parts = value.split(',').map((s) => s.trim()).filter(Boolean);
-      updated[eventIdx] = {
-        ...updated[eventIdx],
-        warnings: parts.map((p) => ({ offsetSeconds: Math.max(1, Number(p) || 1) })),
-      };
-      persistEvents(updated);
+      const event = { ...updated[eventIdx] };
+      if (field === 'spawnTime') {
+        event.spawnTime = Math.max(0, Number(value) || 0);
+      } else if (field === 'repeatEvery') {
+        const numVal = Number(value) || 0;
+        event.repeatEvery = numVal > 0 ? numVal : undefined;
+      } else if (field === 'maxOccurrences') {
+        const numVal = parseInt(value, 10);
+        event.maxOccurrences = numVal > 0 ? numVal : undefined;
+      } else if (field === 'warnings') {
+        const parts = value.split(',').map((s) => s.trim()).filter((s) => s !== '');
+        event.warnings = parts
+          .map((p) => Number(p))
+          .filter((n) => !isNaN(n) && n >= 0)
+          .map((n) => ({ offsetSeconds: n }));
+      }
+      updated[eventIdx] = event;
+      saveEvents(updated);
       return updated;
     });
-  }, [persistEvents]);
-
-  const handleSpawnTimeChange = useCallback((eventIdx: number, value: string) => {
-    setEvents((prev) => {
-      const updated = [...prev];
-      updated[eventIdx] = { ...updated[eventIdx], spawnTime: Math.max(0, Number(value) || 0) };
-      persistEvents(updated);
-      return updated;
-    });
-  }, [persistEvents]);
-
-  const handleRepeatChange = useCallback((eventIdx: number, value: string) => {
-    setEvents((prev) => {
-      const updated = [...prev];
-      const numVal = Number(value) || 0;
-      updated[eventIdx] = { ...updated[eventIdx], repeatEvery: numVal > 0 ? numVal : undefined };
-      persistEvents(updated);
-      return updated;
-    });
-  }, [persistEvents]);
-
-  const handleMaxOccurrencesChange = useCallback((eventIdx: number, value: string) => {
-    setEvents((prev) => {
-      const updated = [...prev];
-      const numVal = parseInt(value, 10);
-      updated[eventIdx] = { ...updated[eventIdx], maxOccurrences: numVal > 0 ? numVal : undefined };
-      persistEvents(updated);
-      return updated;
-    });
-  }, [persistEvents]);
+  }, [saveEvents]);
 
   const handleToggleEvent = useCallback((eventIdx: number) => {
     setEvents((prev) => {
       const updated = [...prev];
       updated[eventIdx] = { ...updated[eventIdx], enabled: !updated[eventIdx].enabled };
-      persistEvents(updated);
+      saveEvents(updated);
       return updated;
     });
-  }, [persistEvents]);
+  }, [saveEvents]);
 
   const handleRemoveEvent = useCallback((eventIdx: number) => {
     setEvents((prev) => {
       const updated = prev.filter((_, i) => i !== eventIdx);
-      persistEvents(updated);
+      saveEvents(updated);
       return updated;
     });
-  }, [persistEvents]);
+  }, [saveEvents]);
 
   const handleAddEvent = useCallback(() => {
     setAddError('');
@@ -122,12 +105,12 @@ export function TimingConfig() {
     };
     setEvents((prev) => {
       const updated = [...prev, newEvent];
-      persistEvents(updated);
+      saveEvents(updated);
       return updated;
     });
     setNewName('');
     setShowAdd(false);
-  }, [newName, events, persistEvents]);
+  }, [newName, events, saveEvents]);
 
   const handleReload = useCallback(() => {
     window.electronAPI.reloadEvents().then((config) => {
@@ -347,8 +330,9 @@ export function TimingConfig() {
                     <input
                       type="number"
                       min="0"
-                      value={event.spawnTime}
-                      onChange={(e) => handleSpawnTimeChange(idx, e.target.value)}
+                      key={`${event.id}-spawn`}
+                      defaultValue={event.spawnTime}
+                      onBlur={(e) => commitField(idx, 'spawnTime', e.target.value)}
                       className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
                     />
                   </label>
@@ -357,8 +341,9 @@ export function TimingConfig() {
                     <input
                       type="number"
                       min="0"
-                      value={event.repeatEvery ?? 0}
-                      onChange={(e) => handleRepeatChange(idx, e.target.value)}
+                      key={`${event.id}-repeat`}
+                      defaultValue={event.repeatEvery ?? 0}
+                      onBlur={(e) => commitField(idx, 'repeatEvery', e.target.value)}
                       className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
                     />
                   </label>
@@ -367,8 +352,9 @@ export function TimingConfig() {
                     <input
                       type="number"
                       min="0"
-                      value={event.maxOccurrences ?? 0}
-                      onChange={(e) => handleMaxOccurrencesChange(idx, e.target.value)}
+                      key={`${event.id}-max`}
+                      defaultValue={event.maxOccurrences ?? 0}
+                      onBlur={(e) => commitField(idx, 'maxOccurrences', e.target.value)}
                       placeholder="∞"
                       className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
                     />
@@ -377,9 +363,10 @@ export function TimingConfig() {
                     <span className="text-dota-grey/70">Warnings (s)</span>
                     <input
                       type="text"
-                      value={(event.warnings ?? []).map((w) => w.offsetSeconds).join(', ')}
-                      onChange={(e) => handleWarningChange(idx, e.target.value)}
-                      placeholder="60, 30"
+                      key={`${event.id}-warn`}
+                      defaultValue={(event.warnings ?? []).map((w) => w.offsetSeconds).join(', ')}
+                      onBlur={(e) => commitField(idx, 'warnings', e.target.value)}
+                      placeholder="60, 30, 0"
                       className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
                     />
                   </label>
