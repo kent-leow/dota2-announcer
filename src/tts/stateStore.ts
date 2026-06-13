@@ -3,6 +3,11 @@ import * as path from 'path';
 
 export type OverlayPosition = 'left-center' | 'right-center';
 
+export interface OverlayFontSize {
+  name: number;
+  offset: number;
+}
+
 export interface AppState {
   volume: number;
   muted: boolean;
@@ -11,6 +16,7 @@ export interface AppState {
   voiceUri: string;
   overlayPosition: OverlayPosition;
   soundDisabled: Record<string, boolean>;
+  overlayFontSize: OverlayFontSize;
 }
 
 function getStatePath(): string {
@@ -35,9 +41,13 @@ export function readAppState(): AppState {
       voiceUri: typeof parsed.voiceUri === 'string' ? parsed.voiceUri : '',
       overlayPosition: validPositions.includes(parsed.overlayPosition) ? parsed.overlayPosition : 'right-center',
       soundDisabled: (typeof parsed.soundDisabled === 'object' && parsed.soundDisabled !== null) ? parsed.soundDisabled : {},
+      overlayFontSize: {
+        name: typeof parsed.overlayFontSize?.name === 'number' ? parsed.overlayFontSize.name : 16,
+        offset: typeof parsed.overlayFontSize?.offset === 'number' ? parsed.overlayFontSize.offset : 13,
+      },
     };
   } catch {
-    return { volume: 100, muted: false, includeTimeSuffix: true, rate: 1.0, voiceUri: '', overlayPosition: 'right-center', soundDisabled: {} };
+    return { volume: 100, muted: false, includeTimeSuffix: true, rate: 1.0, voiceUri: '', overlayPosition: 'right-center', soundDisabled: {}, overlayFontSize: { name: 16, offset: 13 } };
   }
 }
 

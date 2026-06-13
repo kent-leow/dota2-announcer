@@ -58,4 +58,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   getSoundDisabled: () => ipcRenderer.invoke('sound:getDisabled'),
   setSoundDisabled: (eventId: string, disabled: boolean) => ipcRenderer.invoke('sound:setDisabled', eventId, disabled),
+  getOverlayFontSize: () => ipcRenderer.invoke('overlay:getFontSize'),
+  setOverlayFontSize: (fontSize: { name: number; offset: number }) => ipcRenderer.invoke('overlay:setFontSize', fontSize),
 });

@@ -58,6 +58,8 @@ export interface ElectronAPI {
   onEventsChanged: (callback: (config: EventsConfig) => void) => () => void;
   getSoundDisabled: () => Promise<Record<string, boolean>>;
   setSoundDisabled: (eventId: string, disabled: boolean) => Promise<void>;
+  getOverlayFontSize: () => Promise<{ name: number; offset: number }>;
+  setOverlayFontSize: (fontSize: { name: number; offset: number }) => Promise<{ name: number; offset: number }>;
 }
 
 declare global {
