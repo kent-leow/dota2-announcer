@@ -1,19 +1,34 @@
 import { BrowserWindow, screen } from 'electron';
 import * as path from 'path';
+import { OverlayPosition, readAppState, writeAppState } from 'src/tts/stateStore';
 
 let overlayWindow: BrowserWindow | null = null;
 
 const OVERLAY_WIDTH = 350;
 const OVERLAY_HEIGHT = 300;
 
-export function createOverlayWindow(): BrowserWindow {
+function computePosition(position: OverlayPosition): { x: number; y: number } {
   const { width: screenWidth } = screen.getPrimaryDisplay().workAreaSize;
+  switch (position) {
+    case 'top-left':
+      return { x: 0, y: 0 };
+    case 'top-center':
+      return { x: Math.round((screenWidth - OVERLAY_WIDTH) / 2), y: 0 };
+    case 'top-right':
+    default:
+      return { x: screenWidth - OVERLAY_WIDTH, y: 0 };
+  }
+}
+
+export function createOverlayWindow(): BrowserWindow {
+  const state = readAppState();
+  const { x, y } = computePosition(state.overlayPosition);
 
   overlayWindow = new BrowserWindow({
     width: OVERLAY_WIDTH,
     height: OVERLAY_HEIGHT,
-    x: screenWidth - OVERLAY_WIDTH,
-    y: 0,
+    x,
+    y,
     transparent: true,
     frame: false,
     alwaysOnTop: true,
@@ -63,6 +78,20 @@ export function destroyOverlay(): void {
     overlayWindow.close();
   }
   overlayWindow = null;
+}
+
+export function setOverlayPosition(position: OverlayPosition): void {
+  const state = readAppState();
+  state.overlayPosition = position;
+  writeAppState(state);
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    const { x, y } = computePosition(position);
+    overlayWindow.setPosition(x, y);
+  }
+}
+
+export function getOverlayPosition(): OverlayPosition {
+  return readAppState().overlayPosition;
 }
 
 export function getOverlayWindow(): BrowserWindow | null {

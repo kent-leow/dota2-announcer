@@ -53,6 +53,8 @@ export interface ElectronAPI {
   getSoundFilePath: (eventId: string) => Promise<string | null>;
   openSoundFileDialog: () => Promise<{ success: boolean; canceled?: boolean; filePath?: string }>;
   sendOverlayNotification: (payload: { eventName: string; offsetSeconds: number; eventId: string }) => void;
+  getOverlayPosition: () => Promise<'top-left' | 'top-center' | 'top-right'>;
+  setOverlayPosition: (position: 'top-left' | 'top-center' | 'top-right') => Promise<string>;
 }
 
 declare global {

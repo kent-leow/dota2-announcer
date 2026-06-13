@@ -10,7 +10,8 @@ import * as eventsLoader from 'src/config/eventsLoader';
 import { readAppState, writeAppState } from 'src/tts/stateStore';
 import * as soundStore from 'src/tts/soundStore';
 import * as soundFileManager from 'src/tts/soundFileManager';
-import { getOverlayWindow } from './overlayWindow';
+import { getOverlayWindow, setOverlayPosition, getOverlayPosition } from './overlayWindow';
+import { OverlayPosition } from 'src/tts/stateStore';
 
 function findDotaGsiPath(): string | null {
   const platform = process.platform;
@@ -232,5 +233,11 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
       ...payload,
       timestamp: Date.now(),
     });
+  });
+
+  ipcMain.handle('overlay:getPosition', () => getOverlayPosition());
+  ipcMain.handle('overlay:setPosition', (_event, position: OverlayPosition) => {
+    setOverlayPosition(position);
+    return position;
   });
 }

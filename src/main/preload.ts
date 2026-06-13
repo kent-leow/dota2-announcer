@@ -49,4 +49,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSoundFilePath: (eventId: string) => ipcRenderer.invoke('sound:getFilePath', eventId),
   openSoundFileDialog: () => ipcRenderer.invoke('sound:openFileDialog'),
   sendOverlayNotification: (payload: { eventName: string; offsetSeconds: number; eventId: string }) => ipcRenderer.send('overlay:announcement', payload),
+  getOverlayPosition: () => ipcRenderer.invoke('overlay:getPosition'),
+  setOverlayPosition: (position: string) => ipcRenderer.invoke('overlay:setPosition', position),
 });
