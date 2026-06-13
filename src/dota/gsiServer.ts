@@ -4,7 +4,7 @@ import { GsiPayload, ParsedGameState, GAME_STATES } from './gsiTypes';
 export type GsiStateCallback = (state: ParsedGameState) => void;
 
 const GSI_PORT = 3001;
-const GSI_TIMEOUT_MS = 15_000;
+const GSI_TIMEOUT_MS = 35_000;
 
 let server: http.Server | null = null;
 let listeners: GsiStateCallback[] = [];
@@ -60,9 +60,9 @@ function handleRequest(req: http.IncomingMessage, res: http.ServerResponse): voi
   let body = '';
   req.on('data', (chunk) => { body += chunk; });
   req.on('end', () => {
+    resetHeartbeat();
     const state = parsePayload(body);
     if (state) {
-      resetHeartbeat();
       notifyListeners(state);
     }
     res.writeHead(200);

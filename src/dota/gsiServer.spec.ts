@@ -168,7 +168,7 @@ describe('gsiServer', () => {
     await simulatePost(payload);
     expect(received).toHaveLength(1);
 
-    jest.advanceTimersByTime(15_000);
+    jest.advanceTimersByTime(35_000);
 
     expect(received).toHaveLength(2);
     expect(received[1].gameState).toBe(GAME_STATES.DISCONNECT);
@@ -188,7 +188,7 @@ describe('gsiServer', () => {
     await simulatePost(payload);
     expect(received).toHaveLength(1);
 
-    jest.advanceTimersByTime(15_000);
+    jest.advanceTimersByTime(35_000);
 
     expect(received).toHaveLength(1);
     jest.useRealTimers();
