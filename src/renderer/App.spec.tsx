@@ -152,11 +152,11 @@ describe('App', () => {
     });
   });
 
-  it('settings tab unchanged - no two-column layout', async () => {
+  it('settings tab hides main layout but keeps it mounted', async () => {
     render(<App />);
     fireEvent.click(screen.getByText('Settings'));
-    expect(screen.queryByTestId('main-layout')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('game-status-panel')).not.toBeInTheDocument();
+    const layout = screen.getByTestId('main-layout');
+    expect(layout.className).toContain('hidden');
   });
 
   it('responsive class applied for narrow viewports', async () => {

@@ -110,33 +110,46 @@
 }
 
 .persistent-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
   padding: 12px;
   width: 100%;
   box-sizing: border-box;
 }
 
 .persistent-panel--right {
-  align-items: flex-end;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .persistent-panel--left {
-  align-items: flex-start;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.persistent-panel__box {
+  background: rgba(30, 40, 55, 0.55);
+  border: 1px solid rgba(200, 170, 110, 0.35);
+  border-radius: 8px;
+  padding: 10px 14px;
+  max-width: 320px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(20, 20, 40, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .persistent-panel__item {
   display: flex;
   align-items: baseline;
+  justify-content: space-between;
   gap: 10px;
-  background: rgba(30, 40, 55, 0.55);
-  border: 1px solid rgba(200, 170, 110, 0.25);
-  border-radius: 6px;
-  padding: 8px 14px;
-  max-width: 320px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  backdrop-filter: blur(4px);
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(200, 170, 110, 0.1);
+}
+
+.persistent-panel__item:last-child {
+  border-bottom: none;
 }
 
 .persistent-panel__name {
@@ -145,8 +158,20 @@
   flex: 1;
 }
 
-.persistent-panel__countdown {
-  color: #b8c0cc;
-  font-variant-numeric: tabular-nums;
+.persistent-panel__timing {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
   white-space: nowrap;
+}
+
+.persistent-panel__countdown {
+  color: #e8b84b;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.persistent-panel__spawn {
+  color: #8890a0;
+  font-variant-numeric: tabular-nums;
 }
