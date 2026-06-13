@@ -200,10 +200,17 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
   ipcMain.handle('sound:getFilePath', (_event, eventId: string) => {
     const assignment = soundStore.getSoundForEvent(eventId);
     if (!assignment) return null;
-    if (assignment.type === 'custom') {
-      return soundFileManager.getCustomSoundPath(assignment.filename);
+    const filePath = assignment.type === 'custom'
+      ? soundFileManager.getCustomSoundPath(assignment.filename)
+      : soundFileManager.getBundledSoundPath(assignment.filename);
+    try {
+      const data = fs.readFileSync(filePath);
+      const ext = path.extname(filePath).slice(1);
+      const mime = ext === 'mp3' ? 'audio/mpeg' : ext === 'ogg' ? 'audio/ogg' : 'audio/wav';
+      return `data:${mime};base64,${data.toString('base64')}`;
+    } catch {
+      return null;
     }
-    return soundFileManager.getBundledSoundPath(assignment.filename);
   });
 
   ipcMain.handle('sound:openFileDialog', async () => {

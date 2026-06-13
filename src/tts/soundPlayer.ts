@@ -7,7 +7,7 @@ export function playSound(filePath: string): void {
 
   stop();
 
-  const audio = new Audio(`file://${filePath}`);
+  const audio = new Audio(filePath);
   audio.volume = volume / 100;
   audio.onended = () => { currentAudio = null; };
   audio.onerror = () => { currentAudio = null; };
