@@ -119,7 +119,7 @@ describe('main process', () => {
 
     expect(BrowserWindow).toHaveBeenCalledWith(
       expect.objectContaining({
-        width: 400,
+        width: 600,
         height: 700,
       })
     );
