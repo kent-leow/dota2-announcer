@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { GameEvent, EventsConfig } from 'src/config/events.schema';
 import * as eventScheduler from 'src/scheduler/eventScheduler';
+import * as soundPlayer from 'src/tts/soundPlayer';
+import { SoundAssignment, SoundAssignments } from 'src/renderer/electron.d';
 
 interface EditableEvent extends GameEvent {
   enabled: boolean;
@@ -19,11 +21,14 @@ export function TimingConfig() {
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState('');
   const [addError, setAddError] = useState('');
+  const [soundAssignments, setSoundAssignments] = useState<SoundAssignments>({});
+  const [soundError, setSoundError] = useState('');
 
   useEffect(() => {
     window.electronAPI.getEvents().then((config) => {
       setEvents(config.events.map((e) => ({ ...e, enabled: true })));
     });
+    window.electronAPI.getSoundAssignments().then(setSoundAssignments);
   }, []);
 
   const handleWarningChange = useCallback((eventIdx: number, value: string) => {
@@ -133,8 +138,38 @@ export function TimingConfig() {
     });
   }, []);
 
+  const handleSoundUpload = useCallback(async (eventId: string) => {
+    setSoundError('');
+    const dialogResult = await window.electronAPI.openSoundFileDialog();
+    if (!dialogResult.success || dialogResult.canceled || !dialogResult.filePath) return;
+
+    const result = await window.electronAPI.assignSound(eventId, dialogResult.filePath);
+    if (!result.success) {
+      setSoundError(result.error || 'Failed to assign sound');
+      return;
+    }
+    const updated = await window.electronAPI.getSoundAssignments();
+    setSoundAssignments(updated);
+  }, []);
+
+  const handleSoundRemove = useCallback(async (eventId: string) => {
+    await window.electronAPI.removeSound(eventId);
+    const updated = await window.electronAPI.getSoundAssignments();
+    setSoundAssignments(updated);
+  }, []);
+
+  const handleSoundPreview = useCallback(async (eventId: string) => {
+    const filePath = await window.electronAPI.getSoundFilePath(eventId);
+    if (filePath) {
+      soundPlayer.playSound(filePath);
+    }
+  }, []);
+
   return (
     <div className="bg-dota-dark rounded-lg p-4 space-y-4 flex-1 flex flex-col min-h-0">
+      {soundError && (
+        <p data-testid="sound-error" className="text-red-400 text-xs bg-red-400/10 rounded px-3 py-2">{soundError}</p>
+      )}
       <div className="flex items-center justify-between">
         <h2 className="text-dota-gold text-sm font-semibold uppercase tracking-wide">Event Timings</h2>
         <div className="flex gap-2">
@@ -222,49 +257,84 @@ export function TimingConfig() {
             </div>
 
             {event.enabled && (
-              <div className="grid grid-cols-4 gap-3 text-xs">
-                <label className="space-y-1">
-                  <span className="text-dota-grey/70">Spawn (s)</span>
-                  <input
-                    type="number"
-                    min="0"
-                    value={event.spawnTime}
-                    onChange={(e) => handleSpawnTimeChange(idx, e.target.value)}
-                    className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
-                  />
-                </label>
-                <label className="space-y-1">
-                  <span className="text-dota-grey/70">Repeat (s)</span>
-                  <input
-                    type="number"
-                    min="0"
-                    value={event.repeatEvery ?? 0}
-                    onChange={(e) => handleRepeatChange(idx, e.target.value)}
-                    className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
-                  />
-                </label>
-                <label className="space-y-1">
-                  <span className="text-dota-grey/70">Max Iterations</span>
-                  <input
-                    type="number"
-                    min="0"
-                    value={event.maxOccurrences ?? 0}
-                    onChange={(e) => handleMaxOccurrencesChange(idx, e.target.value)}
-                    placeholder="∞"
-                    className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
-                  />
-                </label>
-                <label className="space-y-1">
-                  <span className="text-dota-grey/70">Warnings (s)</span>
-                  <input
-                    type="text"
-                    value={(event.warnings ?? []).map((w) => w.offsetSeconds).join(', ')}
-                    onChange={(e) => handleWarningChange(idx, e.target.value)}
-                    placeholder="60, 30"
-                    className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
-                  />
-                </label>
-              </div>
+              <>
+                <div className="grid grid-cols-4 gap-3 text-xs">
+                  <label className="space-y-1">
+                    <span className="text-dota-grey/70">Spawn (s)</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={event.spawnTime}
+                      onChange={(e) => handleSpawnTimeChange(idx, e.target.value)}
+                      className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
+                    />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-dota-grey/70">Repeat (s)</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={event.repeatEvery ?? 0}
+                      onChange={(e) => handleRepeatChange(idx, e.target.value)}
+                      className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
+                    />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-dota-grey/70">Max Iterations</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={event.maxOccurrences ?? 0}
+                      onChange={(e) => handleMaxOccurrencesChange(idx, e.target.value)}
+                      placeholder="∞"
+                      className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
+                    />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-dota-grey/70">Warnings (s)</span>
+                    <input
+                      type="text"
+                      value={(event.warnings ?? []).map((w) => w.offsetSeconds).join(', ')}
+                      onChange={(e) => handleWarningChange(idx, e.target.value)}
+                      placeholder="60, 30"
+                      className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
+                    />
+                  </label>
+                </div>
+                <div data-testid={`sound-row-${event.id}`} className="mt-2 flex items-center gap-2 text-xs">
+                  <span className="text-dota-grey/70 w-12">Sound</span>
+                  <span className="text-dota-grey/50 flex-1 truncate">
+                    {soundAssignments[event.id]
+                      ? `${soundAssignments[event.id].filename} ${soundAssignments[event.id].type === 'bundled' ? '(default)' : '(custom)'}`
+                      : 'None (TTS)'}
+                  </span>
+                  {soundAssignments[event.id] && (
+                    <button
+                      data-testid={`preview-${event.id}`}
+                      onClick={() => handleSoundPreview(event.id)}
+                      className="px-2 py-0.5 rounded bg-dota-gold/20 text-dota-gold border border-dota-gold/40 hover:bg-dota-gold/30 transition-colors"
+                    >
+                      Play
+                    </button>
+                  )}
+                  <button
+                    data-testid={`upload-${event.id}`}
+                    onClick={() => handleSoundUpload(event.id)}
+                    className="px-2 py-0.5 rounded bg-green-600/20 text-green-400 border border-green-500/40 hover:bg-green-600/30 transition-colors"
+                  >
+                    Upload
+                  </button>
+                  {soundAssignments[event.id] && soundAssignments[event.id].type === 'custom' && (
+                    <button
+                      data-testid={`remove-${event.id}`}
+                      onClick={() => handleSoundRemove(event.id)}
+                      className="px-2 py-0.5 rounded bg-red-600/20 text-red-400 border border-red-500/40 hover:bg-red-600/30 transition-colors"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </>
             )}
           </div>
         ))}
