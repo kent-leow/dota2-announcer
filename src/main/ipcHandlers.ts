@@ -11,7 +11,7 @@ import { readAppState, writeAppState } from 'src/tts/stateStore';
 import * as soundStore from 'src/tts/soundStore';
 import * as soundFileManager from 'src/tts/soundFileManager';
 import { getOverlayWindow, setOverlayPosition, getOverlayPosition } from './overlayWindow';
-import { OverlayPosition } from 'src/tts/stateStore';
+import { OverlayPosition, OverlayFontSize } from 'src/tts/stateStore';
 
 function findDotaGsiPath(): string | null {
   const platform = process.platform;
@@ -265,5 +265,20 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
       overlay.webContents.send('overlay:position', position);
     }
     return position;
+  });
+
+  ipcMain.handle('overlay:getFontSize', () => readAppState().overlayFontSize);
+  ipcMain.handle('overlay:setFontSize', (_event, fontSize: OverlayFontSize) => {
+    const state = readAppState();
+    state.overlayFontSize = {
+      name: Math.max(10, Math.min(32, fontSize.name)),
+      offset: Math.max(8, Math.min(28, fontSize.offset)),
+    };
+    writeAppState(state);
+    const overlay = getOverlayWindow();
+    if (overlay && !overlay.isDestroyed()) {
+      overlay.webContents.send('overlay:fontSize', state.overlayFontSize);
+    }
+    return state.overlayFontSize;
   });
 }

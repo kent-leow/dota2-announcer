@@ -26,6 +26,8 @@ export function TimingConfig() {
   const [soundDisabled, setSoundDisabled] = useState<Record<string, boolean>>({});
   const [soundError, setSoundError] = useState('');
   const [overlayPosition, setOverlayPosition] = useState<OverlayPosition>('right-center');
+  const [fontSizeName, setFontSizeName] = useState(16);
+  const [fontSizeOffset, setFontSizeOffset] = useState(13);
 
   useEffect(() => {
     window.electronAPI.getEvents().then((config) => {
@@ -34,6 +36,10 @@ export function TimingConfig() {
     window.electronAPI.getSoundAssignments().then(setSoundAssignments);
     window.electronAPI.getSoundDisabled().then(setSoundDisabled);
     window.electronAPI.getOverlayPosition().then(setOverlayPosition);
+    window.electronAPI.getOverlayFontSize().then((fs) => {
+      setFontSizeName(fs.name);
+      setFontSizeOffset(fs.offset);
+    });
   }, []);
 
   const handleWarningChange = useCallback((eventIdx: number, value: string) => {
@@ -177,25 +183,63 @@ export function TimingConfig() {
     window.electronAPI.setOverlayPosition(pos);
   }, []);
 
+  const handleFontSizeNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Number(e.target.value);
+    setFontSizeName(val);
+    window.electronAPI.setOverlayFontSize({ name: val, offset: fontSizeOffset });
+  }, [fontSizeOffset]);
+
+  const handleFontSizeOffsetChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Number(e.target.value);
+    setFontSizeOffset(val);
+    window.electronAPI.setOverlayFontSize({ name: fontSizeName, offset: val });
+  }, [fontSizeName]);
+
   return (
     <div className="bg-dota-dark rounded-lg p-4 space-y-4 flex-1 flex flex-col min-h-0">
-      <div className="flex items-center justify-between border-b border-dota-gold/10 pb-3">
-        <span className="text-xs text-dota-grey/70">Overlay Position</span>
-        <div className="flex gap-1">
-          {(['left-center', 'right-center'] as OverlayPosition[]).map((pos) => (
-            <button
-              key={pos}
-              onClick={() => handleOverlayPositionChange(pos)}
-              className={`px-2 py-1 rounded text-xs transition-colors ${
-                overlayPosition === pos
-                  ? 'bg-dota-gold/30 text-dota-gold border border-dota-gold/60'
-                  : 'bg-dota-black/40 text-dota-grey/60 border border-dota-grey/20 hover:border-dota-gold/30'
-              }`}
-            >
-              {pos === 'left-center' ? 'Left' : 'Right'}
-            </button>
-          ))}
+      <div className="space-y-3 border-b border-dota-gold/10 pb-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-dota-grey/70">Overlay Position</span>
+          <div className="flex gap-1">
+            {(['left-center', 'right-center'] as OverlayPosition[]).map((pos) => (
+              <button
+                key={pos}
+                onClick={() => handleOverlayPositionChange(pos)}
+                className={`px-2 py-1 rounded text-xs transition-colors ${
+                  overlayPosition === pos
+                    ? 'bg-dota-gold/30 text-dota-gold border border-dota-gold/60'
+                    : 'bg-dota-black/40 text-dota-grey/60 border border-dota-grey/20 hover:border-dota-gold/30'
+                }`}
+              >
+                {pos === 'left-center' ? 'Left' : 'Right'}
+              </button>
+            ))}
+          </div>
         </div>
+        <label className="flex items-center gap-3">
+          <span className="text-xs text-dota-grey/70 w-24">Event Font</span>
+          <input
+            type="range"
+            min="10"
+            max="32"
+            value={fontSizeName}
+            onChange={handleFontSizeNameChange}
+            className="flex-1 h-1.5 rounded-full appearance-none bg-dota-grey/20 accent-dota-gold cursor-pointer"
+          />
+          <span className="text-xs text-dota-grey w-10 text-right">{fontSizeName}px</span>
+        </label>
+        <label className="flex items-center gap-3">
+          <span className="text-xs text-dota-grey/70 w-24">Timer Font</span>
+          <input
+            type="range"
+            min="8"
+            max="28"
+            value={fontSizeOffset}
+            onChange={handleFontSizeOffsetChange}
+            className="flex-1 h-1.5 rounded-full appearance-none bg-dota-grey/20 accent-dota-gold cursor-pointer"
+          />
+          <span className="text-xs text-dota-grey w-10 text-right">{fontSizeOffset}px</span>
+        </label>
       </div>
       {soundError && (
         <p data-testid="sound-error" className="text-red-400 text-xs bg-red-400/10 rounded px-3 py-2">{soundError}</p>

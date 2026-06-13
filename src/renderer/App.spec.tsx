@@ -70,6 +70,8 @@ const mockElectronAPI = {
   onEventsChanged: jest.fn(() => () => {}),
   getSoundDisabled: jest.fn(() => Promise.resolve({})),
   setSoundDisabled: jest.fn(() => Promise.resolve()),
+  getOverlayFontSize: jest.fn(() => Promise.resolve({ name: 16, offset: 13 })),
+  setOverlayFontSize: jest.fn((fs: { name: number; offset: number }) => Promise.resolve(fs)),
 };
 
 (window as any).electronAPI = mockElectronAPI;
