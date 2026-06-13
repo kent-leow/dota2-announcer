@@ -13,13 +13,15 @@ let tickCallback: ((elapsedMs: number) => void) | null = null;
     tickCallback = cb;
     return () => { tickCallback = null; };
   }),
-  getPosition: jest.fn(() => Promise.resolve('right-center')),
-  getFontSize: jest.fn(() => Promise.resolve({ name: 16, offset: 13 })),
-  onPositionChange: jest.fn(() => () => {}),
-  onFontSizeChange: jest.fn(() => () => {}),
 };
 
 import { NotificationStack } from './NotificationStack';
+
+const defaultProps = {
+  position: 'right' as const,
+  fontSize: { name: 16, offset: 13 },
+  topOffset: 0,
+};
 
 describe('NotificationStack', () => {
   beforeEach(() => {
@@ -34,12 +36,12 @@ describe('NotificationStack', () => {
   });
 
   it('subscribes to overlayAPI.onNotification on mount', () => {
-    render(<NotificationStack />);
+    render(<NotificationStack {...defaultProps} />);
     expect(window.overlayAPI.onNotification).toHaveBeenCalled();
   });
 
   it('adds notification when callback fires', () => {
-    render(<NotificationStack />);
+    render(<NotificationStack {...defaultProps} />);
     act(() => {
       notificationCallback!({ eventName: 'Bounty Rune', offsetSeconds: 30, eventId: 'bounty', timestamp: 1000 });
     });
@@ -47,7 +49,7 @@ describe('NotificationStack', () => {
   });
 
   it('notification starts with entering status', () => {
-    const { container } = render(<NotificationStack />);
+    const { container } = render(<NotificationStack {...defaultProps} />);
     act(() => {
       notificationCallback!({ eventName: 'Test', offsetSeconds: 10, eventId: 'test', timestamp: 1000 });
     });
@@ -55,7 +57,7 @@ describe('NotificationStack', () => {
   });
 
   it('transitions to visible after enter duration', () => {
-    const { container } = render(<NotificationStack />);
+    const { container } = render(<NotificationStack {...defaultProps} />);
     act(() => {
       notificationCallback!({ eventName: 'Test', offsetSeconds: 10, eventId: 'test', timestamp: 1000 });
     });
@@ -66,7 +68,7 @@ describe('NotificationStack', () => {
   });
 
   it('transitions to exiting after 5 seconds', () => {
-    const { container } = render(<NotificationStack />);
+    const { container } = render(<NotificationStack {...defaultProps} />);
     act(() => {
       notificationCallback!({ eventName: 'Test', offsetSeconds: 10, eventId: 'test', timestamp: 1000 });
     });
@@ -77,7 +79,7 @@ describe('NotificationStack', () => {
   });
 
   it('removes notification after exit animation', () => {
-    render(<NotificationStack />);
+    render(<NotificationStack {...defaultProps} />);
     act(() => {
       notificationCallback!({ eventName: 'Test', offsetSeconds: 10, eventId: 'test', timestamp: 1000 });
     });
@@ -88,7 +90,7 @@ describe('NotificationStack', () => {
   });
 
   it('supports multiple concurrent notifications', () => {
-    render(<NotificationStack />);
+    render(<NotificationStack {...defaultProps} />);
     act(() => {
       notificationCallback!({ eventName: 'Event A', offsetSeconds: 30, eventId: 'a', timestamp: 1000 });
       notificationCallback!({ eventName: 'Event B', offsetSeconds: 15, eventId: 'b', timestamp: 1000 });
@@ -98,18 +100,18 @@ describe('NotificationStack', () => {
   });
 
   it('cleans up subscription on unmount', () => {
-    const { unmount } = render(<NotificationStack />);
+    const { unmount } = render(<NotificationStack {...defaultProps} />);
     unmount();
     expect(notificationCallback).toBeNull();
   });
 
   it('subscribes to onTick on mount', () => {
-    render(<NotificationStack />);
+    render(<NotificationStack {...defaultProps} />);
     expect(window.overlayAPI.onTick).toHaveBeenCalled();
   });
 
   it('stores happenTimeMs from notification payload', () => {
-    render(<NotificationStack />);
+    render(<NotificationStack {...defaultProps} />);
     act(() => {
       notificationCallback!({ eventName: 'Rune', offsetSeconds: 60, eventId: 'rune', timestamp: 1000, happenTimeMs: 120000 });
     });
@@ -117,7 +119,7 @@ describe('NotificationStack', () => {
   });
 
   it('tick updates propagate to card countdown', () => {
-    render(<NotificationStack />);
+    render(<NotificationStack {...defaultProps} />);
     act(() => {
       tickCallback!(60000);
     });
@@ -129,5 +131,16 @@ describe('NotificationStack', () => {
       tickCallback!(90000);
     });
     expect(screen.getByText('in 30s')).toBeInTheDocument();
+  });
+
+  it('applies topOffset as marginTop', () => {
+    const { container } = render(<NotificationStack {...defaultProps} topOffset={150} />);
+    const stack = container.querySelector('.notification-stack');
+    expect(stack).toHaveStyle({ marginTop: '150px' });
+  });
+
+  it('uses position prop for alignment class', () => {
+    const { container } = render(<NotificationStack {...defaultProps} position="left" />);
+    expect(container.querySelector('.notification-stack--left')).toBeInTheDocument();
   });
 });

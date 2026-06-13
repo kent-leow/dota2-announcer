@@ -13,12 +13,30 @@ export interface GsiInstallResult {
   error?: string;
 }
 
-export interface SoundAssignment {
-  type: 'bundled' | 'custom';
-  filename: string;
+export type OverlayPosition = 'left' | 'right';
+
+export interface OverlayFontSize {
+  name: number;
+  offset: number;
 }
 
-export type SoundAssignments = Record<string, SoundAssignment>;
+export interface NotificationOverlayConfig {
+  enabled: boolean;
+  position: OverlayPosition;
+  fontSize: OverlayFontSize;
+}
+
+export interface PersistentOverlayConfig {
+  enabled: boolean;
+  position: OverlayPosition;
+  fontSize: OverlayFontSize;
+  eventCount: number;
+}
+
+export interface OverlayConfig {
+  notification: NotificationOverlayConfig;
+  persistent: PersistentOverlayConfig;
+}
 
 export interface ElectronAPI {
   getState: () => Promise<string>;
@@ -47,26 +65,14 @@ export interface ElectronAPI {
   gsiIsConnected: () => Promise<boolean>;
   gsiGetInstallPath: () => Promise<string | null>;
   onGsiStatusUpdate: (callback: (status: GsiStatusUpdate) => void) => () => void;
-  getSoundAssignments: () => Promise<SoundAssignments>;
-  assignSound: (eventId: string, filePath: string) => Promise<{ success: boolean; error?: string; filename?: string }>;
-  removeSound: (eventId: string) => Promise<{ success: boolean }>;
-  getSoundFilePath: (eventId: string) => Promise<string | null>;
-  openSoundFileDialog: () => Promise<{ success: boolean; canceled?: boolean; filePath?: string }>;
   sendOverlayNotification: (payload: { eventName: string; offsetSeconds: number; eventId: string; happenTimeMs: number }) => void;
-  getOverlayPosition: () => Promise<'left-center' | 'right-center'>;
-  setOverlayPosition: (position: 'left-center' | 'right-center') => Promise<string>;
-  onEventsChanged: (callback: (config: EventsConfig) => void) => () => void;
-  getSoundDisabled: () => Promise<Record<string, boolean>>;
-  setSoundDisabled: (eventId: string, disabled: boolean) => Promise<void>;
-  getOverlayFontSize: () => Promise<{ name: number; offset: number }>;
-  setOverlayFontSize: (fontSize: { name: number; offset: number }) => Promise<{ name: number; offset: number }>;
-  getOverlayMode: () => Promise<string>;
-  setOverlayMode: (mode: string) => Promise<string>;
-  getOverlayEventCount: () => Promise<number>;
-  setOverlayEventCount: (count: number) => Promise<number>;
   sendOverlayUpcoming: (occurrences: Array<{ eventId: string; eventName: string; happenTimeMs: number }>) => void;
-  onOverlayModeChanged: (callback: (mode: string) => void) => () => void;
-  onOverlayEventCountChanged: (callback: (count: number) => void) => () => void;
+  onEventsChanged: (callback: (config: EventsConfig) => void) => () => void;
+  getNotificationConfig: () => Promise<NotificationOverlayConfig>;
+  setNotificationConfig: (config: Partial<NotificationOverlayConfig>) => Promise<NotificationOverlayConfig>;
+  getPersistentConfig: () => Promise<PersistentOverlayConfig>;
+  setPersistentConfig: (config: Partial<PersistentOverlayConfig>) => Promise<PersistentOverlayConfig>;
+  onOverlayConfigChanged: (callback: (config: OverlayConfig) => void) => () => void;
 }
 
 declare global {

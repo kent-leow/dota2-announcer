@@ -34,13 +34,14 @@ jest.mock('electron', () => ({
 
 import { createOverlayWindow, showOverlay, hideOverlay, destroyOverlay, getOverlayWindow } from './overlayWindow';
 
+
 describe('overlayWindow', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe('createOverlayWindow', () => {
-    it('creates BrowserWindow with correct options', () => {
+    it('creates BrowserWindow with full-screen dimensions', () => {
       createOverlayWindow();
 
       expect(mockBrowserWindow).toHaveBeenCalledWith(
@@ -55,10 +56,10 @@ describe('overlayWindow', () => {
           hasShadow: false,
           show: false,
           backgroundColor: '#00000000',
-          width: 350,
-          height: 300,
-          x: 1920 - 350,
-          y: Math.round((1080 - 300) / 2),
+          width: 1920,
+          height: 1080,
+          x: 0,
+          y: 0,
         })
       );
     });

@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, app, dialog } from 'electron';
+import { ipcMain, BrowserWindow, app } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as gsiServer from 'src/dota/gsiServer';
@@ -7,11 +7,8 @@ import * as gameTimer from 'src/timer/gameTimer';
 import * as muteManager from 'src/tts/muteManager';
 import * as volumeController from 'src/tts/volumeController';
 import * as eventsLoader from 'src/config/eventsLoader';
-import { readAppState, writeAppState } from 'src/tts/stateStore';
-import * as soundStore from 'src/tts/soundStore';
-import * as soundFileManager from 'src/tts/soundFileManager';
-import { getOverlayWindow, setOverlayPosition, getOverlayPosition } from './overlayWindow';
-import { OverlayPosition, OverlayFontSize, OverlayMode } from 'src/tts/stateStore';
+import { readAppState, writeAppState, NotificationOverlayConfig, PersistentOverlayConfig } from 'src/tts/stateStore';
+import { getOverlayWindow } from './overlayWindow';
 
 function findDotaGsiPath(): string | null {
   const platform = process.platform;
@@ -189,68 +186,6 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     return last !== null;
   });
 
-  ipcMain.handle('sound:getDisabled', () => readAppState().soundDisabled);
-  ipcMain.handle('sound:setDisabled', (_event, eventId: string, disabled: boolean) => {
-    const state = readAppState();
-    if (disabled) {
-      state.soundDisabled[eventId] = true;
-    } else {
-      delete state.soundDisabled[eventId];
-    }
-    writeAppState(state);
-  });
-
-  ipcMain.handle('sound:getAssignments', () => {
-    const defaults = soundStore.getDefaultSoundMap();
-    const custom = soundStore.readSoundAssignments();
-    return { ...defaults, ...custom };
-  });
-
-  ipcMain.handle('sound:assign', (_event, eventId: string, filePath: string) => {
-    const validation = soundFileManager.validateAudioFile(filePath);
-    if (!validation.valid) {
-      return { success: false, error: validation.error };
-    }
-    const filename = soundFileManager.copyToSoundsDir(filePath);
-    soundStore.assignSound(eventId, { type: 'custom', filename });
-    return { success: true, filename };
-  });
-
-  ipcMain.handle('sound:remove', (_event, eventId: string) => {
-    const assignment = soundStore.getSoundForEvent(eventId);
-    if (assignment && assignment.type === 'custom') {
-      soundFileManager.deleteSoundFile(assignment.filename);
-    }
-    soundStore.removeSound(eventId);
-    return { success: true };
-  });
-
-  ipcMain.handle('sound:getFilePath', (_event, eventId: string) => {
-    const assignment = soundStore.getSoundForEvent(eventId);
-    if (!assignment) return null;
-    const filePath = assignment.type === 'custom'
-      ? soundFileManager.getCustomSoundPath(assignment.filename)
-      : soundFileManager.getBundledSoundPath(assignment.filename);
-    try {
-      const data = fs.readFileSync(filePath);
-      const ext = path.extname(filePath).slice(1);
-      const mime = ext === 'mp3' ? 'audio/mpeg' : ext === 'ogg' ? 'audio/ogg' : 'audio/wav';
-      return `data:${mime};base64,${data.toString('base64')}`;
-    } catch {
-      return null;
-    }
-  });
-
-  ipcMain.handle('sound:openFileDialog', async () => {
-    const result = await dialog.showOpenDialog({
-      properties: ['openFile'],
-      filters: [{ name: 'Audio Files', extensions: ['mp3', 'wav', 'ogg'] }],
-    });
-    if (result.canceled || result.filePaths.length === 0) {
-      return { success: false, canceled: true };
-    }
-    return { success: true, filePath: result.filePaths[0] };
-  });
 
   ipcMain.on('overlay:announcement', (_event, payload: { eventName: string; offsetSeconds: number; eventId: string; happenTimeMs?: number }) => {
     const overlay = getOverlayWindow();
@@ -267,60 +202,59 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     overlay.webContents.send('overlay:upcoming', occurrences);
   });
 
-  ipcMain.handle('overlay:getPosition', () => getOverlayPosition());
-  ipcMain.handle('overlay:setPosition', (_event, position: OverlayPosition) => {
-    setOverlayPosition(position);
-    const overlay = getOverlayWindow();
-    if (overlay && !overlay.isDestroyed()) {
-      overlay.webContents.send('overlay:position', position);
+  ipcMain.handle('overlay:notification:getConfig', () => readAppState().notification);
+  ipcMain.handle('overlay:notification:setConfig', (_event, config: Partial<NotificationOverlayConfig>) => {
+    const state = readAppState();
+    if (typeof config.enabled === 'boolean') state.notification.enabled = config.enabled;
+    if (config.position === 'left' || config.position === 'right') state.notification.position = config.position;
+    if (config.fontSize) {
+      state.notification.fontSize = {
+        name: Math.max(10, Math.min(32, config.fontSize.name)),
+        offset: Math.max(8, Math.min(28, config.fontSize.offset)),
+      };
     }
-    return position;
+    writeAppState(state);
+    broadcastOverlayConfig(state, getWindow, getOverlayWindow);
+    return state.notification;
   });
 
-  ipcMain.handle('overlay:getFontSize', () => readAppState().overlayFontSize);
-  ipcMain.handle('overlay:setFontSize', (_event, fontSize: OverlayFontSize) => {
+  ipcMain.handle('overlay:persistent:getConfig', () => readAppState().persistent);
+  ipcMain.handle('overlay:persistent:setConfig', (_event, config: Partial<PersistentOverlayConfig>) => {
     const state = readAppState();
-    state.overlayFontSize = {
-      name: Math.max(10, Math.min(32, fontSize.name)),
-      offset: Math.max(8, Math.min(28, fontSize.offset)),
-    };
-    writeAppState(state);
-    const overlay = getOverlayWindow();
-    if (overlay && !overlay.isDestroyed()) {
-      overlay.webContents.send('overlay:fontSize', state.overlayFontSize);
+    if (typeof config.enabled === 'boolean') state.persistent.enabled = config.enabled;
+    if (config.position === 'left' || config.position === 'right') state.persistent.position = config.position;
+    if (config.fontSize) {
+      state.persistent.fontSize = {
+        name: Math.max(10, Math.min(32, config.fontSize.name)),
+        offset: Math.max(8, Math.min(28, config.fontSize.offset)),
+      };
     }
-    return state.overlayFontSize;
+    if (typeof config.eventCount === 'number') {
+      state.persistent.eventCount = Math.max(1, Math.min(10, config.eventCount));
+    }
+    writeAppState(state);
+    broadcastOverlayConfig(state, getWindow, getOverlayWindow);
+    return state.persistent;
   });
+}
 
-  ipcMain.handle('overlay:getMode', () => readAppState().overlayMode);
-  ipcMain.handle('overlay:setMode', (_event, mode: OverlayMode) => {
-    const state = readAppState();
-    state.overlayMode = mode;
-    writeAppState(state);
-    const overlay = getOverlayWindow();
-    if (overlay && !overlay.isDestroyed()) {
-      overlay.webContents.send('overlay:mode', mode);
-    }
-    const win = getWindow();
-    if (win && !win.isDestroyed()) {
-      win.webContents.send('overlay:modeChanged', mode);
-    }
-    return mode;
-  });
-
-  ipcMain.handle('overlay:getEventCount', () => readAppState().overlayEventCount);
-  ipcMain.handle('overlay:setEventCount', (_event, count: number) => {
-    const state = readAppState();
-    state.overlayEventCount = Math.max(1, Math.min(10, count));
-    writeAppState(state);
-    const overlay = getOverlayWindow();
-    if (overlay && !overlay.isDestroyed()) {
-      overlay.webContents.send('overlay:eventCount', state.overlayEventCount);
-    }
-    const win = getWindow();
-    if (win && !win.isDestroyed()) {
-      win.webContents.send('overlay:eventCountChanged', state.overlayEventCount);
-    }
-    return state.overlayEventCount;
-  });
+function broadcastOverlayConfig(
+  state: ReturnType<typeof readAppState>,
+  getWindow: () => BrowserWindow | null,
+  getOverlay: typeof getOverlayWindow,
+): void {
+  const overlay = getOverlay();
+  if (overlay && !overlay.isDestroyed()) {
+    overlay.webContents.send('overlay:config', {
+      notification: state.notification,
+      persistent: state.persistent,
+    });
+  }
+  const win = getWindow();
+  if (win && !win.isDestroyed()) {
+    win.webContents.send('overlay:configChanged', {
+      notification: state.notification,
+      persistent: state.persistent,
+    });
+  }
 }

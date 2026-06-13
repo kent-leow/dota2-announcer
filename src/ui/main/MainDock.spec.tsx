@@ -22,11 +22,6 @@ jest.mock('src/tts/announcer', () => ({
   getAvailableVoices: jest.fn(() => []),
 }));
 
-jest.mock('src/tts/soundPlayer', () => ({
-  playSound: jest.fn(),
-  setVolume: jest.fn(),
-  setMuted: jest.fn(),
-}));
 
 let stateChangeHandler: ((state: string) => void) | null = null;
 
@@ -56,16 +51,12 @@ const mockElectronAPI = {
   onPauseChange: jest.fn(() => () => {}),
   getIncludeTimeSuffix: jest.fn(() => Promise.resolve(true)),
   setIncludeTimeSuffix: jest.fn((v: boolean) => Promise.resolve(v)),
-  getSoundFilePath: jest.fn((): Promise<string | null> => Promise.resolve(null)),
   sendOverlayNotification: jest.fn(),
   sendOverlayUpcoming: jest.fn(),
   onEventsChanged: jest.fn(() => () => {}),
-  getSoundDisabled: jest.fn(() => Promise.resolve({})),
-  setSoundDisabled: jest.fn(() => Promise.resolve()),
-  getOverlayMode: jest.fn(() => Promise.resolve('notification')),
-  getOverlayEventCount: jest.fn(() => Promise.resolve(5)),
-  onOverlayModeChanged: jest.fn(() => () => {}),
-  onOverlayEventCountChanged: jest.fn(() => () => {}),
+  getPersistentConfig: jest.fn(() => Promise.resolve({ enabled: false, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5 })),
+  getNotificationConfig: jest.fn(() => Promise.resolve({ enabled: true, position: 'right', fontSize: { name: 16, offset: 13 } })),
+  onOverlayConfigChanged: jest.fn(() => () => {}),
 };
 
 (window as any).electronAPI = mockElectronAPI;
@@ -185,38 +176,11 @@ describe('MainDock', () => {
       expect(screen.getByTestId('volume-value')).toHaveTextContent('50%');
     });
 
-    it('reload config button reloads without crash', async () => {
+    it('does not render start/stop or reload buttons', async () => {
       render(<MainDock />);
-      await waitFor(() => expect(stateChangeHandler).not.toBeNull());
-
-      act(() => {
-        stateChangeHandler?.('in-match');
-      });
-      act(() => {
-        tickCallback?.(30000);
-      });
-
-      await act(async () => {
-        fireEvent.click(screen.getByTestId('reload-config'));
-      });
-
-      await waitFor(() => {
-        expect(mockElectronAPI.reloadEvents).toHaveBeenCalled();
-        expect(eventScheduler.loadSchedule).toHaveBeenCalled();
-      });
-      expect(screen.getByTestId('game-clock')).toHaveTextContent('00:30');
-      expect(screen.getByTestId('status-line')).toHaveTextContent('In Match');
-    });
-
-    it('start/stop button toggles announcer state', async () => {
-      render(<MainDock />);
-      await waitFor(() => expect(screen.getByTestId('start-stop')).toHaveTextContent('Stop'));
-
-      act(() => {
-        fireEvent.click(screen.getByTestId('start-stop'));
-      });
-
-      expect(screen.getByTestId('start-stop')).toHaveTextContent('Start');
+      await waitFor(() => expect(screen.getByTestId('mute-toggle')).toBeInTheDocument());
+      expect(screen.queryByTestId('start-stop')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('reload-config')).not.toBeInTheDocument();
     });
   });
 
@@ -237,8 +201,7 @@ describe('MainDock', () => {
       expect(eventScheduler.tick).toHaveBeenCalledWith(5000);
     });
 
-    it('calls announcer.speak when scheduler fires an announcement with no sound', async () => {
-      mockElectronAPI.getSoundFilePath.mockResolvedValue(null);
+    it('calls announcer.speak when scheduler fires an announcement', async () => {
       render(<MainDock />);
       await waitFor(() => expect(eventScheduler.onAnnouncement).toHaveBeenCalled());
 
@@ -251,9 +214,7 @@ describe('MainDock', () => {
       expect(announcer.speak).toHaveBeenCalledWith('Bounty Rune in 30 seconds');
     });
 
-    it('plays sound instead of TTS when sound file is assigned', async () => {
-      const soundPlayer = require('src/tts/soundPlayer');
-      mockElectronAPI.getSoundFilePath.mockResolvedValue('/path/to/bounty-rune.wav');
+    it('sends overlay notification when notification enabled', async () => {
       render(<MainDock />);
       await waitFor(() => expect(eventScheduler.onAnnouncement).toHaveBeenCalled());
 
@@ -262,8 +223,48 @@ describe('MainDock', () => {
         announcementCb('Bounty Rune', 30, 'bounty-rune');
       });
 
-      expect(soundPlayer.playSound).toHaveBeenCalledWith('/path/to/bounty-rune.wav');
-      expect(announcer.speak).not.toHaveBeenCalled();
+      expect(mockElectronAPI.sendOverlayNotification).toHaveBeenCalled();
+    });
+
+    it('does not send overlay notification when notification disabled', async () => {
+      mockElectronAPI.getNotificationConfig.mockResolvedValue({ enabled: false, position: 'right', fontSize: { name: 16, offset: 13 } });
+      render(<MainDock />);
+      await waitFor(() => expect(eventScheduler.onAnnouncement).toHaveBeenCalled());
+
+      const announcementCb = (eventScheduler.onAnnouncement as jest.Mock).mock.calls[0][0];
+      await act(async () => {
+        announcementCb('Bounty Rune', 30, 'bounty-rune');
+      });
+
+      expect(mockElectronAPI.sendOverlayNotification).not.toHaveBeenCalled();
+    });
+
+    it('sends upcoming events when persistent enabled on tick', async () => {
+      mockElectronAPI.getPersistentConfig.mockResolvedValue({ enabled: true, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5 });
+      (eventScheduler.getUpcomingOccurrences as jest.Mock).mockReturnValue([{ eventId: 'a', eventName: 'Rune', happenTimeMs: 120000 }]);
+      render(<MainDock />);
+      await waitFor(() => expect(tickCallback).not.toBeNull());
+
+      act(() => {
+        tickCallback?.(60000);
+      });
+
+      expect(mockElectronAPI.sendOverlayUpcoming).toHaveBeenCalled();
+    });
+
+    it('does not send upcoming events when persistent disabled on tick', async () => {
+      mockElectronAPI.getPersistentConfig.mockResolvedValue({ enabled: false, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5 });
+      (eventScheduler.getUpcomingOccurrences as jest.Mock).mockReturnValue([{ eventId: 'a', eventName: 'Rune', happenTimeMs: 120000 }]);
+      render(<MainDock />);
+      await waitFor(() => expect(tickCallback).not.toBeNull());
+      await act(async () => { await Promise.resolve(); });
+
+      mockElectronAPI.sendOverlayUpcoming.mockClear();
+      act(() => {
+        tickCallback?.(60000);
+      });
+
+      expect(mockElectronAPI.sendOverlayUpcoming).not.toHaveBeenCalled();
     });
   });
 });

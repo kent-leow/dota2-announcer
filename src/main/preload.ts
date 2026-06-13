@@ -43,36 +43,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('dota:gsiStatusUpdate', handler);
     return () => { ipcRenderer.removeListener('dota:gsiStatusUpdate', handler); };
   },
-  getSoundAssignments: () => ipcRenderer.invoke('sound:getAssignments'),
-  assignSound: (eventId: string, filePath: string) => ipcRenderer.invoke('sound:assign', eventId, filePath),
-  removeSound: (eventId: string) => ipcRenderer.invoke('sound:remove', eventId),
-  getSoundFilePath: (eventId: string) => ipcRenderer.invoke('sound:getFilePath', eventId),
-  openSoundFileDialog: () => ipcRenderer.invoke('sound:openFileDialog'),
   sendOverlayNotification: (payload: { eventName: string; offsetSeconds: number; eventId: string; happenTimeMs: number }) => ipcRenderer.send('overlay:announcement', payload),
-  getOverlayPosition: () => ipcRenderer.invoke('overlay:getPosition'),
-  setOverlayPosition: (position: string) => ipcRenderer.invoke('overlay:setPosition', position),
+  sendOverlayUpcoming: (occurrences: Array<{ eventId: string; eventName: string; happenTimeMs: number }>) => ipcRenderer.send('overlay:sendUpcoming', occurrences),
   onEventsChanged: (callback: (config: unknown) => void) => {
     const handler = (_event: unknown, config: unknown) => callback(config);
     ipcRenderer.on('config:eventsChanged', handler);
     return () => { ipcRenderer.removeListener('config:eventsChanged', handler); };
   },
-  getSoundDisabled: () => ipcRenderer.invoke('sound:getDisabled'),
-  setSoundDisabled: (eventId: string, disabled: boolean) => ipcRenderer.invoke('sound:setDisabled', eventId, disabled),
-  getOverlayFontSize: () => ipcRenderer.invoke('overlay:getFontSize'),
-  setOverlayFontSize: (fontSize: { name: number; offset: number }) => ipcRenderer.invoke('overlay:setFontSize', fontSize),
-  getOverlayMode: () => ipcRenderer.invoke('overlay:getMode'),
-  setOverlayMode: (mode: string) => ipcRenderer.invoke('overlay:setMode', mode),
-  getOverlayEventCount: () => ipcRenderer.invoke('overlay:getEventCount'),
-  setOverlayEventCount: (count: number) => ipcRenderer.invoke('overlay:setEventCount', count),
-  sendOverlayUpcoming: (occurrences: Array<{ eventId: string; eventName: string; happenTimeMs: number }>) => ipcRenderer.send('overlay:sendUpcoming', occurrences),
-  onOverlayModeChanged: (callback: (mode: string) => void) => {
-    const handler = (_event: unknown, mode: string) => callback(mode);
-    ipcRenderer.on('overlay:modeChanged', handler);
-    return () => { ipcRenderer.removeListener('overlay:modeChanged', handler); };
-  },
-  onOverlayEventCountChanged: (callback: (count: number) => void) => {
-    const handler = (_event: unknown, count: number) => callback(count);
-    ipcRenderer.on('overlay:eventCountChanged', handler);
-    return () => { ipcRenderer.removeListener('overlay:eventCountChanged', handler); };
+  getNotificationConfig: () => ipcRenderer.invoke('overlay:notification:getConfig'),
+  setNotificationConfig: (config: unknown) => ipcRenderer.invoke('overlay:notification:setConfig', config),
+  getPersistentConfig: () => ipcRenderer.invoke('overlay:persistent:getConfig'),
+  setPersistentConfig: (config: unknown) => ipcRenderer.invoke('overlay:persistent:setConfig', config),
+  onOverlayConfigChanged: (callback: (config: unknown) => void) => {
+    const handler = (_event: unknown, config: unknown) => callback(config);
+    ipcRenderer.on('overlay:configChanged', handler);
+    return () => { ipcRenderer.removeListener('overlay:configChanged', handler); };
   },
 });

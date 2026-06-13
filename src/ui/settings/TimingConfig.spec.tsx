@@ -1,87 +1,65 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-jest.mock('src/tts/soundPlayer', () => ({
-  playSound: jest.fn(),
-}));
-
 const mockElectronAPI = {
   getEvents: jest.fn(() => Promise.resolve({ events: [] })),
   reloadEvents: jest.fn(() => Promise.resolve({ events: [] })),
   saveEvents: jest.fn(() => Promise.resolve({ success: true })),
-  getSoundAssignments: jest.fn(() => Promise.resolve({})),
-  getSoundDisabled: jest.fn(() => Promise.resolve({})),
-  setSoundDisabled: jest.fn(() => Promise.resolve()),
-  getOverlayPosition: jest.fn(() => Promise.resolve('right-center')),
-  setOverlayPosition: jest.fn(() => Promise.resolve('right-center')),
-  getOverlayFontSize: jest.fn(() => Promise.resolve({ name: 16, offset: 13 })),
-  setOverlayFontSize: jest.fn(() => Promise.resolve({ name: 16, offset: 13 })),
-  getOverlayMode: jest.fn(() => Promise.resolve('notification')),
-  setOverlayMode: jest.fn(() => Promise.resolve('persistent')),
-  getOverlayEventCount: jest.fn(() => Promise.resolve(5)),
-  setOverlayEventCount: jest.fn(() => Promise.resolve(3)),
-  openSoundFileDialog: jest.fn(() => Promise.resolve({ success: false, canceled: true })),
-  assignSound: jest.fn(() => Promise.resolve({ success: true })),
-  removeSound: jest.fn(() => Promise.resolve({ success: true })),
-  getSoundFilePath: jest.fn(() => Promise.resolve(null)),
+  getNotificationConfig: jest.fn(() => Promise.resolve({ enabled: true, position: 'right', fontSize: { name: 16, offset: 13 } })),
+  setNotificationConfig: jest.fn((c: unknown) => Promise.resolve(c)),
+  getPersistentConfig: jest.fn(() => Promise.resolve({ enabled: false, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5 })),
+  setPersistentConfig: jest.fn((c: unknown) => Promise.resolve(c)),
 };
 
 (window as any).electronAPI = mockElectronAPI;
 
 import { TimingConfig } from './TimingConfig';
 
-describe('TimingConfig — Overlay Mode & Event Count', () => {
+describe('TimingConfig — Per-Overlay Configuration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('renders mode radio buttons', async () => {
+  it('renders notification and persistent overlay sections', async () => {
     render(<TimingConfig />);
     await waitFor(() => {
-      expect(screen.getByTestId('mode-notification')).toBeInTheDocument();
-      expect(screen.getByTestId('mode-persistent')).toBeInTheDocument();
+      expect(screen.getByTestId('notif-enabled')).toBeInTheDocument();
+      expect(screen.getByTestId('persist-enabled')).toBeInTheDocument();
     });
   });
 
-  it('loads initial mode from IPC', async () => {
-    mockElectronAPI.getOverlayMode.mockResolvedValue('persistent');
+  it('toggles notification enabled calls setNotificationConfig', async () => {
     render(<TimingConfig />);
-    await waitFor(() => {
-      expect(mockElectronAPI.getOverlayMode).toHaveBeenCalled();
-    });
+    await waitFor(() => expect(screen.getByTestId('notif-enabled')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('notif-enabled'));
+    expect(mockElectronAPI.setNotificationConfig).toHaveBeenCalledWith({ enabled: false });
   });
 
-  it('calls setOverlayMode on mode change', async () => {
+  it('toggles persistent enabled calls setPersistentConfig', async () => {
     render(<TimingConfig />);
-    await waitFor(() => {
-      expect(screen.getByTestId('mode-persistent')).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByTestId('mode-persistent'));
-    expect(mockElectronAPI.setOverlayMode).toHaveBeenCalledWith('persistent');
+    await waitFor(() => expect(screen.getByTestId('persist-enabled')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('persist-enabled'));
+    expect(mockElectronAPI.setPersistentConfig).toHaveBeenCalledWith({ enabled: true });
   });
 
-  it('renders event count control', async () => {
+  it('changes notification position calls setNotificationConfig', async () => {
+    render(<TimingConfig />);
+    await waitFor(() => expect(screen.getByTestId('notif-pos-left')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('notif-pos-left'));
+    expect(mockElectronAPI.setNotificationConfig).toHaveBeenCalledWith({ position: 'left' });
+  });
+
+  it('renders event count control for persistent', async () => {
     render(<TimingConfig />);
     await waitFor(() => {
       expect(screen.getByTestId('event-count')).toBeInTheDocument();
     });
   });
 
-  it('calls setOverlayEventCount on change', async () => {
-    mockElectronAPI.getOverlayMode.mockResolvedValue('persistent');
+  it('calls setPersistentConfig on event count change', async () => {
     render(<TimingConfig />);
-    await waitFor(() => {
-      expect(screen.getByTestId('event-count')).not.toBeDisabled();
-    });
+    await waitFor(() => expect(screen.getByTestId('event-count')).toBeInTheDocument());
     fireEvent.change(screen.getByTestId('event-count'), { target: { value: '3' } });
-    expect(mockElectronAPI.setOverlayEventCount).toHaveBeenCalledWith(3);
-  });
-
-  it('event count disabled in notification mode', async () => {
-    mockElectronAPI.getOverlayMode.mockResolvedValue('notification');
-    render(<TimingConfig />);
-    await waitFor(() => {
-      expect(screen.getByTestId('event-count')).toBeDisabled();
-    });
+    expect(mockElectronAPI.setPersistentConfig).toHaveBeenCalledWith({ eventCount: 3 });
   });
 });

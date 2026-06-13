@@ -1,22 +1,21 @@
 import { render, screen, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-let modeCallback: ((mode: string) => void) | null = null;
-let currentMode = 'notification';
+let configChangeCallback: ((config: { notification: any; persistent: any }) => void) | null = null;
+
+const defaultNotif = { enabled: true, position: 'right', fontSize: { name: 16, offset: 13 } };
+const defaultPersist = { enabled: false, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5 };
 
 (window as any).overlayAPI = {
-  getMode: jest.fn(() => Promise.resolve(currentMode)),
-  onModeChange: jest.fn((cb) => {
-    modeCallback = cb;
-    return () => { modeCallback = null; };
+  getNotificationConfig: jest.fn(() => Promise.resolve(defaultNotif)),
+  getPersistentConfig: jest.fn(() => Promise.resolve(defaultPersist)),
+  onConfigChange: jest.fn((cb) => {
+    configChangeCallback = cb;
+    return () => { configChangeCallback = null; };
   }),
   onNotification: jest.fn(() => () => {}),
   onTick: jest.fn(() => () => {}),
   onUpcoming: jest.fn(() => () => {}),
-  getPosition: jest.fn(() => Promise.resolve('right-center')),
-  getFontSize: jest.fn(() => Promise.resolve({ name: 16, offset: 13 })),
-  onPositionChange: jest.fn(() => () => {}),
-  onFontSizeChange: jest.fn(() => () => {}),
 };
 
 jest.mock('./NotificationStack', () => ({
@@ -31,13 +30,13 @@ import { OverlayRoot } from './OverlayRoot';
 
 describe('OverlayRoot', () => {
   beforeEach(() => {
-    currentMode = 'notification';
-    modeCallback = null;
+    configChangeCallback = null;
     jest.clearAllMocks();
+    (window as any).overlayAPI.getNotificationConfig.mockResolvedValue(defaultNotif);
+    (window as any).overlayAPI.getPersistentConfig.mockResolvedValue(defaultPersist);
   });
 
-  it('renders NotificationStack for notification mode', async () => {
-    currentMode = 'notification';
+  it('renders NotificationStack when notification enabled', async () => {
     await act(async () => {
       render(<OverlayRoot />);
     });
@@ -45,8 +44,9 @@ describe('OverlayRoot', () => {
     expect(screen.queryByTestId('persistent-panel')).not.toBeInTheDocument();
   });
 
-  it('renders PersistentPanel for persistent mode', async () => {
-    currentMode = 'persistent';
+  it('renders PersistentPanel when persistent enabled', async () => {
+    (window as any).overlayAPI.getNotificationConfig.mockResolvedValue({ ...defaultNotif, enabled: false });
+    (window as any).overlayAPI.getPersistentConfig.mockResolvedValue({ ...defaultPersist, enabled: true });
     await act(async () => {
       render(<OverlayRoot />);
     });
@@ -54,14 +54,25 @@ describe('OverlayRoot', () => {
     expect(screen.queryByTestId('notification-stack')).not.toBeInTheDocument();
   });
 
-  it('switches on mode change event', async () => {
-    currentMode = 'notification';
+  it('renders both when both enabled', async () => {
+    (window as any).overlayAPI.getPersistentConfig.mockResolvedValue({ ...defaultPersist, enabled: true });
     await act(async () => {
       render(<OverlayRoot />);
     });
     expect(screen.getByTestId('notification-stack')).toBeInTheDocument();
+    expect(screen.getByTestId('persistent-panel')).toBeInTheDocument();
+  });
+
+  it('updates on config change event', async () => {
     await act(async () => {
-      modeCallback!('persistent');
+      render(<OverlayRoot />);
+    });
+    expect(screen.queryByTestId('persistent-panel')).not.toBeInTheDocument();
+    await act(async () => {
+      configChangeCallback!({
+        notification: { ...defaultNotif, enabled: true },
+        persistent: { ...defaultPersist, enabled: true },
+      });
     });
     expect(screen.getByTestId('persistent-panel')).toBeInTheDocument();
   });

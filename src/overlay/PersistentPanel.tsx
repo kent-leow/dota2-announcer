@@ -1,9 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface OccurrenceItem {
   eventId: string;
   eventName: string;
   happenTimeMs: number;
+}
+
+interface PersistentPanelProps {
+  position: 'left' | 'right';
+  fontSize: { name: number; offset: number };
+  onHeightChange: (height: number) => void;
 }
 
 function formatCountdown(happenTimeMs: number, gameTimeMs: number): string {
@@ -24,56 +30,47 @@ function formatSpawnTime(happenTimeMs: number): string {
   return `@${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
-export function PersistentPanel() {
+export function PersistentPanel({ position, fontSize, onHeightChange }: PersistentPanelProps) {
   const [occurrences, setOccurrences] = useState<OccurrenceItem[]>([]);
   const [gameTimeMs, setGameTimeMs] = useState(0);
-  const [align, setAlign] = useState<'left' | 'right'>('right');
-  const [fontSizeName, setFontSizeName] = useState(16);
-  const [fontSizeOffset, setFontSizeOffset] = useState(13);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!window.overlayAPI) return;
-    window.overlayAPI.getPosition().then((pos) => {
-      setAlign(pos === 'left-center' ? 'left' : 'right');
-    });
-    window.overlayAPI.getFontSize().then((fs) => {
-      setFontSizeName(fs.name);
-      setFontSizeOffset(fs.offset);
-    });
     const unsubUpcoming = window.overlayAPI.onUpcoming((occ) => {
       setOccurrences(occ);
     });
     const unsubTick = window.overlayAPI.onTick((ms) => {
       setGameTimeMs(ms);
     });
-    const unsubPos = window.overlayAPI.onPositionChange((pos) => {
-      setAlign(pos === 'left-center' ? 'left' : 'right');
-    });
-    const unsubFontSize = window.overlayAPI.onFontSizeChange((fs) => {
-      setFontSizeName(fs.name);
-      setFontSizeOffset(fs.offset);
-    });
     return () => {
       unsubUpcoming();
       unsubTick();
-      unsubPos();
-      unsubFontSize();
     };
   }, []);
 
+  useEffect(() => {
+    if (containerRef.current) {
+      onHeightChange(containerRef.current.offsetHeight);
+    }
+  });
+
   const visible = occurrences.filter((o) => o.happenTimeMs > gameTimeMs);
 
-  if (visible.length === 0) return null;
+  if (visible.length === 0) {
+    onHeightChange(0);
+    return null;
+  }
 
   return (
-    <div className={`persistent-panel persistent-panel--${align}`}>
+    <div ref={containerRef} className={`persistent-panel persistent-panel--${position}`}>
       <div className="persistent-panel__box">
         {visible.map((o) => (
           <div key={`${o.eventId}:${o.happenTimeMs}`} className="persistent-panel__item">
-            <span className="persistent-panel__name" style={{ fontSize: `${fontSizeName}px` }}>{o.eventName}</span>
+            <span className="persistent-panel__name" style={{ fontSize: `${fontSize.name}px` }}>{o.eventName}</span>
             <span className="persistent-panel__timing">
-              <span className="persistent-panel__countdown" style={{ fontSize: `${fontSizeOffset}px` }}>{formatCountdown(o.happenTimeMs, gameTimeMs)}</span>
-              <span className="persistent-panel__spawn" style={{ fontSize: `${fontSizeOffset - 2}px` }}>{formatSpawnTime(o.happenTimeMs)}</span>
+              <span className="persistent-panel__countdown" style={{ fontSize: `${fontSize.offset}px` }}>{formatCountdown(o.happenTimeMs, gameTimeMs)}</span>
+              <span className="persistent-panel__spawn" style={{ fontSize: `${fontSize.offset - 2}px` }}>{formatSpawnTime(o.happenTimeMs)}</span>
             </span>
           </div>
         ))}
