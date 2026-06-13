@@ -52,6 +52,7 @@ export interface ElectronAPI {
   removeSound: (eventId: string) => Promise<{ success: boolean }>;
   getSoundFilePath: (eventId: string) => Promise<string | null>;
   openSoundFileDialog: () => Promise<{ success: boolean; canceled?: boolean; filePath?: string }>;
+  sendOverlayNotification: (payload: { eventName: string; offsetSeconds: number; eventId: string }) => void;
 }
 
 declare global {

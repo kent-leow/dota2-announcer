@@ -56,6 +56,7 @@ const mockElectronAPI = {
   getIncludeTimeSuffix: jest.fn(() => Promise.resolve(true)),
   setIncludeTimeSuffix: jest.fn((v: boolean) => Promise.resolve(v)),
   getSoundFilePath: jest.fn((): Promise<string | null> => Promise.resolve(null)),
+  sendOverlayNotification: jest.fn(),
 };
 
 (window as any).electronAPI = mockElectronAPI;

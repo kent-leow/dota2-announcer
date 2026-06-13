@@ -10,7 +10,6 @@ import * as eventsLoader from 'src/config/eventsLoader';
 import { readAppState, writeAppState } from 'src/tts/stateStore';
 import * as soundStore from 'src/tts/soundStore';
 import * as soundFileManager from 'src/tts/soundFileManager';
-import { initOverlayNotifier } from './overlayNotifier';
 import { getOverlayWindow } from './overlayWindow';
 
 function findDotaGsiPath(): string | null {
@@ -48,7 +47,6 @@ function findDotaGsiPath(): string | null {
 export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void {
   gsiServer.start();
   matchStateManager.startListening();
-  initOverlayNotifier(getOverlayWindow);
 
   matchStateManager.onPhaseChange((phase) => {
     const win = getWindow();
@@ -225,5 +223,14 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
       return { success: false, canceled: true };
     }
     return { success: true, filePath: result.filePaths[0] };
+  });
+
+  ipcMain.on('overlay:announcement', (_event, payload: { eventName: string; offsetSeconds: number; eventId: string }) => {
+    const overlay = getOverlayWindow();
+    if (!overlay || overlay.isDestroyed()) return;
+    overlay.webContents.send('overlay:notify', {
+      ...payload,
+      timestamp: Date.now(),
+    });
   });
 }
