@@ -7,7 +7,9 @@ interface OccurrenceItem {
 }
 
 function formatCountdown(happenTimeMs: number, gameTimeMs: number): string {
-  const remaining = Math.max(0, Math.floor((happenTimeMs - gameTimeMs) / 1000));
+  const happenSec = Math.floor(happenTimeMs / 1000);
+  const currentSec = Math.floor(gameTimeMs / 1000);
+  const remaining = Math.max(0, happenSec - currentSec);
   if (remaining === 0) return 'now';
   const min = Math.floor(remaining / 60);
   const sec = remaining % 60;
