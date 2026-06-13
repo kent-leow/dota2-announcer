@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, app } from 'electron';
+import { ipcMain, BrowserWindow, app, dialog } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as gsiServer from 'src/dota/gsiServer';
@@ -8,6 +8,8 @@ import * as muteManager from 'src/tts/muteManager';
 import * as volumeController from 'src/tts/volumeController';
 import * as eventsLoader from 'src/config/eventsLoader';
 import { readAppState, writeAppState } from 'src/tts/stateStore';
+import * as soundStore from 'src/tts/soundStore';
+import * as soundFileManager from 'src/tts/soundFileManager';
 
 function findDotaGsiPath(): string | null {
   const platform = process.platform;
@@ -168,5 +170,46 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
   ipcMain.handle('gsi:isConnected', () => {
     const last = gsiServer.getLastState();
     return last !== null;
+  });
+
+  ipcMain.handle('sound:getAssignments', () => soundStore.readSoundAssignments());
+
+  ipcMain.handle('sound:assign', (_event, eventId: string, filePath: string) => {
+    const validation = soundFileManager.validateAudioFile(filePath);
+    if (!validation.valid) {
+      return { success: false, error: validation.error };
+    }
+    const filename = soundFileManager.copyToSoundsDir(filePath);
+    soundStore.assignSound(eventId, { type: 'custom', filename });
+    return { success: true, filename };
+  });
+
+  ipcMain.handle('sound:remove', (_event, eventId: string) => {
+    const assignment = soundStore.getSoundForEvent(eventId);
+    if (assignment && assignment.type === 'custom') {
+      soundFileManager.deleteSoundFile(assignment.filename);
+    }
+    soundStore.removeSound(eventId);
+    return { success: true };
+  });
+
+  ipcMain.handle('sound:getFilePath', (_event, eventId: string) => {
+    const assignment = soundStore.getSoundForEvent(eventId);
+    if (!assignment) return null;
+    if (assignment.type === 'custom') {
+      return soundFileManager.getCustomSoundPath(assignment.filename);
+    }
+    return soundFileManager.getBundledSoundPath(assignment.filename);
+  });
+
+  ipcMain.handle('sound:openFileDialog', async () => {
+    const result = await dialog.showOpenDialog({
+      properties: ['openFile'],
+      filters: [{ name: 'Audio Files', extensions: ['mp3', 'wav', 'ogg'] }],
+    });
+    if (result.canceled || result.filePaths.length === 0) {
+      return { success: false, canceled: true };
+    }
+    return { success: true, filePath: result.filePaths[0] };
   });
 }

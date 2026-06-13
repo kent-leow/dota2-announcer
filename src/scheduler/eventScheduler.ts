@@ -95,7 +95,7 @@ export function tick(elapsedMs: number): void {
 
   for (const fire of pendingFires) {
     firedIds.add(fire.fireId);
-    announcementCallback?.(fire.eventName, fire.offsetSeconds);
+    announcementCallback?.(fire.eventName, fire.offsetSeconds, fire.eventId);
   }
 }
 

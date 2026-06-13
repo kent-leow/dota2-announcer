@@ -43,4 +43,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('dota:gsiStatusUpdate', handler);
     return () => { ipcRenderer.removeListener('dota:gsiStatusUpdate', handler); };
   },
+  getSoundAssignments: () => ipcRenderer.invoke('sound:getAssignments'),
+  assignSound: (eventId: string, filePath: string) => ipcRenderer.invoke('sound:assign', eventId, filePath),
+  removeSound: (eventId: string) => ipcRenderer.invoke('sound:remove', eventId),
+  getSoundFilePath: (eventId: string) => ipcRenderer.invoke('sound:getFilePath', eventId),
+  openSoundFileDialog: () => ipcRenderer.invoke('sound:openFileDialog'),
 });
