@@ -33,16 +33,16 @@ describe('gameTimer', () => {
     expect(elapsed).toBeLessThanOrEqual(6000);
   });
 
-  it('fires tick callbacks every second', () => {
+  it('fires tick callbacks every 250ms', () => {
     const tickFn = jest.fn();
     onTick(tickFn);
     start();
 
-    jest.advanceTimersByTime(3000);
+    jest.advanceTimersByTime(1000);
 
-    expect(tickFn).toHaveBeenCalledTimes(3);
-    expect(tickFn.mock.calls[0][0]).toBeGreaterThanOrEqual(1000);
-    expect(tickFn.mock.calls[2][0]).toBeGreaterThanOrEqual(3000);
+    expect(tickFn).toHaveBeenCalledTimes(4);
+    expect(tickFn.mock.calls[0][0]).toBeGreaterThanOrEqual(250);
+    expect(tickFn.mock.calls[3][0]).toBeGreaterThanOrEqual(1000);
   });
 
   it('stop halts time tracking', () => {
