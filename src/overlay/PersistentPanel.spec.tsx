@@ -47,11 +47,12 @@ describe('PersistentPanel', () => {
       upcomingCallback!([{ eventId: 'a', eventName: 'Rune', happenTimeMs: 120000 }]);
       tickCallback!(60000);
     });
-    expect(screen.getByText('1:00')).toBeInTheDocument();
+    expect(screen.getByText('in 1:00')).toBeInTheDocument();
+    expect(screen.getByText('@02:00')).toBeInTheDocument();
     act(() => {
       tickCallback!(90000);
     });
-    expect(screen.getByText('30s')).toBeInTheDocument();
+    expect(screen.getByText('in 30s')).toBeInTheDocument();
   });
 
   it('removes event when countdown reaches 0', () => {

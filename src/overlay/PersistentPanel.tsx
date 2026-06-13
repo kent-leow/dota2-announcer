@@ -13,8 +13,15 @@ function formatCountdown(happenTimeMs: number, gameTimeMs: number): string {
   if (remaining === 0) return 'now';
   const min = Math.floor(remaining / 60);
   const sec = remaining % 60;
-  if (min > 0) return `${min}:${String(sec).padStart(2, '0')}`;
-  return `${sec}s`;
+  if (min > 0) return `in ${min}:${String(sec).padStart(2, '0')}`;
+  return `in ${sec}s`;
+}
+
+function formatSpawnTime(happenTimeMs: number): string {
+  const totalSeconds = Math.floor(happenTimeMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `@${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
 export function PersistentPanel() {
@@ -60,12 +67,17 @@ export function PersistentPanel() {
 
   return (
     <div className={`persistent-panel persistent-panel--${align}`}>
-      {visible.map((o) => (
-        <div key={`${o.eventId}:${o.happenTimeMs}`} className="persistent-panel__item">
-          <span className="persistent-panel__name" style={{ fontSize: `${fontSizeName}px` }}>{o.eventName}</span>
-          <span className="persistent-panel__countdown" style={{ fontSize: `${fontSizeOffset}px` }}>{formatCountdown(o.happenTimeMs, gameTimeMs)}</span>
-        </div>
-      ))}
+      <div className="persistent-panel__box">
+        {visible.map((o) => (
+          <div key={`${o.eventId}:${o.happenTimeMs}`} className="persistent-panel__item">
+            <span className="persistent-panel__name" style={{ fontSize: `${fontSizeName}px` }}>{o.eventName}</span>
+            <span className="persistent-panel__timing">
+              <span className="persistent-panel__countdown" style={{ fontSize: `${fontSizeOffset}px` }}>{formatCountdown(o.happenTimeMs, gameTimeMs)}</span>
+              <span className="persistent-panel__spawn" style={{ fontSize: `${fontSizeOffset - 2}px` }}>{formatSpawnTime(o.happenTimeMs)}</span>
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
