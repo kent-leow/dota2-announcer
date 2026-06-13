@@ -64,6 +64,9 @@ export interface ElectronAPI {
   setOverlayMode: (mode: string) => Promise<string>;
   getOverlayEventCount: () => Promise<number>;
   setOverlayEventCount: (count: number) => Promise<number>;
+  sendOverlayUpcoming: (occurrences: Array<{ eventId: string; eventName: string; happenTimeMs: number }>) => void;
+  onOverlayModeChanged: (callback: (mode: string) => void) => () => void;
+  onOverlayEventCountChanged: (callback: (count: number) => void) => () => void;
 }
 
 declare global {

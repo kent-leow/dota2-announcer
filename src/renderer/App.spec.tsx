@@ -6,6 +6,7 @@ jest.mock('src/scheduler/eventScheduler', () => ({
   onAnnouncement: jest.fn(),
   tick: jest.fn(),
   getUpcoming: jest.fn(() => []),
+  getUpcomingOccurrences: jest.fn(() => []),
   resetScheduler: jest.fn(),
 }));
 
@@ -76,6 +77,9 @@ const mockElectronAPI = {
   setOverlayMode: jest.fn((m: string) => Promise.resolve(m)),
   getOverlayEventCount: jest.fn(() => Promise.resolve(5)),
   setOverlayEventCount: jest.fn((c: number) => Promise.resolve(c)),
+  sendOverlayUpcoming: jest.fn(),
+  onOverlayModeChanged: jest.fn(() => () => {}),
+  onOverlayEventCountChanged: jest.fn(() => () => {}),
 };
 
 (window as any).electronAPI = mockElectronAPI;

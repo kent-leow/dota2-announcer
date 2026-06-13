@@ -64,4 +64,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setOverlayMode: (mode: string) => ipcRenderer.invoke('overlay:setMode', mode),
   getOverlayEventCount: () => ipcRenderer.invoke('overlay:getEventCount'),
   setOverlayEventCount: (count: number) => ipcRenderer.invoke('overlay:setEventCount', count),
+  sendOverlayUpcoming: (occurrences: Array<{ eventId: string; eventName: string; happenTimeMs: number }>) => ipcRenderer.send('overlay:sendUpcoming', occurrences),
+  onOverlayModeChanged: (callback: (mode: string) => void) => {
+    const handler = (_event: unknown, mode: string) => callback(mode);
+    ipcRenderer.on('overlay:modeChanged', handler);
+    return () => { ipcRenderer.removeListener('overlay:modeChanged', handler); };
+  },
+  onOverlayEventCountChanged: (callback: (count: number) => void) => {
+    const handler = (_event: unknown, count: number) => callback(count);
+    ipcRenderer.on('overlay:eventCountChanged', handler);
+    return () => { ipcRenderer.removeListener('overlay:eventCountChanged', handler); };
+  },
 });

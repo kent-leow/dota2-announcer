@@ -7,7 +7,6 @@ import * as gameTimer from 'src/timer/gameTimer';
 import * as muteManager from 'src/tts/muteManager';
 import * as volumeController from 'src/tts/volumeController';
 import * as eventsLoader from 'src/config/eventsLoader';
-import * as eventScheduler from 'src/scheduler/eventScheduler';
 import { readAppState, writeAppState } from 'src/tts/stateStore';
 import * as soundStore from 'src/tts/soundStore';
 import * as soundFileManager from 'src/tts/soundFileManager';
@@ -84,11 +83,6 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     const overlay = getOverlayWindow();
     if (overlay && !overlay.isDestroyed()) {
       overlay.webContents.send('overlay:tick', elapsedMs);
-      const state = readAppState();
-      if (state.overlayMode === 'persistent') {
-        const occurrences = eventScheduler.getUpcomingOccurrences(elapsedMs, state.overlayEventCount);
-        overlay.webContents.send('overlay:upcoming', occurrences);
-      }
     }
   });
 
@@ -267,6 +261,12 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     });
   });
 
+  ipcMain.on('overlay:sendUpcoming', (_event, occurrences: Array<{ eventId: string; eventName: string; happenTimeMs: number }>) => {
+    const overlay = getOverlayWindow();
+    if (!overlay || overlay.isDestroyed()) return;
+    overlay.webContents.send('overlay:upcoming', occurrences);
+  });
+
   ipcMain.handle('overlay:getPosition', () => getOverlayPosition());
   ipcMain.handle('overlay:setPosition', (_event, position: OverlayPosition) => {
     setOverlayPosition(position);
@@ -301,6 +301,10 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     if (overlay && !overlay.isDestroyed()) {
       overlay.webContents.send('overlay:mode', mode);
     }
+    const win = getWindow();
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('overlay:modeChanged', mode);
+    }
     return mode;
   });
 
@@ -312,6 +316,10 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     const overlay = getOverlayWindow();
     if (overlay && !overlay.isDestroyed()) {
       overlay.webContents.send('overlay:eventCount', state.overlayEventCount);
+    }
+    const win = getWindow();
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('overlay:eventCountChanged', state.overlayEventCount);
     }
     return state.overlayEventCount;
   });
