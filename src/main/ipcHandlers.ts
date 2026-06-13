@@ -238,6 +238,10 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
   ipcMain.handle('overlay:getPosition', () => getOverlayPosition());
   ipcMain.handle('overlay:setPosition', (_event, position: OverlayPosition) => {
     setOverlayPosition(position);
+    const overlay = getOverlayWindow();
+    if (overlay && !overlay.isDestroyed()) {
+      overlay.webContents.send('overlay:position', position);
+    }
     return position;
   });
 }

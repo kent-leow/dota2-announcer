@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-export type OverlayPosition = 'top-left' | 'top-center' | 'top-right';
+export type OverlayPosition = 'left-center' | 'right-center';
 
 export interface AppState {
   volume: number;
@@ -25,17 +25,17 @@ export function readAppState(): AppState {
   try {
     const raw = fs.readFileSync(getStatePath(), 'utf-8');
     const parsed = JSON.parse(raw);
-    const validPositions: OverlayPosition[] = ['top-left', 'top-center', 'top-right'];
+    const validPositions: OverlayPosition[] = ['left-center', 'right-center'];
     return {
       volume: typeof parsed.volume === 'number' ? parsed.volume : 100,
       muted: typeof parsed.muted === 'boolean' ? parsed.muted : false,
       includeTimeSuffix: typeof parsed.includeTimeSuffix === 'boolean' ? parsed.includeTimeSuffix : true,
       rate: typeof parsed.rate === 'number' ? parsed.rate : 1.0,
       voiceUri: typeof parsed.voiceUri === 'string' ? parsed.voiceUri : '',
-      overlayPosition: validPositions.includes(parsed.overlayPosition) ? parsed.overlayPosition : 'top-right',
+      overlayPosition: validPositions.includes(parsed.overlayPosition) ? parsed.overlayPosition : 'right-center',
     };
   } catch {
-    return { volume: 100, muted: false, includeTimeSuffix: true, rate: 1.0, voiceUri: '', overlayPosition: 'top-right' };
+    return { volume: 100, muted: false, includeTimeSuffix: true, rate: 1.0, voiceUri: '', overlayPosition: 'right-center' };
   }
 }
 

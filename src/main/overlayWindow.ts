@@ -8,15 +8,14 @@ const OVERLAY_WIDTH = 350;
 const OVERLAY_HEIGHT = 300;
 
 function computePosition(position: OverlayPosition): { x: number; y: number } {
-  const { width: screenWidth } = screen.getPrimaryDisplay().workAreaSize;
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  const y = Math.round((screenHeight - OVERLAY_HEIGHT) / 2);
   switch (position) {
-    case 'top-left':
-      return { x: 0, y: 0 };
-    case 'top-center':
-      return { x: Math.round((screenWidth - OVERLAY_WIDTH) / 2), y: 0 };
-    case 'top-right':
+    case 'left-center':
+      return { x: 0, y };
+    case 'right-center':
     default:
-      return { x: screenWidth - OVERLAY_WIDTH, y: 0 };
+      return { x: screenWidth - OVERLAY_WIDTH, y };
   }
 }
 
