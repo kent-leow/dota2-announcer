@@ -7,6 +7,7 @@ import * as gameTimer from 'src/timer/gameTimer';
 import * as muteManager from 'src/tts/muteManager';
 import * as volumeController from 'src/tts/volumeController';
 import * as eventsLoader from 'src/config/eventsLoader';
+import { eventsConfigSchema } from 'src/config/events.schema';
 import { readAppState, writeAppState, NotificationOverlayConfig, PersistentOverlayConfig } from 'src/tts/stateStore';
 import { getOverlayWindow } from './overlayWindow';
 
@@ -101,7 +102,6 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     return config;
   });
   ipcMain.handle('config:saveEvents', (_event, config: { events: unknown[] }) => {
-    const { eventsConfigSchema } = require('src/config/events.schema');
     const parsed = eventsConfigSchema.safeParse(config);
     if (!parsed.success) {
       return { success: false, error: parsed.error.message };
