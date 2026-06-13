@@ -71,6 +71,7 @@ export function MainDock() {
           announcer.speak(announcer.formatMessage(name, offset));
         }
       });
+      window.electronAPI.sendOverlayNotification({ eventName: name, offsetSeconds: offset, eventId });
     });
 
     const unsubState = window.electronAPI.onStateChange((newState) => {
