@@ -15,7 +15,7 @@ function nameToId(name: string): string {
     .replace(/^-|-$/g, '');
 }
 
-type OverlayPosition = 'top-left' | 'top-center' | 'top-right';
+type OverlayPosition = 'left-center' | 'right-center';
 
 export function TimingConfig() {
   const [events, setEvents] = useState<EditableEvent[]>([]);
@@ -25,7 +25,7 @@ export function TimingConfig() {
   const [addError, setAddError] = useState('');
   const [soundAssignments, setSoundAssignments] = useState<SoundAssignments>({});
   const [soundError, setSoundError] = useState('');
-  const [overlayPosition, setOverlayPosition] = useState<OverlayPosition>('top-right');
+  const [overlayPosition, setOverlayPosition] = useState<OverlayPosition>('right-center');
 
   useEffect(() => {
     window.electronAPI.getEvents().then((config) => {
@@ -179,7 +179,7 @@ export function TimingConfig() {
       <div className="flex items-center justify-between border-b border-dota-gold/10 pb-3">
         <span className="text-xs text-dota-grey/70">Overlay Position</span>
         <div className="flex gap-1">
-          {(['top-left', 'top-center', 'top-right'] as OverlayPosition[]).map((pos) => (
+          {(['left-center', 'right-center'] as OverlayPosition[]).map((pos) => (
             <button
               key={pos}
               onClick={() => handleOverlayPositionChange(pos)}
@@ -189,7 +189,7 @@ export function TimingConfig() {
                   : 'bg-dota-black/40 text-dota-grey/60 border border-dota-grey/20 hover:border-dota-gold/30'
               }`}
             >
-              {pos === 'top-left' ? 'Left' : pos === 'top-center' ? 'Center' : 'Right'}
+              {pos === 'left-center' ? 'Left' : 'Right'}
             </button>
           ))}
         </div>

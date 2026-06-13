@@ -1,11 +1,18 @@
 .notification-stack {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
   gap: 8px;
   padding: 12px;
   width: 100%;
   box-sizing: border-box;
+}
+
+.notification-stack--right {
+  align-items: flex-end;
+}
+
+.notification-stack--left {
+  align-items: flex-start;
 }
 
 .notification-card {
@@ -32,19 +39,35 @@
   color: #b8c0cc;
 }
 
-.notification-card--entering {
-  animation: fadeIn 300ms ease-out forwards;
+.notification-card--right {
+  text-align: right;
+}
+
+.notification-card--left {
+  text-align: left;
+}
+
+.notification-card--entering.notification-card--right {
+  animation: fadeInRight 300ms ease-out forwards;
+}
+
+.notification-card--entering.notification-card--left {
+  animation: fadeInLeft 300ms ease-out forwards;
 }
 
 .notification-card--visible {
   opacity: 1;
 }
 
-.notification-card--exiting {
-  animation: fadeOut 400ms ease-in forwards;
+.notification-card--exiting.notification-card--right {
+  animation: fadeOutRight 400ms ease-in forwards;
 }
 
-@keyframes fadeIn {
+.notification-card--exiting.notification-card--left {
+  animation: fadeOutLeft 400ms ease-in forwards;
+}
+
+@keyframes fadeInRight {
   from {
     opacity: 0;
     transform: translateX(20px);
@@ -55,7 +78,7 @@
   }
 }
 
-@keyframes fadeOut {
+@keyframes fadeOutRight {
   from {
     opacity: 1;
     transform: translateX(0);
@@ -63,5 +86,27 @@
   to {
     opacity: 0;
     transform: translateX(20px);
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeOutLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-20px);
   }
 }

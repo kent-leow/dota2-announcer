@@ -6,4 +6,10 @@ contextBridge.exposeInMainWorld('overlayAPI', {
     ipcRenderer.on('overlay:notify', handler);
     return () => { ipcRenderer.removeListener('overlay:notify', handler); };
   },
+  onPositionChange: (callback: (position: string) => void) => {
+    const handler = (_event: unknown, position: string) => callback(position);
+    ipcRenderer.on('overlay:position', handler);
+    return () => { ipcRenderer.removeListener('overlay:position', handler); };
+  },
+  getPosition: (): Promise<string> => ipcRenderer.invoke('overlay:getPosition'),
 });

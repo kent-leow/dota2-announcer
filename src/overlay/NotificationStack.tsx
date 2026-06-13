@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { NotificationCard, NotificationStatus } from './NotificationCard';
 
+type Align = 'left' | 'right';
+
 interface NotificationItem {
   id: number;
   eventName: string;
@@ -16,6 +18,7 @@ let nextId = 0;
 
 export function NotificationStack() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [align, setAlign] = useState<Align>('right');
   const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
   const scheduleTimer = useCallback((fn: () => void, delay: number) => {
@@ -50,24 +53,32 @@ export function NotificationStack() {
 
   useEffect(() => {
     if (!window.overlayAPI) return;
-    const unsub = window.overlayAPI.onNotification((payload) => {
+    window.overlayAPI.getPosition().then((pos) => {
+      setAlign(pos === 'left-center' ? 'left' : 'right');
+    });
+    const unsubNotify = window.overlayAPI.onNotification((payload) => {
       addNotification(payload.eventName, payload.offsetSeconds);
     });
+    const unsubPos = window.overlayAPI.onPositionChange((pos) => {
+      setAlign(pos === 'left-center' ? 'left' : 'right');
+    });
     return () => {
-      unsub();
+      unsubNotify();
+      unsubPos();
       timersRef.current.forEach(clearTimeout);
       timersRef.current.clear();
     };
   }, [addNotification]);
 
   return (
-    <div className="notification-stack">
+    <div className={`notification-stack notification-stack--${align}`}>
       {notifications.map((n) => (
         <NotificationCard
           key={n.id}
           eventName={n.eventName}
           offsetSeconds={n.offsetSeconds}
           status={n.status}
+          align={align}
         />
       ))}
     </div>
