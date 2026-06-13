@@ -16,6 +16,8 @@ export function MainDock() {
   const [status, setStatus] = useState<DotaState>('idle');
   const [elapsed, setElapsed] = useState<number>(0);
   const elapsedRef = useRef<number>(0);
+  const overlayModeRef = useRef<string>('notification');
+  const overlayEventCountRef = useRef<number>(5);
   const [gamePaused, setGamePaused] = useState<boolean>(false);
   const [muted, setMuted] = useState<boolean>(false);
   const [volume, setVolume] = useState<number>(100);
@@ -42,6 +44,8 @@ export function MainDock() {
     window.electronAPI.getEvents().then((config) => {
       window.electronAPI.getElapsed().then((ms) => eventScheduler.loadSchedule(config, ms));
     });
+    window.electronAPI.getOverlayMode().then((m) => { overlayModeRef.current = m; });
+    window.electronAPI.getOverlayEventCount().then((c) => { overlayEventCountRef.current = c; });
     window.electronAPI.getIncludeTimeSuffix().then((v) => {
       setTimeSuffix(v);
       announcer.setIncludeTimeSuffix(v);
@@ -92,6 +96,10 @@ export function MainDock() {
       elapsedRef.current = ms;
       setElapsed(ms);
       eventScheduler.tick(ms);
+      if (overlayModeRef.current === 'persistent') {
+        const upcoming = eventScheduler.getUpcomingOccurrences(ms, overlayEventCountRef.current);
+        window.electronAPI.sendOverlayUpcoming(upcoming);
+      }
     });
 
     const unsubPause = window.electronAPI.onPauseChange((isPaused) => {
@@ -102,11 +110,20 @@ export function MainDock() {
       window.electronAPI.getElapsed().then((ms) => eventScheduler.loadSchedule(config, ms));
     });
 
+    const unsubModeChanged = window.electronAPI.onOverlayModeChanged((mode) => {
+      overlayModeRef.current = mode;
+    });
+    const unsubEventCountChanged = window.electronAPI.onOverlayEventCountChanged((count) => {
+      overlayEventCountRef.current = count;
+    });
+
     return () => {
       unsubState();
       unsubTick();
       unsubPause();
       unsubEventsChanged();
+      unsubModeChanged();
+      unsubEventCountChanged();
     };
   }, []);
 

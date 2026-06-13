@@ -7,6 +7,7 @@ jest.mock('src/scheduler/eventScheduler', () => ({
   loadSchedule: jest.fn(),
   onAnnouncement: jest.fn(),
   tick: jest.fn(),
+  getUpcomingOccurrences: jest.fn(() => []),
   resetScheduler: jest.fn(),
 }));
 
@@ -57,9 +58,14 @@ const mockElectronAPI = {
   setIncludeTimeSuffix: jest.fn((v: boolean) => Promise.resolve(v)),
   getSoundFilePath: jest.fn((): Promise<string | null> => Promise.resolve(null)),
   sendOverlayNotification: jest.fn(),
+  sendOverlayUpcoming: jest.fn(),
   onEventsChanged: jest.fn(() => () => {}),
   getSoundDisabled: jest.fn(() => Promise.resolve({})),
   setSoundDisabled: jest.fn(() => Promise.resolve()),
+  getOverlayMode: jest.fn(() => Promise.resolve('notification')),
+  getOverlayEventCount: jest.fn(() => Promise.resolve(5)),
+  onOverlayModeChanged: jest.fn(() => () => {}),
+  onOverlayEventCountChanged: jest.fn(() => () => {}),
 };
 
 (window as any).electronAPI = mockElectronAPI;
