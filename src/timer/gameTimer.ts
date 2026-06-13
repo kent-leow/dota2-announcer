@@ -1,6 +1,6 @@
 export type TickCallback = (elapsedMs: number) => void;
 
-const TICK_INTERVAL_MS = 1000;
+const TICK_INTERVAL_MS = 250;
 
 let startTime: number | null = null;
 let elapsed: number = 0;
