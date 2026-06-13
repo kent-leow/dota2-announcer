@@ -1,17 +1,22 @@
 .notification-stack {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 12px;
-  width: 100%;
+  max-width: 350px;
   box-sizing: border-box;
 }
 
 .notification-stack--right {
+  right: 0;
   align-items: flex-end;
 }
 
 .notification-stack--left {
+  left: 0;
   align-items: flex-start;
 }
 
@@ -110,19 +115,20 @@
 }
 
 .persistent-panel {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
   padding: 12px;
-  width: 100%;
+  max-width: 350px;
   box-sizing: border-box;
 }
 
 .persistent-panel--right {
-  display: flex;
-  justify-content: flex-end;
+  right: 0;
 }
 
 .persistent-panel--left {
-  display: flex;
-  justify-content: flex-start;
+  left: 0;
 }
 
 .persistent-panel__box {
