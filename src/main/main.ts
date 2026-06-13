@@ -57,9 +57,9 @@ function createWindow(): BrowserWindow {
   });
 
   if (process.env.VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+    mainWindow.loadURL(`${process.env.VITE_DEV_SERVER_URL}src/renderer/index.html`);
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+    mainWindow.loadFile(path.join(__dirname, '../renderer/src/renderer/index.html'));
   }
 
   mainWindow.on('close', (event) => {

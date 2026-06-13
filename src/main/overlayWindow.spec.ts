@@ -52,9 +52,11 @@ describe('overlayWindow', () => {
           resizable: false,
           focusable: false,
           fullscreenable: false,
+          hasShadow: false,
           show: false,
+          backgroundColor: '#00000000',
           width: 350,
-          height: 600,
+          height: 300,
           x: 1920 - 350,
           y: 0,
         })
