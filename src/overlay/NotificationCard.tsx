@@ -13,7 +13,7 @@ interface NotificationCardProps {
 
 function computeCountdown(happenTimeMs: number | undefined, gameTimeMs: number | undefined, offsetSeconds: number): string {
   if (happenTimeMs && gameTimeMs) {
-    const remaining = Math.max(0, Math.ceil((happenTimeMs - gameTimeMs) / 1000));
+    const remaining = Math.max(0, Math.floor((happenTimeMs - gameTimeMs) / 1000));
     if (remaining === 0) return 'now';
     return `in ${remaining}s`;
   }
