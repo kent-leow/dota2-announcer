@@ -20,6 +20,7 @@ function getSynthesis(): SpeechSynthesis | null {
 
 export function formatMessage(eventName: string, offsetSeconds: number): string {
   if (!includeTimeSuffix) return eventName;
+  if (offsetSeconds === 0) return `${eventName} now`;
   return `${eventName} in ${offsetSeconds} seconds`;
 }
 

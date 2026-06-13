@@ -3,7 +3,7 @@ import { z } from 'zod';
 const positiveNumber = z.number().positive();
 
 export const warningSchema = z.object({
-  offsetSeconds: positiveNumber,
+  offsetSeconds: z.number().nonnegative(),
 });
 
 export const eventSchema = z.object({
