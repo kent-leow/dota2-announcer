@@ -64,6 +64,11 @@ function handleRequest(req: http.IncomingMessage, res: http.ServerResponse): voi
     const state = parsePayload(body);
     if (state) {
       notifyListeners(state);
+    } else if (lastState && lastState.gameState !== GAME_STATES.POST_GAME && lastState.gameState !== GAME_STATES.DISCONNECT) {
+      notifyListeners({
+        ...lastState,
+        gameState: GAME_STATES.DISCONNECT,
+      });
     }
     res.writeHead(200);
     res.end();
