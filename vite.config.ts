@@ -3,10 +3,16 @@ import electron from 'vite-plugin-electron';
 import { resolve } from 'path';
 
 export default defineConfig({
-  root: 'src/renderer',
+  root: '.',
   build: {
     outDir: resolve(__dirname, 'dist/renderer'),
     emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'src/renderer/index.html'),
+        overlay: resolve(__dirname, 'src/overlay/index.html'),
+      },
+    },
   },
   resolve: {
     alias: {

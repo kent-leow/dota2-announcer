@@ -4,7 +4,7 @@ import * as path from 'path';
 let overlayWindow: BrowserWindow | null = null;
 
 const OVERLAY_WIDTH = 350;
-const OVERLAY_HEIGHT = 600;
+const OVERLAY_HEIGHT = 300;
 
 export function createOverlayWindow(): BrowserWindow {
   const { width: screenWidth } = screen.getPrimaryDisplay().workAreaSize;
@@ -21,7 +21,9 @@ export function createOverlayWindow(): BrowserWindow {
     resizable: false,
     focusable: false,
     fullscreenable: false,
+    hasShadow: false,
     show: false,
+    backgroundColor: '#00000000',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -32,10 +34,9 @@ export function createOverlayWindow(): BrowserWindow {
   overlayWindow.setIgnoreMouseEvents(true);
 
   if (process.env.VITE_DEV_SERVER_URL) {
-    const overlayUrl = new URL('/src/overlay/index.html', process.env.VITE_DEV_SERVER_URL).href;
-    overlayWindow.loadURL(overlayUrl);
+    overlayWindow.loadURL(`${process.env.VITE_DEV_SERVER_URL}src/overlay/index.html`);
   } else {
-    overlayWindow.loadFile(path.join(__dirname, '../overlay/index.html'));
+    overlayWindow.loadFile(path.join(__dirname, '../renderer/src/overlay/index.html'));
   }
 
   overlayWindow.on('closed', () => {
