@@ -4,10 +4,6 @@ jest.mock('src/config/preferences', () => ({
   resetClosePreference: jest.fn(),
 }));
 
-jest.mock('src/config/eventsLoader', () => ({
-  reload: jest.fn(() => ({ events: [] })),
-}));
-
 const mockShowMessageBox = jest.fn();
 const mockBuildFromTemplate = jest.fn((template) => ({ items: template }));
 
@@ -32,7 +28,6 @@ describe('appMenu', () => {
   };
   const deps = {
     getWindow: () => mockWindow as any,
-    toggleOverlay: jest.fn(),
     getAppVersion: () => '1.0.0',
   };
 
@@ -47,20 +42,19 @@ describe('appMenu', () => {
     expect(labels).toEqual(['File', 'View', 'Settings', 'Help']);
   });
 
-  it('File menu contains Reload Config and Quit', () => {
+  it('File menu contains only Quit', () => {
     buildAppMenu(deps);
     const template = mockBuildFromTemplate.mock.calls[0][0];
     const fileSubmenu = template[0].submenu;
     const fileLabels = fileSubmenu.filter((i: any) => i.label).map((i: any) => i.label);
-    expect(fileLabels).toEqual(['Reload Config', 'Quit']);
+    expect(fileLabels).toEqual(['Quit']);
   });
 
-  it('View menu contains Toggle Overlay and Toggle DevTools in dev', () => {
+  it('View menu contains Toggle DevTools in dev', () => {
     buildAppMenu(deps);
     const template = mockBuildFromTemplate.mock.calls[0][0];
     const viewSubmenu = template[1].submenu;
     const viewLabels = viewSubmenu.map((i: any) => i.label);
-    expect(viewLabels).toContain('Toggle Overlay');
     expect(viewLabels).toContain('Toggle DevTools');
   });
 
@@ -82,26 +76,6 @@ describe('appMenu', () => {
     expect(mockShowMessageBox).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'Dota 2 Announcer v1.0.0' }),
     );
-  });
-
-  it('File > Reload Config reloads events and notifies renderer', () => {
-    const { reload } = require('src/config/eventsLoader');
-    buildAppMenu(deps);
-    const template = mockBuildFromTemplate.mock.calls[0][0];
-    const fileSubmenu = template[0].submenu;
-    const reloadItem = fileSubmenu.find((i: any) => i.label === 'Reload Config');
-    reloadItem.click();
-    expect(reload).toHaveBeenCalled();
-    expect(mockWindow.webContents.send).toHaveBeenCalledWith('config:eventsChanged', { events: [] });
-  });
-
-  it('View > Toggle Overlay calls toggleOverlay', () => {
-    buildAppMenu(deps);
-    const template = mockBuildFromTemplate.mock.calls[0][0];
-    const viewSubmenu = template[1].submenu;
-    const overlayItem = viewSubmenu.find((i: any) => i.label === 'Toggle Overlay');
-    overlayItem.click();
-    expect(deps.toggleOverlay).toHaveBeenCalled();
   });
 
   it('Settings > Reset Close Behavior calls resetClosePreference', () => {

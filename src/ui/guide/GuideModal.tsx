@@ -49,7 +49,6 @@ export function GuideModal({ open, onClose }: GuideModalProps) {
               <li><span className="text-white font-medium">Speech Rate</span> — Control how fast announcements are spoken</li>
               <li><span className="text-white font-medium">Voice Selection</span> — Choose from available system TTS voices</li>
               <li><span className="text-white font-medium">Time Suffix</span> — Toggle spoken time remaining in announcements</li>
-              <li><span className="text-white font-medium">Reload Config</span> — Reload event configuration from disk</li>
             </ul>
           </section>
 
@@ -76,15 +75,16 @@ export function GuideModal({ open, onClose }: GuideModalProps) {
           <section data-testid="section-overlay">
             <h3 className="text-dota-gold font-semibold mb-2">Overlay</h3>
             <p className="text-dota-grey leading-relaxed mb-2">
-              The in-game overlay displays event information on top of Dota 2. Two modes are available:
+              The in-game overlay displays event information on top of Dota 2. It activates
+              automatically when a match is detected. Two modes are available:
             </p>
             <ul className="text-dota-grey space-y-1.5 list-disc list-inside">
               <li><span className="text-white font-medium">Notification Mode</span> — Shows pop-up alerts when events are about to occur</li>
               <li><span className="text-white font-medium">Persistent Mode</span> — Shows an always-visible panel with upcoming events and countdown timers</li>
             </ul>
             <p className="text-dota-grey leading-relaxed mt-2">
-              Both modes support left/right positioning and configurable font sizes.
-              Use the Settings tab to adjust overlay behavior.
+              Enable or disable each mode from the Settings tab. Both support left/right
+              positioning and configurable font sizes.
             </p>
           </section>
 
