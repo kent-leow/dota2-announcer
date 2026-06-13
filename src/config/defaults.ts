@@ -71,6 +71,20 @@ export const DEFAULT_EVENTS: EventsConfig = {
       spawnTime: 900,
       warnings: [{ offsetSeconds: 30 }],
     },
+    {
+      id: 'siege-creep',
+      name: 'Siege Creep',
+      spawnTime: 300,
+      repeatEvery: 300,
+      warnings: [{ offsetSeconds: 0 }],
+    },
+    {
+      id: 'flagbearer-creep',
+      name: 'Flagbearer Creep',
+      spawnTime: 120,
+      repeatEvery: 60,
+      warnings: [{ offsetSeconds: 0 }],
+    },
   ],
 };
 
@@ -85,4 +99,6 @@ export const EVENT_GROUP_IDS = [
   'neutral-camp',
   'tormentor',
   'aghanim-shard',
+  'siege-creep',
+  'flagbearer-creep',
 ] as const;

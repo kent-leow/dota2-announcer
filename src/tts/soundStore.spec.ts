@@ -60,9 +60,9 @@ describe('soundStore', () => {
   });
 
   it('removeSound on event with no default returns null', () => {
-    assignSound('tormentor', { type: 'custom', filename: 'custom.mp3' });
-    removeSound('tormentor');
-    expect(getSoundForEvent('tormentor')).toBeNull();
+    assignSound('custom-event', { type: 'custom', filename: 'custom.mp3' });
+    removeSound('custom-event');
+    expect(getSoundForEvent('custom-event')).toBeNull();
   });
 
   it('getSoundForEvent returns default for known event with no custom', () => {
@@ -78,14 +78,17 @@ describe('soundStore', () => {
     expect(readSoundAssignments()).toEqual({});
   });
 
-  it('getDefaultSoundMap returns bundled mappings for known events', () => {
+  it('getDefaultSoundMap returns bundled mappings for all default events', () => {
     const defaults = getDefaultSoundMap();
-    expect(defaults['bounty-rune']).toEqual({ type: 'bundled', filename: 'bounty-rune.wav' });
-    expect(defaults['lotus-rune']).toEqual({ type: 'bundled', filename: 'lotus-rune.wav' });
-    expect(defaults['power-rune']).toEqual({ type: 'bundled', filename: 'power-rune.wav' });
-    expect(defaults['neutral-camp']).toEqual({ type: 'bundled', filename: 'neutral-camp.wav' });
-    expect(defaults['night']).toEqual({ type: 'bundled', filename: 'night.wav' });
-    expect(defaults['water-rune']).toEqual({ type: 'bundled', filename: 'water-rune.wav' });
-    expect(defaults['wisdom-rune']).toEqual({ type: 'bundled', filename: 'wisdom-rune.wav' });
+    const expectedIds = [
+      'bounty-rune', 'water-rune', 'power-rune', 'wisdom-rune', 'lotus-rune',
+      'night', 'day', 'neutral-camp', 'tormentor', 'aghanim-shard',
+      'siege-creep', 'flagbearer-creep',
+    ];
+    for (const id of expectedIds) {
+      expect(defaults[id]).toBeDefined();
+      expect(defaults[id].type).toBe('bundled');
+    }
+    expect(Object.keys(defaults)).toHaveLength(expectedIds.length);
   });
 });

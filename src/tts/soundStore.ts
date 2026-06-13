@@ -51,12 +51,17 @@ export function removeSound(eventId: string): void {
 
 const DEFAULT_SOUND_MAP: SoundAssignments = {
   'bounty-rune': { type: 'bundled', filename: 'bounty-rune.wav' },
-  'lotus-rune': { type: 'bundled', filename: 'lotus-rune.wav' },
-  'power-rune': { type: 'bundled', filename: 'power-rune.wav' },
-  'neutral-camp': { type: 'bundled', filename: 'neutral-camp.wav' },
-  'night': { type: 'bundled', filename: 'night.wav' },
   'water-rune': { type: 'bundled', filename: 'water-rune.wav' },
+  'power-rune': { type: 'bundled', filename: 'power-rune.wav' },
   'wisdom-rune': { type: 'bundled', filename: 'wisdom-rune.wav' },
+  'lotus-rune': { type: 'bundled', filename: 'lotus-rune.wav' },
+  'night': { type: 'bundled', filename: 'night.wav' },
+  'day': { type: 'bundled', filename: 'day.wav' },
+  'neutral-camp': { type: 'bundled', filename: 'neutral-camp.wav' },
+  'tormentor': { type: 'bundled', filename: 'tormentor.wav' },
+  'aghanim-shard': { type: 'bundled', filename: 'aghanim-shard.wav' },
+  'siege-creep': { type: 'bundled', filename: 'siege-creep.wav' },
+  'flagbearer-creep': { type: 'bundled', filename: 'flagbearer-creep.wav' },
 };
 
 export function getDefaultSoundMap(): SoundAssignments {
