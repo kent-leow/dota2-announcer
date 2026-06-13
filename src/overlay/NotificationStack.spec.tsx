@@ -133,10 +133,10 @@ describe('NotificationStack', () => {
     expect(screen.getByText('in 30s')).toBeInTheDocument();
   });
 
-  it('applies topOffset as shifted top position', () => {
+  it('applies topOffset as shifted top position below persistent', () => {
     const { container } = render(<NotificationStack {...defaultProps} topOffset={150} />);
     const stack = container.querySelector('.notification-stack');
-    expect(stack).toHaveStyle({ top: 'calc(50% + 75px)' });
+    expect(stack).toHaveStyle({ top: 'calc(50% + 83px)', transform: 'none' });
   });
 
   it('uses position prop for alignment class', () => {

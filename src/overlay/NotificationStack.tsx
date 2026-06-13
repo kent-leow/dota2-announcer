@@ -75,7 +75,7 @@ export function NotificationStack({ position, fontSize, topOffset }: Notificatio
   }, [addNotification]);
 
   const style = topOffset > 0
-    ? { top: `calc(50% + ${topOffset / 2}px)` }
+    ? { top: `calc(50% + ${topOffset / 2 + 8}px)`, transform: 'none' }
     : undefined;
 
   return (
