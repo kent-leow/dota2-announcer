@@ -74,10 +74,14 @@ export function NotificationStack({ position, fontSize, topOffset }: Notificatio
     };
   }, [addNotification]);
 
+  const style = topOffset > 0
+    ? { top: `calc(50% + ${topOffset / 2}px)` }
+    : undefined;
+
   return (
     <div
       className={`notification-stack notification-stack--${position}`}
-      style={{ marginTop: `${topOffset}px` }}
+      style={style}
     >
       {notifications.map((n) => (
         <NotificationCard

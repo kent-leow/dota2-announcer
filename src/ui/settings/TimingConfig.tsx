@@ -16,7 +16,6 @@ import { NotificationOverlayConfig, PersistentOverlayConfig, OverlayPosition } f
 
 export function TimingConfig() {
   const [events, setEvents] = useState<EditableEvent[]>([]);
-  const [dirty, setDirty] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState('');
   const [addError, setAddError] = useState('');
@@ -31,6 +30,14 @@ export function TimingConfig() {
     window.electronAPI.getPersistentConfig().then(setPersistConfig);
   }, []);
 
+  const persistEvents = useCallback((updated: EditableEvent[]) => {
+    const enabledEvents = updated.filter((e) => e.enabled);
+    const config: EventsConfig = {
+      events: enabledEvents.map(({ enabled: _e, ...rest }) => rest),
+    };
+    window.electronAPI.saveEvents(config);
+  }, []);
+
   const handleWarningChange = useCallback((eventIdx: number, value: string) => {
     setEvents((prev) => {
       const updated = [...prev];
@@ -39,53 +46,56 @@ export function TimingConfig() {
         ...updated[eventIdx],
         warnings: parts.map((p) => ({ offsetSeconds: Math.max(1, Number(p) || 1) })),
       };
+      persistEvents(updated);
       return updated;
     });
-    setDirty(true);
-  }, []);
+  }, [persistEvents]);
 
   const handleSpawnTimeChange = useCallback((eventIdx: number, value: string) => {
     setEvents((prev) => {
       const updated = [...prev];
       updated[eventIdx] = { ...updated[eventIdx], spawnTime: Math.max(0, Number(value) || 0) };
+      persistEvents(updated);
       return updated;
     });
-    setDirty(true);
-  }, []);
+  }, [persistEvents]);
 
   const handleRepeatChange = useCallback((eventIdx: number, value: string) => {
     setEvents((prev) => {
       const updated = [...prev];
       const numVal = Number(value) || 0;
       updated[eventIdx] = { ...updated[eventIdx], repeatEvery: numVal > 0 ? numVal : undefined };
+      persistEvents(updated);
       return updated;
     });
-    setDirty(true);
-  }, []);
+  }, [persistEvents]);
 
   const handleMaxOccurrencesChange = useCallback((eventIdx: number, value: string) => {
     setEvents((prev) => {
       const updated = [...prev];
       const numVal = parseInt(value, 10);
       updated[eventIdx] = { ...updated[eventIdx], maxOccurrences: numVal > 0 ? numVal : undefined };
+      persistEvents(updated);
       return updated;
     });
-    setDirty(true);
-  }, []);
+  }, [persistEvents]);
 
   const handleToggleEvent = useCallback((eventIdx: number) => {
     setEvents((prev) => {
       const updated = [...prev];
       updated[eventIdx] = { ...updated[eventIdx], enabled: !updated[eventIdx].enabled };
+      persistEvents(updated);
       return updated;
     });
-    setDirty(true);
-  }, []);
+  }, [persistEvents]);
 
   const handleRemoveEvent = useCallback((eventIdx: number) => {
-    setEvents((prev) => prev.filter((_, i) => i !== eventIdx));
-    setDirty(true);
-  }, []);
+    setEvents((prev) => {
+      const updated = prev.filter((_, i) => i !== eventIdx);
+      persistEvents(updated);
+      return updated;
+    });
+  }, [persistEvents]);
 
   const handleAddEvent = useCallback(() => {
     setAddError('');
@@ -110,27 +120,18 @@ export function TimingConfig() {
       enabled: true,
       warnings: [{ offsetSeconds: 30 }],
     };
-    setEvents((prev) => [...prev, newEvent]);
+    setEvents((prev) => {
+      const updated = [...prev, newEvent];
+      persistEvents(updated);
+      return updated;
+    });
     setNewName('');
     setShowAdd(false);
-    setDirty(true);
-  }, [newName, events]);
-
-  const handleApply = useCallback(async () => {
-    const enabledEvents = events.filter((e) => e.enabled);
-    const config: EventsConfig = {
-      events: enabledEvents.map(({ enabled: _e, ...rest }) => rest),
-    };
-    const result = await window.electronAPI.saveEvents(config);
-    if (result.success) {
-      setDirty(false);
-    }
-  }, [events]);
+  }, [newName, events, persistEvents]);
 
   const handleReload = useCallback(() => {
     window.electronAPI.reloadEvents().then((config) => {
       setEvents(config.events.map((e) => ({ ...e, enabled: true })));
-      setDirty(false);
     });
   }, []);
 
@@ -273,13 +274,6 @@ export function TimingConfig() {
             className="px-3 py-1.5 rounded text-xs font-medium bg-dota-gold/20 text-dota-gold border border-dota-gold/40 hover:bg-dota-gold/30 transition-colors"
           >
             Reset Defaults
-          </button>
-          <button
-            onClick={handleApply}
-            disabled={!dirty}
-            className="px-3 py-1.5 rounded text-xs font-medium bg-dota-green/20 text-dota-green border border-dota-green/40 hover:bg-dota-green/30 transition-colors disabled:opacity-40"
-          >
-            Apply & Save
           </button>
         </div>
       </div>
