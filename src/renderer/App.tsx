@@ -14,7 +14,7 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-dota-black text-dota-grey flex flex-col">
-      <header className="bg-dota-dark border-b border-dota-gold/30 px-4 py-3 flex items-center justify-between">
+      <header className="bg-dota-dark border-b border-dota-gold/30 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
         <h1 className="text-dota-gold text-lg font-bold tracking-wide">Dota 2 Announcer</h1>
         <div className="flex items-center gap-2">
           <nav className="flex gap-1">

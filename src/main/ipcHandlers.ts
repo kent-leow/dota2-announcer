@@ -172,7 +172,11 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     return last !== null;
   });
 
-  ipcMain.handle('sound:getAssignments', () => soundStore.readSoundAssignments());
+  ipcMain.handle('sound:getAssignments', () => {
+    const defaults = soundStore.getDefaultSoundMap();
+    const custom = soundStore.readSoundAssignments();
+    return { ...defaults, ...custom };
+  });
 
   ipcMain.handle('sound:assign', (_event, eventId: string, filePath: string) => {
     const validation = soundFileManager.validateAudioFile(filePath);
