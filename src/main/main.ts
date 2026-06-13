@@ -1,12 +1,14 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage } from 'electron';
+import { app, BrowserWindow, Tray, Menu, nativeImage, dialog } from 'electron';
 import * as path from 'path';
 import { registerIpcHandlers } from './ipcHandlers';
 import { loadEvents } from 'src/config/eventsLoader';
 import { loadMuteState } from 'src/tts/muteManager';
 import { loadVolume } from 'src/tts/volumeController';
-import { createOverlayWindow, showOverlay, hideOverlay, destroyOverlay } from './overlayWindow';
+import { createOverlayWindow, showOverlay, hideOverlay, destroyOverlay, getOverlayWindow } from './overlayWindow';
 import * as matchStateManager from 'src/dota/matchStateManager';
 import { readAppState } from 'src/tts/stateStore';
+import { buildAppMenu } from './appMenu';
+import { loadPreferences, savePreferences } from 'src/config/preferences';
 
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
 app.commandLine.appendSwitch('disk-cache-dir', path.join(app.getPath('userData'), 'Cache'));
@@ -64,10 +66,43 @@ function createWindow(): BrowserWindow {
   }
 
   mainWindow.on('close', (event) => {
-    if (!isQuitting) {
-      event.preventDefault();
+    if (isQuitting) return;
+    event.preventDefault();
+
+    const prefs = loadPreferences();
+    if (prefs.closeBehavior === 'minimize') {
       mainWindow?.hide();
+      return;
     }
+    if (prefs.closeBehavior === 'quit') {
+      isQuitting = true;
+      app.quit();
+      return;
+    }
+
+    dialog.showMessageBox(mainWindow!, {
+      type: 'question',
+      title: 'Close Application',
+      message: 'What would you like to do?',
+      buttons: ['Minimize to Tray', 'Quit'],
+      defaultId: 0,
+      cancelId: 0,
+      checkboxLabel: "Don't ask me again",
+      checkboxChecked: false,
+    }).then(({ response, checkboxChecked }) => {
+      if (response === 0) {
+        if (checkboxChecked) {
+          savePreferences({ closeBehavior: 'minimize' });
+        }
+        mainWindow?.hide();
+      } else {
+        if (checkboxChecked) {
+          savePreferences({ closeBehavior: 'quit' });
+        }
+        isQuitting = true;
+        app.quit();
+      }
+    });
   });
 
   mainWindow.on('closed', () => {
@@ -110,6 +145,19 @@ function createTray(): void {
   tray.on('click', () => mainWindow?.show());
 }
 
+let overlayVisible = false;
+
+function toggleOverlay(): void {
+  const overlay = getOverlayWindow();
+  if (!overlay || overlay.isDestroyed()) return;
+  if (overlayVisible) {
+    hideOverlay();
+  } else {
+    showOverlay();
+  }
+  overlayVisible = !overlayVisible;
+}
+
 app.whenReady().then(() => {
   loadEvents();
   loadMuteState();
@@ -118,6 +166,13 @@ app.whenReady().then(() => {
   createWindow();
   createTray();
   createOverlayWindow();
+
+  const menu = buildAppMenu({
+    getWindow: () => mainWindow,
+    toggleOverlay,
+    getAppVersion: () => app.getVersion(),
+  });
+  Menu.setApplicationMenu(menu);
 
   matchStateManager.onPhaseChange((phase) => {
     if (phase === 'in-match') {

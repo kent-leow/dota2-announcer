@@ -39,7 +39,8 @@ jest.mock('electron', () => {
     },
     BrowserWindow: mockBrowserWindow,
     Tray: mockTray,
-    Menu: { buildFromTemplate: jest.fn().mockReturnValue({}) },
+    Menu: { buildFromTemplate: jest.fn().mockReturnValue({}), setApplicationMenu: jest.fn() },
+    dialog: { showMessageBox: jest.fn().mockResolvedValue({ response: 0, checkboxChecked: false }) },
     nativeImage: {
       createEmpty: jest.fn().mockReturnValue({ isEmpty: () => true }),
       createFromPath: jest.fn().mockReturnValue({ isEmpty: () => true }),
@@ -112,6 +113,16 @@ jest.mock('./overlayWindow', () => ({
   hideOverlay: mockHideOverlay,
   destroyOverlay: mockDestroyOverlay,
   getOverlayWindow: jest.fn(),
+}));
+
+jest.mock('./appMenu', () => ({
+  buildAppMenu: jest.fn().mockReturnValue({}),
+}));
+
+jest.mock('src/config/preferences', () => ({
+  loadPreferences: jest.fn(() => ({ closeBehavior: 'ask' })),
+  savePreferences: jest.fn(),
+  resetClosePreference: jest.fn(),
 }));
 
 describe('main process', () => {

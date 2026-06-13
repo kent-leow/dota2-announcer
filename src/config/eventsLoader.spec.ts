@@ -1,6 +1,5 @@
 import * as fs from 'fs';
-import * as path from 'path';
-import { loadEvents, reload, getEvents } from './eventsLoader';
+import { loadEvents, reload, getEvents, saveEvents } from './eventsLoader';
 import { DEFAULT_EVENTS } from './defaults';
 
 jest.mock('fs');
@@ -21,6 +20,7 @@ describe('eventsLoader', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedFs.existsSync.mockReturnValue(true);
   });
 
   it('loads valid config from disk', () => {
@@ -46,13 +46,42 @@ describe('eventsLoader', () => {
     expect(result).toEqual(DEFAULT_EVENTS);
   });
 
-  it('falls back to defaults when file does not exist', () => {
+  it('falls back to defaults when file does not exist and no bundled fallback', () => {
+    mockedFs.existsSync.mockReturnValue(false);
     mockedFs.readFileSync.mockImplementation(() => {
       throw new Error('ENOENT');
     });
     const result = loadEvents('/fake/path.json');
 
     expect(result).toEqual(DEFAULT_EVENTS);
+  });
+
+  it('copies bundled config on first run when userData file missing', () => {
+    mockedFs.existsSync.mockImplementation((p) => {
+      if (p === '/userData/config/events.json') return false;
+      if (p === '/bundled/config/events.json') return true;
+      if (p === '/userData/config') return false;
+      return false;
+    });
+    mockedFs.mkdirSync.mockReturnValue(undefined);
+    mockedFs.copyFileSync.mockReturnValue(undefined);
+    mockedFs.readFileSync.mockReturnValue(JSON.stringify(validConfig));
+
+    jest.doMock('electron', () => ({
+      app: {
+        getPath: (key: string) => key === 'userData' ? '/userData' : '/userData',
+        getAppPath: () => '/bundled',
+      },
+    }));
+
+    const eventsLoader = require('./eventsLoader');
+    const result = eventsLoader.loadEvents('/userData/config/events.json');
+
+    expect(mockedFs.copyFileSync).toHaveBeenCalledWith(
+      '/bundled/config/events.json',
+      '/userData/config/events.json',
+    );
+    expect(result.events[0].id).toBe('test-event');
   });
 
   it('reload fetches fresh disk state', () => {
@@ -86,5 +115,27 @@ describe('eventsLoader', () => {
     const result = loadEvents('/fake/path.json');
 
     expect(result).toEqual(DEFAULT_EVENTS);
+  });
+
+  it('saveEvents writes to specified path', () => {
+    mockedFs.writeFileSync.mockReturnValue(undefined);
+    const result = saveEvents(validConfig as any, '/fake/output.json');
+
+    expect(mockedFs.writeFileSync).toHaveBeenCalledWith(
+      '/fake/output.json',
+      JSON.stringify(validConfig, null, 2),
+      'utf-8',
+    );
+    expect(result.events[0].id).toBe('test-event');
+  });
+
+  it('saveEvents creates directory if missing', () => {
+    mockedFs.existsSync.mockReturnValue(false);
+    mockedFs.mkdirSync.mockReturnValue(undefined);
+    mockedFs.writeFileSync.mockReturnValue(undefined);
+
+    saveEvents(validConfig as any, '/new/dir/events.json');
+
+    expect(mockedFs.mkdirSync).toHaveBeenCalledWith('/new/dir', { recursive: true });
   });
 });

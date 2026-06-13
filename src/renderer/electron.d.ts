@@ -39,6 +39,7 @@ export interface OverlayConfig {
 }
 
 export interface ElectronAPI {
+  onMenuOpenGuide: (callback: () => void) => () => void;
   getState: () => Promise<string>;
   getElapsed: () => Promise<number>;
   isPaused: () => Promise<boolean>;

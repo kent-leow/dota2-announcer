@@ -19,7 +19,10 @@ describe('GuideModal', () => {
     expect(screen.getByTestId('section-overview')).toBeInTheDocument();
     expect(screen.getByTestId('section-controls')).toBeInTheDocument();
     expect(screen.getByTestId('section-hotkeys')).toBeInTheDocument();
+    expect(screen.getByTestId('section-overlay')).toBeInTheDocument();
     expect(screen.getByTestId('section-config')).toBeInTheDocument();
+    expect(screen.getByTestId('section-gsi')).toBeInTheDocument();
+    expect(screen.getByTestId('section-tray')).toBeInTheDocument();
   });
 
   it('close button calls onClose', () => {
