@@ -4,10 +4,9 @@ import { UpcomingEvents } from 'src/ui/main/UpcomingEvents';
 import { GsiStatus } from 'src/ui/main/GsiStatus';
 import { GameStatusPanel } from 'src/ui/main/GameStatusPanel';
 import { TimingConfig } from 'src/ui/settings/TimingConfig';
-import { SoundConfig } from 'src/ui/settings/SoundConfig';
 import { GuideModal } from 'src/ui/guide/GuideModal';
 
-type Tab = 'main' | 'settings' | 'sounds';
+type Tab = 'main' | 'settings';
 
 export function App() {
   const [guideOpen, setGuideOpen] = useState(false);
@@ -39,16 +38,6 @@ export function App() {
             >
               Settings
             </button>
-            <button
-              onClick={() => setActiveTab('sounds')}
-              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                activeTab === 'sounds'
-                  ? 'bg-dota-gold/20 text-dota-gold'
-                  : 'text-dota-grey/60 hover:text-dota-grey'
-              }`}
-            >
-              Sounds
-            </button>
           </nav>
           <button
             data-testid="help-button"
@@ -75,9 +64,6 @@ export function App() {
         )}
         {activeTab === 'settings' && (
           <TimingConfig />
-        )}
-        {activeTab === 'sounds' && (
-          <SoundConfig />
         )}
       </main>
 
