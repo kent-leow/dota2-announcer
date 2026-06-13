@@ -99,7 +99,13 @@ export function MainDock() {
     });
 
     const unsubEventsChanged = window.electronAPI.onEventsChanged((config) => {
-      window.electronAPI.getElapsed().then((ms) => eventScheduler.loadSchedule(config, ms));
+      window.electronAPI.getElapsed().then((ms) => {
+        eventScheduler.loadSchedule(config, ms);
+        if (persistentEnabledRef.current) {
+          const upcoming = eventScheduler.getUpcomingOccurrences(ms, persistentEventCountRef.current);
+          window.electronAPI.sendOverlayUpcoming(upcoming);
+        }
+      });
     });
 
     const unsubOverlayConfig = window.electronAPI.onOverlayConfigChanged((config) => {
