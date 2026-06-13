@@ -58,7 +58,7 @@ describe('overlayWindow', () => {
           width: 350,
           height: 300,
           x: 1920 - 350,
-          y: 0,
+          y: Math.round((1080 - 300) / 2),
         })
       );
     });
