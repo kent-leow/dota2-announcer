@@ -32,9 +32,10 @@ export function GuideModal({ open, onClose }: GuideModalProps) {
           <section data-testid="section-overview">
             <h3 className="text-dota-gold font-semibold mb-2">Overview</h3>
             <p className="text-dota-grey leading-relaxed">
-              Dota 2 Announcer automatically detects when Dota 2 is running and announces upcoming
-              game events via text-to-speech. It tracks the game timer and fires voice warnings
-              before key events like rune spawns, neutral camp respawns, and day/night transitions.
+              Dota 2 Announcer detects when Dota 2 is running via Game State Integration (GSI)
+              and announces upcoming game events via text-to-speech. It provides an in-game overlay
+              showing event timers and fires voice warnings before key events like rune spawns,
+              neutral camp respawns, and day/night transitions.
             </p>
           </section>
 
@@ -45,7 +46,9 @@ export function GuideModal({ open, onClose }: GuideModalProps) {
             <ul className="text-dota-grey space-y-1.5 list-disc list-inside">
               <li><span className="text-white font-medium">Mute/Unmute</span> — Toggle voice announcements on or off</li>
               <li><span className="text-white font-medium">Volume Slider</span> — Adjust announcement volume (0–100%)</li>
-              <li><span className="text-white font-medium">Start/Stop</span> — Enable or disable the announcer</li>
+              <li><span className="text-white font-medium">Speech Rate</span> — Control how fast announcements are spoken</li>
+              <li><span className="text-white font-medium">Voice Selection</span> — Choose from available system TTS voices</li>
+              <li><span className="text-white font-medium">Time Suffix</span> — Toggle spoken time remaining in announcements</li>
               <li><span className="text-white font-medium">Reload Config</span> — Reload event configuration from disk</li>
             </ul>
           </section>
@@ -70,19 +73,60 @@ export function GuideModal({ open, onClose }: GuideModalProps) {
 
           <hr className="border-dota-gold/10" />
 
+          <section data-testid="section-overlay">
+            <h3 className="text-dota-gold font-semibold mb-2">Overlay</h3>
+            <p className="text-dota-grey leading-relaxed mb-2">
+              The in-game overlay displays event information on top of Dota 2. Two modes are available:
+            </p>
+            <ul className="text-dota-grey space-y-1.5 list-disc list-inside">
+              <li><span className="text-white font-medium">Notification Mode</span> — Shows pop-up alerts when events are about to occur</li>
+              <li><span className="text-white font-medium">Persistent Mode</span> — Shows an always-visible panel with upcoming events and countdown timers</li>
+            </ul>
+            <p className="text-dota-grey leading-relaxed mt-2">
+              Both modes support left/right positioning and configurable font sizes.
+              Use the Settings tab to adjust overlay behavior.
+            </p>
+          </section>
+
+          <hr className="border-dota-gold/10" />
+
           <section data-testid="section-config">
             <h3 className="text-dota-gold font-semibold mb-2">Event Configuration</h3>
             <p className="text-dota-grey leading-relaxed mb-2">
-              Events are defined in <code className="text-dota-amber bg-dota-black/40 px-1 rounded">config/events.json</code>.
-              Each event has the following fields:
+              Events can be configured directly in the Settings tab. Each event has:
             </p>
             <ul className="text-dota-grey space-y-1 list-disc list-inside">
-              <li><code className="text-dota-amber">id</code> — Unique identifier</li>
-              <li><code className="text-dota-amber">name</code> — Display name spoken in announcements</li>
-              <li><code className="text-dota-amber">spawnTime</code> — Seconds into the game when the event first occurs</li>
-              <li><code className="text-dota-amber">repeatEvery</code> — (Optional) Seconds between repetitions</li>
-              <li><code className="text-dota-amber">warnings</code> — Array of offsets (in seconds) before spawn to announce</li>
+              <li><code className="text-dota-amber">Name</code> — Display name spoken in announcements</li>
+              <li><code className="text-dota-amber">Spawn Time</code> — Seconds into the game when the event first occurs</li>
+              <li><code className="text-dota-amber">Repeat Every</code> — (Optional) Seconds between repetitions</li>
+              <li><code className="text-dota-amber">Warnings</code> — Seconds before spawn to announce (can have multiple)</li>
+              <li><code className="text-dota-amber">Sound</code> — Optional custom sound effect per event</li>
             </ul>
+            <p className="text-dota-grey leading-relaxed mt-2">
+              You can add, remove, and reorder events. Changes are saved automatically.
+            </p>
+          </section>
+
+          <hr className="border-dota-gold/10" />
+
+          <section data-testid="section-gsi">
+            <h3 className="text-dota-gold font-semibold mb-2">GSI Setup</h3>
+            <p className="text-dota-grey leading-relaxed">
+              Game State Integration connects the app to Dota 2. Use the GSI panel to install
+              or uninstall the integration file automatically. When connected, the app detects
+              match start/end, game clock, and day/night state from Dota 2 in real time.
+            </p>
+          </section>
+
+          <hr className="border-dota-gold/10" />
+
+          <section data-testid="section-tray">
+            <h3 className="text-dota-gold font-semibold mb-2">System Tray</h3>
+            <p className="text-dota-grey leading-relaxed">
+              Closing the window minimizes the app to the system tray by default.
+              You can choose your preferred close behavior when prompted, or reset it
+              from the Settings menu. Right-click the tray icon to show the window or quit.
+            </p>
           </section>
         </div>
       </div>

@@ -1,6 +1,11 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  onMenuOpenGuide: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on('menu:openGuide', handler);
+    return () => { ipcRenderer.removeListener('menu:openGuide', handler); };
+  },
   getState: () => ipcRenderer.invoke('dota:getState'),
   getElapsed: () => ipcRenderer.invoke('dota:getElapsed'),
   isPaused: () => ipcRenderer.invoke('dota:isPaused'),

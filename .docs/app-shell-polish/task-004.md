@@ -10,14 +10,14 @@ Update the GuideModal content to accurately reflect all current application feat
 
 ### UI Layer
 
-- [ ] `src/ui/guide/GuideModal.tsx` — Rewrite content sections to cover: Overview (with overlay mention), Controls (mute, volume, rate, voice selection, time suffix toggle), Hotkeys (current bindings), Overlay Settings (notification mode, persistent mode, position, font size, event count), Event Configuration (UI-based editing, timing, sounds, enable/disable), GSI Setup (install/uninstall integration), Close-to-Tray behavior
-  - [ ] `src/ui/guide/GuideModal.spec.tsx` — Test: all section headings render; modal opens/closes correctly; content mentions overlay, GSI, and event configuration sections
+- [x] `src/ui/guide/GuideModal.tsx` — Rewrite content sections to cover: Overview (with overlay mention), Controls (mute, volume, rate, voice selection, time suffix toggle), Hotkeys (current bindings), Overlay Settings (notification mode, persistent mode, position, font size, event count), Event Configuration (UI-based editing, timing, sounds, enable/disable), GSI Setup (install/uninstall integration), Close-to-Tray behavior
+  - [x] `src/ui/guide/GuideModal.spec.tsx` — Test: all section headings render; modal opens/closes correctly; content mentions overlay, GSI, and event configuration sections
 
 ## Done When
-- [ ] User Guide accurately describes all current features
-- [ ] No references to outdated config/events.json manual editing as primary method
-- [ ] Overlay modes (notification + persistent) documented
-- [ ] GSI integration mentioned
-- [ ] Sound settings (voice, rate, volume) documented
-- [ ] All new and modified tests pass
-- [ ] No existing tests broken
+- [x] User Guide accurately describes all current features <!-- verified 2026-06-14 -->
+- [x] No references to outdated config/events.json manual editing as primary method <!-- verified 2026-06-14 -->
+- [x] Overlay modes (notification + persistent) documented <!-- verified 2026-06-14 -->
+- [x] GSI integration mentioned <!-- verified 2026-06-14 -->
+- [x] Sound settings (voice, rate, volume) documented <!-- verified 2026-06-14 -->
+- [x] All new and modified tests pass <!-- verified 2026-06-14 -->
+- [x] No existing tests broken <!-- verified 2026-06-14 -->
