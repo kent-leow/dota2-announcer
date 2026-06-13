@@ -123,7 +123,6 @@ export function getUpcoming(elapsedMs: number, limit: number = 10): UpcomingEven
 }
 
 export function getUpcomingOccurrences(elapsedMs: number, limit: number = 5): UpcomingOccurrence[] {
-  const seen = new Set<string>();
   const occurrences: UpcomingOccurrence[] = [];
 
   for (const event of currentEvents) {
@@ -132,27 +131,16 @@ export function getUpcomingOccurrences(elapsedMs: number, limit: number = 5): Up
     if (event.repeatEvery) {
       const repeatMs = event.repeatEvery * 1000;
       const maxOcc = event.maxOccurrences ?? Infinity;
-      let occurrence = spawnTimeMs;
-      let count = 0;
-      while (count < maxOcc) {
-        if (occurrence > elapsedMs) {
-          const key = `${event.id}:${occurrence}`;
-          if (!seen.has(key)) {
-            seen.add(key);
-            occurrences.push({ eventId: event.id, eventName: event.name, happenTimeMs: occurrence });
-          }
-        }
-        occurrence += repeatMs;
-        count++;
-        if (occurrences.length >= limit * currentEvents.length) break;
+      const periodsElapsed = elapsedMs > spawnTimeMs
+        ? Math.ceil((elapsedMs - spawnTimeMs) / repeatMs)
+        : 0;
+      if (periodsElapsed < maxOcc) {
+        const nextOccurrence = spawnTimeMs + periodsElapsed * repeatMs;
+        occurrences.push({ eventId: event.id, eventName: event.name, happenTimeMs: nextOccurrence });
       }
     } else {
       if (spawnTimeMs > elapsedMs) {
-        const key = `${event.id}:${spawnTimeMs}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          occurrences.push({ eventId: event.id, eventName: event.name, happenTimeMs: spawnTimeMs });
-        }
+        occurrences.push({ eventId: event.id, eventName: event.name, happenTimeMs: spawnTimeMs });
       }
     }
   }

@@ -283,10 +283,13 @@ describe('eventScheduler', () => {
       expect(occ[0].happenTimeMs).toBe(120000);
     });
 
-    it('respects limit parameter', () => {
+    it('respects limit with multiple events', () => {
       const config: EventsConfig = {
         events: [
-          { id: 'a', name: 'A', spawnTime: 60, repeatEvery: 60, warnings: [{ offsetSeconds: 10 }] },
+          { id: 'a', name: 'A', spawnTime: 60, warnings: [{ offsetSeconds: 10 }] },
+          { id: 'b', name: 'B', spawnTime: 90, warnings: [{ offsetSeconds: 10 }] },
+          { id: 'c', name: 'C', spawnTime: 120, warnings: [{ offsetSeconds: 10 }] },
+          { id: 'd', name: 'D', spawnTime: 150, warnings: [{ offsetSeconds: 10 }] },
         ],
       };
       loadSchedule(config);
@@ -307,7 +310,7 @@ describe('eventScheduler', () => {
       expect(occ[0].eventName).toBe('Future');
     });
 
-    it('handles repeating events producing multiple future entries', () => {
+    it('shows only next occurrence per repeating event', () => {
       const config: EventsConfig = {
         events: [
           { id: 'bounty', name: 'Bounty', spawnTime: 180, repeatEvery: 180, warnings: [{ offsetSeconds: 30 }] },
@@ -315,10 +318,20 @@ describe('eventScheduler', () => {
       };
       loadSchedule(config);
       const occ = getUpcomingOccurrences(0, 5);
-      expect(occ.length).toBe(5);
+      expect(occ.length).toBe(1);
       expect(occ[0].happenTimeMs).toBe(180000);
-      expect(occ[1].happenTimeMs).toBe(360000);
-      expect(occ[2].happenTimeMs).toBe(540000);
+    });
+
+    it('shows next occurrence after mid-game join', () => {
+      const config: EventsConfig = {
+        events: [
+          { id: 'bounty', name: 'Bounty', spawnTime: 180, repeatEvery: 180, warnings: [{ offsetSeconds: 30 }] },
+        ],
+      };
+      loadSchedule(config, 600000);
+      const occ = getUpcomingOccurrences(600000, 5);
+      expect(occ.length).toBe(1);
+      expect(occ[0].happenTimeMs).toBe(720000);
     });
   });
 });
