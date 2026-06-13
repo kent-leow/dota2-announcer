@@ -83,13 +83,26 @@ jest.mock('src/dota/gsiServer', () => ({
   getLastState: jest.fn(() => null),
 }));
 
+const mockOnPhaseChange = jest.fn(() => () => {});
 jest.mock('src/dota/matchStateManager', () => ({
   startListening: jest.fn(),
   stopListening: jest.fn(),
   getPhase: jest.fn(() => 'idle'),
   isPaused: jest.fn(() => false),
-  onPhaseChange: jest.fn(() => () => {}),
+  onPhaseChange: mockOnPhaseChange,
   onPauseChange: jest.fn(() => () => {}),
+}));
+
+const mockCreateOverlayWindow = jest.fn();
+const mockShowOverlay = jest.fn();
+const mockHideOverlay = jest.fn();
+const mockDestroyOverlay = jest.fn();
+jest.mock('./overlayWindow', () => ({
+  createOverlayWindow: mockCreateOverlayWindow,
+  showOverlay: mockShowOverlay,
+  hideOverlay: mockHideOverlay,
+  destroyOverlay: mockDestroyOverlay,
+  getOverlayWindow: jest.fn(),
 }));
 
 describe('main process', () => {
@@ -117,5 +130,17 @@ describe('main process', () => {
       require('./main');
     });
     expect(mockOn).toHaveBeenCalledWith('window-all-closed', expect.any(Function));
+  });
+
+  it('calls createOverlayWindow on app ready', async () => {
+    require('./main');
+    await Promise.resolve();
+    expect(mockCreateOverlayWindow).toHaveBeenCalled();
+  });
+
+  it('registers overlay phase change handler', async () => {
+    require('./main');
+    await Promise.resolve();
+    expect(mockOnPhaseChange).toHaveBeenCalledWith(expect.any(Function));
   });
 });

@@ -10,6 +10,8 @@ import * as eventsLoader from 'src/config/eventsLoader';
 import { readAppState, writeAppState } from 'src/tts/stateStore';
 import * as soundStore from 'src/tts/soundStore';
 import * as soundFileManager from 'src/tts/soundFileManager';
+import { initOverlayNotifier } from './overlayNotifier';
+import { getOverlayWindow } from './overlayWindow';
 
 function findDotaGsiPath(): string | null {
   const platform = process.platform;
@@ -46,6 +48,7 @@ function findDotaGsiPath(): string | null {
 export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void {
   gsiServer.start();
   matchStateManager.startListening();
+  initOverlayNotifier(getOverlayWindow);
 
   matchStateManager.onPhaseChange((phase) => {
     const win = getWindow();

@@ -17,6 +17,7 @@ const config: Config = {
       testMatch: [
         '<rootDir>/src/renderer/**/*.spec.{ts,tsx}',
         '<rootDir>/src/ui/**/*.spec.{ts,tsx}',
+        '<rootDir>/src/overlay/**/*.spec.{ts,tsx}',
       ],
       preset: 'ts-jest',
       moduleNameMapper: {
@@ -28,7 +29,7 @@ const config: Config = {
       displayName: 'services',
       testEnvironment: 'node',
       testMatch: ['<rootDir>/src/**/*.spec.ts'],
-      testPathIgnorePatterns: ['/src/main/', '/src/renderer/', '/src/ui/'],
+      testPathIgnorePatterns: ['/src/main/', '/src/renderer/', '/src/ui/', '/src/overlay/'],
       preset: 'ts-jest',
       moduleNameMapper: {
         '^src/(.*)$': '<rootDir>/src/$1',
