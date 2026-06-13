@@ -15,6 +15,7 @@ function nameToId(name: string): string {
 }
 
 type OverlayPosition = 'left-center' | 'right-center';
+type OverlayMode = 'notification' | 'persistent';
 
 export function TimingConfig() {
   const [events, setEvents] = useState<EditableEvent[]>([]);
@@ -28,6 +29,8 @@ export function TimingConfig() {
   const [overlayPosition, setOverlayPosition] = useState<OverlayPosition>('right-center');
   const [fontSizeName, setFontSizeName] = useState(16);
   const [fontSizeOffset, setFontSizeOffset] = useState(13);
+  const [overlayMode, setOverlayMode] = useState<OverlayMode>('notification');
+  const [overlayEventCount, setOverlayEventCount] = useState(5);
 
   useEffect(() => {
     window.electronAPI.getEvents().then((config) => {
@@ -40,6 +43,8 @@ export function TimingConfig() {
       setFontSizeName(fs.name);
       setFontSizeOffset(fs.offset);
     });
+    window.electronAPI.getOverlayMode().then((m) => setOverlayMode(m as OverlayMode));
+    window.electronAPI.getOverlayEventCount().then(setOverlayEventCount);
   }, []);
 
   const handleWarningChange = useCallback((eventIdx: number, value: string) => {
@@ -195,6 +200,17 @@ export function TimingConfig() {
     window.electronAPI.setOverlayFontSize({ name: fontSizeName, offset: val });
   }, [fontSizeName]);
 
+  const handleOverlayModeChange = useCallback((mode: OverlayMode) => {
+    setOverlayMode(mode);
+    window.electronAPI.setOverlayMode(mode);
+  }, []);
+
+  const handleOverlayEventCountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Math.max(1, Math.min(10, Number(e.target.value) || 1));
+    setOverlayEventCount(val);
+    window.electronAPI.setOverlayEventCount(val);
+  }, []);
+
   return (
     <div className="bg-dota-dark rounded-lg p-4 space-y-4 flex-1 flex flex-col min-h-0">
       <div className="space-y-3 border-b border-dota-gold/10 pb-3">
@@ -239,6 +255,39 @@ export function TimingConfig() {
             className="flex-1 h-1.5 rounded-full appearance-none bg-dota-grey/20 accent-dota-gold cursor-pointer"
           />
           <span className="text-xs text-dota-grey w-10 text-right">{fontSizeOffset}px</span>
+        </label>
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-dota-grey/70">Overlay Mode</span>
+          <div className="flex gap-1">
+            {(['notification', 'persistent'] as OverlayMode[]).map((m) => (
+              <button
+                key={m}
+                data-testid={`mode-${m}`}
+                onClick={() => handleOverlayModeChange(m)}
+                className={`px-2 py-1 rounded text-xs transition-colors ${
+                  overlayMode === m
+                    ? 'bg-dota-gold/30 text-dota-gold border border-dota-gold/60'
+                    : 'bg-dota-black/40 text-dota-grey/60 border border-dota-grey/20 hover:border-dota-gold/30'
+                }`}
+              >
+                {m === 'notification' ? 'Notification' : 'Persistent'}
+              </button>
+            ))}
+          </div>
+        </div>
+        <label className="flex items-center gap-3">
+          <span className="text-xs text-dota-grey/70 w-24">Events Shown</span>
+          <input
+            data-testid="event-count"
+            type="number"
+            min="1"
+            max="10"
+            value={overlayEventCount}
+            onChange={handleOverlayEventCountChange}
+            disabled={overlayMode !== 'persistent'}
+            className="w-16 px-2 py-1 rounded text-xs bg-dota-black border border-dota-gold/20 text-dota-grey disabled:opacity-40"
+          />
+          <span className="text-xs text-dota-grey/50">(persistent mode)</span>
         </label>
       </div>
       {soundError && (

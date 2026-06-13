@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import * as eventScheduler from 'src/scheduler/eventScheduler';
 import * as announcer from 'src/tts/announcer';
 import * as soundPlayer from 'src/tts/soundPlayer';
@@ -15,6 +15,7 @@ function formatTime(ms: number): string {
 export function MainDock() {
   const [status, setStatus] = useState<DotaState>('idle');
   const [elapsed, setElapsed] = useState<number>(0);
+  const elapsedRef = useRef<number>(0);
   const [gamePaused, setGamePaused] = useState<boolean>(false);
   const [muted, setMuted] = useState<boolean>(false);
   const [volume, setVolume] = useState<number>(100);
@@ -77,7 +78,7 @@ export function MainDock() {
           });
         }
       });
-      window.electronAPI.sendOverlayNotification({ eventName: name, offsetSeconds: offset, eventId });
+      window.electronAPI.sendOverlayNotification({ eventName: name, offsetSeconds: offset, eventId, happenTimeMs: elapsedRef.current + offset * 1000 });
     });
 
     const unsubState = window.electronAPI.onStateChange((newState) => {
@@ -88,6 +89,7 @@ export function MainDock() {
     });
 
     const unsubTick = window.electronAPI.onClockTick((ms) => {
+      elapsedRef.current = ms;
       setElapsed(ms);
       eventScheduler.tick(ms);
     });

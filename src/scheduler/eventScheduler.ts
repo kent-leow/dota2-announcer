@@ -2,6 +2,7 @@ import { GameEvent, EventsConfig } from 'src/config/events.schema';
 import {
   ScheduledFire,
   UpcomingEvent,
+  UpcomingOccurrence,
   AnnouncementCallback,
 } from './eventSchedulerTypes';
 
@@ -119,6 +120,45 @@ export function getUpcoming(elapsedMs: number, limit: number = 10): UpcomingEven
 
   upcoming.sort((a, b) => a.fireAtMs - b.fireAtMs);
   return upcoming.slice(0, limit);
+}
+
+export function getUpcomingOccurrences(elapsedMs: number, limit: number = 5): UpcomingOccurrence[] {
+  const seen = new Set<string>();
+  const occurrences: UpcomingOccurrence[] = [];
+
+  for (const event of currentEvents) {
+    const spawnTimeMs = event.spawnTime * 1000;
+
+    if (event.repeatEvery) {
+      const repeatMs = event.repeatEvery * 1000;
+      const maxOcc = event.maxOccurrences ?? Infinity;
+      let occurrence = spawnTimeMs;
+      let count = 0;
+      while (count < maxOcc) {
+        if (occurrence > elapsedMs) {
+          const key = `${event.id}:${occurrence}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            occurrences.push({ eventId: event.id, eventName: event.name, happenTimeMs: occurrence });
+          }
+        }
+        occurrence += repeatMs;
+        count++;
+        if (occurrences.length >= limit * currentEvents.length) break;
+      }
+    } else {
+      if (spawnTimeMs > elapsedMs) {
+        const key = `${event.id}:${spawnTimeMs}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          occurrences.push({ eventId: event.id, eventName: event.name, happenTimeMs: spawnTimeMs });
+        }
+      }
+    }
+  }
+
+  occurrences.sort((a, b) => a.happenTimeMs - b.happenTimeMs);
+  return occurrences.slice(0, limit);
 }
 
 export function resetScheduler(): void {
