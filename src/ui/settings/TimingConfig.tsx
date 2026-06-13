@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { GameEvent, EventsConfig } from 'src/config/events.schema';
-import * as eventScheduler from 'src/scheduler/eventScheduler';
 import * as soundPlayer from 'src/tts/soundPlayer';
 import { SoundAssignment, SoundAssignments } from 'src/renderer/electron.d';
 
@@ -24,6 +23,7 @@ export function TimingConfig() {
   const [newName, setNewName] = useState('');
   const [addError, setAddError] = useState('');
   const [soundAssignments, setSoundAssignments] = useState<SoundAssignments>({});
+  const [soundDisabled, setSoundDisabled] = useState<Record<string, boolean>>({});
   const [soundError, setSoundError] = useState('');
   const [overlayPosition, setOverlayPosition] = useState<OverlayPosition>('right-center');
 
@@ -32,6 +32,7 @@ export function TimingConfig() {
       setEvents(config.events.map((e) => ({ ...e, enabled: true })));
     });
     window.electronAPI.getSoundAssignments().then(setSoundAssignments);
+    window.electronAPI.getSoundDisabled().then(setSoundDisabled);
     window.electronAPI.getOverlayPosition().then(setOverlayPosition);
   }, []);
 
@@ -127,20 +128,22 @@ export function TimingConfig() {
     };
     const result = await window.electronAPI.saveEvents(config);
     if (result.success) {
-      const ms = await window.electronAPI.getElapsed();
-      eventScheduler.loadSchedule(config, ms);
       setDirty(false);
     }
   }, [events]);
 
   const handleReload = useCallback(() => {
-    window.electronAPI.reloadEvents().then(async (config) => {
+    window.electronAPI.reloadEvents().then((config) => {
       setEvents(config.events.map((e) => ({ ...e, enabled: true })));
-      const ms = await window.electronAPI.getElapsed();
-      eventScheduler.loadSchedule(config, ms);
       setDirty(false);
     });
   }, []);
+
+  const handleSoundToggle = useCallback(async (eventId: string) => {
+    const newDisabled = !soundDisabled[eventId];
+    await window.electronAPI.setSoundDisabled(eventId, newDisabled);
+    setSoundDisabled((prev) => ({ ...prev, [eventId]: newDisabled }));
+  }, [soundDisabled]);
 
   const handleSoundUpload = useCallback(async (eventId: string) => {
     setSoundError('');
@@ -330,12 +333,25 @@ export function TimingConfig() {
                 </div>
                 <div data-testid={`sound-row-${event.id}`} className="mt-2 flex items-center gap-2 text-xs">
                   <span className="text-dota-grey/70 w-12">Sound</span>
+                  <button
+                    data-testid={`sound-toggle-${event.id}`}
+                    onClick={() => handleSoundToggle(event.id)}
+                    className={`px-2 py-0.5 rounded transition-colors ${
+                      soundDisabled[event.id]
+                        ? 'bg-dota-gold/20 text-dota-gold border border-dota-gold/40'
+                        : 'bg-dota-green/20 text-dota-green border border-dota-green/40'
+                    }`}
+                  >
+                    {soundDisabled[event.id] ? 'TTS' : 'SFX'}
+                  </button>
                   <span className="text-dota-grey/50 flex-1 truncate">
-                    {soundAssignments[event.id]
-                      ? `${soundAssignments[event.id].filename} ${soundAssignments[event.id].type === 'bundled' ? '(default)' : '(custom)'}`
-                      : 'None (TTS)'}
+                    {soundDisabled[event.id]
+                      ? 'Using TTS announcer'
+                      : soundAssignments[event.id]
+                        ? `${soundAssignments[event.id].filename} ${soundAssignments[event.id].type === 'bundled' ? '(default)' : '(custom)'}`
+                        : 'None (TTS)'}
                   </span>
-                  {soundAssignments[event.id] && (
+                  {!soundDisabled[event.id] && soundAssignments[event.id] && (
                     <button
                       data-testid={`preview-${event.id}`}
                       onClick={() => handleSoundPreview(event.id)}
@@ -344,14 +360,16 @@ export function TimingConfig() {
                       Play
                     </button>
                   )}
-                  <button
-                    data-testid={`upload-${event.id}`}
-                    onClick={() => handleSoundUpload(event.id)}
-                    className="px-2 py-0.5 rounded bg-green-600/20 text-green-400 border border-green-500/40 hover:bg-green-600/30 transition-colors"
-                  >
-                    Upload
-                  </button>
-                  {soundAssignments[event.id] && soundAssignments[event.id].type === 'custom' && (
+                  {!soundDisabled[event.id] && (
+                    <button
+                      data-testid={`upload-${event.id}`}
+                      onClick={() => handleSoundUpload(event.id)}
+                      className="px-2 py-0.5 rounded bg-green-600/20 text-green-400 border border-green-500/40 hover:bg-green-600/30 transition-colors"
+                    >
+                      Upload
+                    </button>
+                  )}
+                  {!soundDisabled[event.id] && soundAssignments[event.id] && soundAssignments[event.id].type === 'custom' && (
                     <button
                       data-testid={`remove-${event.id}`}
                       onClick={() => handleSoundRemove(event.id)}

@@ -55,6 +55,9 @@ export interface ElectronAPI {
   sendOverlayNotification: (payload: { eventName: string; offsetSeconds: number; eventId: string }) => void;
   getOverlayPosition: () => Promise<'left-center' | 'right-center'>;
   setOverlayPosition: (position: 'left-center' | 'right-center') => Promise<string>;
+  onEventsChanged: (callback: (config: EventsConfig) => void) => () => void;
+  getSoundDisabled: () => Promise<Record<string, boolean>>;
+  setSoundDisabled: (eventId: string, disabled: boolean) => Promise<void>;
 }
 
 declare global {

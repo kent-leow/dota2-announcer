@@ -64,6 +64,12 @@ const mockElectronAPI = {
   openSoundFileDialog: jest.fn(() => Promise.resolve({ success: false, canceled: true })),
   assignSound: jest.fn(() => Promise.resolve({ success: true })),
   removeSound: jest.fn(() => Promise.resolve({ success: true })),
+  sendOverlayNotification: jest.fn(),
+  getOverlayPosition: jest.fn(() => Promise.resolve('right-center')),
+  setOverlayPosition: jest.fn(() => Promise.resolve('right-center')),
+  onEventsChanged: jest.fn(() => () => {}),
+  getSoundDisabled: jest.fn(() => Promise.resolve({})),
+  setSoundDisabled: jest.fn(() => Promise.resolve()),
 };
 
 (window as any).electronAPI = mockElectronAPI;

@@ -10,6 +10,7 @@ export interface AppState {
   rate: number;
   voiceUri: string;
   overlayPosition: OverlayPosition;
+  soundDisabled: Record<string, boolean>;
 }
 
 function getStatePath(): string {
@@ -33,9 +34,10 @@ export function readAppState(): AppState {
       rate: typeof parsed.rate === 'number' ? parsed.rate : 1.0,
       voiceUri: typeof parsed.voiceUri === 'string' ? parsed.voiceUri : '',
       overlayPosition: validPositions.includes(parsed.overlayPosition) ? parsed.overlayPosition : 'right-center',
+      soundDisabled: (typeof parsed.soundDisabled === 'object' && parsed.soundDisabled !== null) ? parsed.soundDisabled : {},
     };
   } catch {
-    return { volume: 100, muted: false, includeTimeSuffix: true, rate: 1.0, voiceUri: '', overlayPosition: 'right-center' };
+    return { volume: 100, muted: false, includeTimeSuffix: true, rate: 1.0, voiceUri: '', overlayPosition: 'right-center', soundDisabled: {} };
   }
 }
 

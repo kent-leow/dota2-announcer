@@ -64,11 +64,17 @@ export function MainDock() {
     }
 
     eventScheduler.onAnnouncement((name, offset, eventId) => {
-      window.electronAPI.getSoundFilePath(eventId).then((filePath) => {
-        if (filePath) {
-          soundPlayer.playSound(filePath);
-        } else {
+      window.electronAPI.getSoundDisabled().then((disabled) => {
+        if (disabled[eventId]) {
           announcer.speak(announcer.formatMessage(name, offset));
+        } else {
+          window.electronAPI.getSoundFilePath(eventId).then((filePath) => {
+            if (filePath) {
+              soundPlayer.playSound(filePath);
+            } else {
+              announcer.speak(announcer.formatMessage(name, offset));
+            }
+          });
         }
       });
       window.electronAPI.sendOverlayNotification({ eventName: name, offsetSeconds: offset, eventId });
@@ -90,10 +96,15 @@ export function MainDock() {
       setGamePaused(isPaused);
     });
 
+    const unsubEventsChanged = window.electronAPI.onEventsChanged((config) => {
+      window.electronAPI.getElapsed().then((ms) => eventScheduler.loadSchedule(config, ms));
+    });
+
     return () => {
       unsubState();
       unsubTick();
       unsubPause();
+      unsubEventsChanged();
     };
   }, []);
 
