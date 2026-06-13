@@ -75,14 +75,19 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     }
   });
 
+  let lastOverlayTickSec = -1;
   gameTimer.onTick((elapsedMs) => {
     const win = getWindow();
     if (win && !win.isDestroyed()) {
       win.webContents.send('dota:clockTick', elapsedMs);
     }
-    const overlay = getOverlayWindow();
-    if (overlay && !overlay.isDestroyed()) {
-      overlay.webContents.send('overlay:tick', elapsedMs);
+    const currentSec = Math.floor(elapsedMs / 1000);
+    if (currentSec !== lastOverlayTickSec) {
+      lastOverlayTickSec = currentSec;
+      const overlay = getOverlayWindow();
+      if (overlay && !overlay.isDestroyed()) {
+        overlay.webContents.send('overlay:tick', currentSec * 1000);
+      }
     }
   });
 
