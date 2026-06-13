@@ -51,4 +51,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   sendOverlayNotification: (payload: { eventName: string; offsetSeconds: number; eventId: string }) => ipcRenderer.send('overlay:announcement', payload),
   getOverlayPosition: () => ipcRenderer.invoke('overlay:getPosition'),
   setOverlayPosition: (position: string) => ipcRenderer.invoke('overlay:setPosition', position),
+  onEventsChanged: (callback: (config: unknown) => void) => {
+    const handler = (_event: unknown, config: unknown) => callback(config);
+    ipcRenderer.on('config:eventsChanged', handler);
+    return () => { ipcRenderer.removeListener('config:eventsChanged', handler); };
+  },
+  getSoundDisabled: () => ipcRenderer.invoke('sound:getDisabled'),
+  setSoundDisabled: (eventId: string, disabled: boolean) => ipcRenderer.invoke('sound:setDisabled', eventId, disabled),
 });

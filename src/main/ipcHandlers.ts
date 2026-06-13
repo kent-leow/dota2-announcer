@@ -91,7 +91,14 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
   ipcMain.handle('audio:setVolume', (_event, value: number) => volumeController.setVolume(value));
   ipcMain.handle('audio:getVolume', () => volumeController.getVolume());
   ipcMain.handle('config:getEvents', () => eventsLoader.getEvents());
-  ipcMain.handle('config:reloadEvents', () => eventsLoader.reload());
+  ipcMain.handle('config:reloadEvents', () => {
+    const config = eventsLoader.reload();
+    const win = getWindow();
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('config:eventsChanged', config);
+    }
+    return config;
+  });
   ipcMain.handle('config:saveEvents', (_event, config: { events: unknown[] }) => {
     const { eventsConfigSchema } = require('src/config/events.schema');
     const parsed = eventsConfigSchema.safeParse(config);
@@ -99,6 +106,10 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
       return { success: false, error: parsed.error.message };
     }
     eventsLoader.saveEvents(parsed.data);
+    const win = getWindow();
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('config:eventsChanged', parsed.data);
+    }
     return { success: true, config: parsed.data };
   });
 
@@ -172,6 +183,17 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
   ipcMain.handle('gsi:isConnected', () => {
     const last = gsiServer.getLastState();
     return last !== null;
+  });
+
+  ipcMain.handle('sound:getDisabled', () => readAppState().soundDisabled);
+  ipcMain.handle('sound:setDisabled', (_event, eventId: string, disabled: boolean) => {
+    const state = readAppState();
+    if (disabled) {
+      state.soundDisabled[eventId] = true;
+    } else {
+      delete state.soundDisabled[eventId];
+    }
+    writeAppState(state);
   });
 
   ipcMain.handle('sound:getAssignments', () => {
