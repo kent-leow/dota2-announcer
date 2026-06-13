@@ -15,6 +15,8 @@ function nameToId(name: string): string {
     .replace(/^-|-$/g, '');
 }
 
+type OverlayPosition = 'top-left' | 'top-center' | 'top-right';
+
 export function TimingConfig() {
   const [events, setEvents] = useState<EditableEvent[]>([]);
   const [dirty, setDirty] = useState(false);
@@ -23,12 +25,14 @@ export function TimingConfig() {
   const [addError, setAddError] = useState('');
   const [soundAssignments, setSoundAssignments] = useState<SoundAssignments>({});
   const [soundError, setSoundError] = useState('');
+  const [overlayPosition, setOverlayPosition] = useState<OverlayPosition>('top-right');
 
   useEffect(() => {
     window.electronAPI.getEvents().then((config) => {
       setEvents(config.events.map((e) => ({ ...e, enabled: true })));
     });
     window.electronAPI.getSoundAssignments().then(setSoundAssignments);
+    window.electronAPI.getOverlayPosition().then(setOverlayPosition);
   }, []);
 
   const handleWarningChange = useCallback((eventIdx: number, value: string) => {
@@ -165,8 +169,31 @@ export function TimingConfig() {
     }
   }, []);
 
+  const handleOverlayPositionChange = useCallback((pos: OverlayPosition) => {
+    setOverlayPosition(pos);
+    window.electronAPI.setOverlayPosition(pos);
+  }, []);
+
   return (
     <div className="bg-dota-dark rounded-lg p-4 space-y-4 flex-1 flex flex-col min-h-0">
+      <div className="flex items-center justify-between border-b border-dota-gold/10 pb-3">
+        <span className="text-xs text-dota-grey/70">Overlay Position</span>
+        <div className="flex gap-1">
+          {(['top-left', 'top-center', 'top-right'] as OverlayPosition[]).map((pos) => (
+            <button
+              key={pos}
+              onClick={() => handleOverlayPositionChange(pos)}
+              className={`px-2 py-1 rounded text-xs transition-colors ${
+                overlayPosition === pos
+                  ? 'bg-dota-gold/30 text-dota-gold border border-dota-gold/60'
+                  : 'bg-dota-black/40 text-dota-grey/60 border border-dota-grey/20 hover:border-dota-gold/30'
+              }`}
+            >
+              {pos === 'top-left' ? 'Left' : pos === 'top-center' ? 'Center' : 'Right'}
+            </button>
+          ))}
+        </div>
+      </div>
       {soundError && (
         <p data-testid="sound-error" className="text-red-400 text-xs bg-red-400/10 rounded px-3 py-2">{soundError}</p>
       )}
