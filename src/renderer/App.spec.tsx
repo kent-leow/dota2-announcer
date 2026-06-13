@@ -27,6 +27,12 @@ jest.mock('src/tts/announcer', () => ({
   getAvailableVoices: jest.fn(() => []),
 }));
 
+jest.mock('src/tts/soundPlayer', () => ({
+  playSound: jest.fn(),
+  setVolume: jest.fn(),
+  setMuted: jest.fn(),
+}));
+
 const mockElectronAPI = {
   getState: jest.fn(() => Promise.resolve('idle')),
   getElapsed: jest.fn(() => Promise.resolve(0)),
@@ -53,6 +59,11 @@ const mockElectronAPI = {
   gsiIsConnected: jest.fn(() => Promise.resolve(false)),
   gsiGetInstallPath: jest.fn(() => Promise.resolve(null)),
   onGsiStatusUpdate: jest.fn(() => () => {}),
+  getSoundFilePath: jest.fn((): Promise<string | null> => Promise.resolve(null)),
+  getSoundAssignments: jest.fn(() => Promise.resolve({})),
+  openSoundFileDialog: jest.fn(() => Promise.resolve({ success: false, canceled: true })),
+  assignSound: jest.fn(() => Promise.resolve({ success: true })),
+  removeSound: jest.fn(() => Promise.resolve({ success: true })),
 };
 
 (window as any).electronAPI = mockElectronAPI;

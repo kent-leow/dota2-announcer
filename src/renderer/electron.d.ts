@@ -13,6 +13,13 @@ export interface GsiInstallResult {
   error?: string;
 }
 
+export interface SoundAssignment {
+  type: 'bundled' | 'custom';
+  filename: string;
+}
+
+export type SoundAssignments = Record<string, SoundAssignment>;
+
 export interface ElectronAPI {
   getState: () => Promise<string>;
   getElapsed: () => Promise<number>;
@@ -40,6 +47,11 @@ export interface ElectronAPI {
   gsiIsConnected: () => Promise<boolean>;
   gsiGetInstallPath: () => Promise<string | null>;
   onGsiStatusUpdate: (callback: (status: GsiStatusUpdate) => void) => () => void;
+  getSoundAssignments: () => Promise<SoundAssignments>;
+  assignSound: (eventId: string, filePath: string) => Promise<{ success: boolean; error?: string; filename?: string }>;
+  removeSound: (eventId: string) => Promise<{ success: boolean }>;
+  getSoundFilePath: (eventId: string) => Promise<string | null>;
+  openSoundFileDialog: () => Promise<{ success: boolean; canceled?: boolean; filePath?: string }>;
 }
 
 declare global {

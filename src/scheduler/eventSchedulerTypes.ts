@@ -13,4 +13,4 @@ export interface UpcomingEvent {
   offsetSeconds: number;
 }
 
-export type AnnouncementCallback = (eventName: string, offsetSeconds: number) => void;
+export type AnnouncementCallback = (eventName: string, offsetSeconds: number, eventId: string) => void;

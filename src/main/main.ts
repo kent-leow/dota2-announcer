@@ -17,11 +17,15 @@ let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let isQuitting = false;
 
-function getAppIconPath(): string {
+function getAssetPath(assetFile: string): string {
   if (process.env.VITE_DEV_SERVER_URL) {
-    return path.join(__dirname, '../../assets/dota2-announcer.png');
+    return path.join(__dirname, '../../assets', assetFile);
   }
-  return path.join(app.getAppPath(), 'assets/dota2-announcer.png');
+  return path.join(app.getAppPath(), 'assets', assetFile);
+}
+
+function getAppIconPath(): string {
+  return getAssetPath('dota2-announcer.png');
 }
 
 function createWindow(): BrowserWindow {
@@ -71,10 +75,7 @@ function createWindow(): BrowserWindow {
 }
 
 function getTrayIconPath(): string {
-  if (process.env.VITE_DEV_SERVER_URL) {
-    return path.join(__dirname, '../../assets/dota2-announcer.png');
-  }
-  return path.join(app.getAppPath(), 'assets/dota2-announcer.png');
+  return getAssetPath('dota2-announcer.png');
 }
 
 function createTray(): void {
@@ -144,4 +145,4 @@ process.on('uncaughtException', (error) => {
   console.error('Uncaught exception in main process:', error);
 });
 
-export { createWindow };
+export { createWindow, getAssetPath };

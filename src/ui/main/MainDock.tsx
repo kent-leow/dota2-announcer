@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import * as eventScheduler from 'src/scheduler/eventScheduler';
 import * as announcer from 'src/tts/announcer';
+import * as soundPlayer from 'src/tts/soundPlayer';
 
 type DotaState = 'idle' | 'hero-pick' | 'pre-game' | 'in-match';
 
@@ -30,10 +31,12 @@ export function MainDock() {
     window.electronAPI.isMuted().then((m) => {
       setMuted(m);
       announcer.setMuted(m);
+      soundPlayer.setMuted(m);
     });
     window.electronAPI.getVolume().then((v) => {
       setVolume(v);
       announcer.setVolume(v);
+      soundPlayer.setVolume(v);
     });
     window.electronAPI.getEvents().then((config) => {
       window.electronAPI.getElapsed().then((ms) => eventScheduler.loadSchedule(config, ms));
@@ -60,8 +63,14 @@ export function MainDock() {
       window.speechSynthesis.onvoiceschanged = loadVoices;
     }
 
-    eventScheduler.onAnnouncement((name, offset) => {
-      announcer.speak(announcer.formatMessage(name, offset));
+    eventScheduler.onAnnouncement((name, offset, eventId) => {
+      window.electronAPI.getSoundFilePath(eventId).then((filePath) => {
+        if (filePath) {
+          soundPlayer.playSound(filePath);
+        } else {
+          announcer.speak(announcer.formatMessage(name, offset));
+        }
+      });
     });
 
     const unsubState = window.electronAPI.onStateChange((newState) => {
@@ -88,13 +97,18 @@ export function MainDock() {
   }, []);
 
   const handleMuteToggle = useCallback(() => {
-    window.electronAPI.toggleMute().then(setMuted);
+    window.electronAPI.toggleMute().then((m) => {
+      setMuted(m);
+      announcer.setMuted(m);
+      soundPlayer.setMuted(m);
+    });
   }, []);
 
   const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
     window.electronAPI.setVolume(val);
     announcer.setVolume(val);
+    soundPlayer.setVolume(val);
     setVolume(val);
   }, []);
 

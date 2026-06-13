@@ -21,6 +21,12 @@ jest.mock('src/tts/announcer', () => ({
   getAvailableVoices: jest.fn(() => []),
 }));
 
+jest.mock('src/tts/soundPlayer', () => ({
+  playSound: jest.fn(),
+  setVolume: jest.fn(),
+  setMuted: jest.fn(),
+}));
+
 let stateChangeHandler: ((state: string) => void) | null = null;
 
 const mockElectronAPI = {
@@ -49,6 +55,7 @@ const mockElectronAPI = {
   onPauseChange: jest.fn(() => () => {}),
   getIncludeTimeSuffix: jest.fn(() => Promise.resolve(true)),
   setIncludeTimeSuffix: jest.fn((v: boolean) => Promise.resolve(v)),
+  getSoundFilePath: jest.fn((): Promise<string | null> => Promise.resolve(null)),
 };
 
 (window as any).electronAPI = mockElectronAPI;
@@ -220,17 +227,33 @@ describe('MainDock', () => {
       expect(eventScheduler.tick).toHaveBeenCalledWith(5000);
     });
 
-    it('calls announcer.speak when scheduler fires an announcement', async () => {
+    it('calls announcer.speak when scheduler fires an announcement with no sound', async () => {
+      mockElectronAPI.getSoundFilePath.mockResolvedValue(null);
       render(<MainDock />);
       await waitFor(() => expect(eventScheduler.onAnnouncement).toHaveBeenCalled());
 
       const announcementCb = (eventScheduler.onAnnouncement as jest.Mock).mock.calls[0][0];
-      act(() => {
-        announcementCb('Bounty Rune', 30);
+      await act(async () => {
+        announcementCb('Bounty Rune', 30, 'bounty-rune');
       });
 
       expect(announcer.formatMessage).toHaveBeenCalledWith('Bounty Rune', 30);
       expect(announcer.speak).toHaveBeenCalledWith('Bounty Rune in 30 seconds');
+    });
+
+    it('plays sound instead of TTS when sound file is assigned', async () => {
+      const soundPlayer = require('src/tts/soundPlayer');
+      mockElectronAPI.getSoundFilePath.mockResolvedValue('/path/to/bounty-rune.wav');
+      render(<MainDock />);
+      await waitFor(() => expect(eventScheduler.onAnnouncement).toHaveBeenCalled());
+
+      const announcementCb = (eventScheduler.onAnnouncement as jest.Mock).mock.calls[0][0];
+      await act(async () => {
+        announcementCb('Bounty Rune', 30, 'bounty-rune');
+      });
+
+      expect(soundPlayer.playSound).toHaveBeenCalledWith('/path/to/bounty-rune.wav');
+      expect(announcer.speak).not.toHaveBeenCalled();
     });
   });
 });

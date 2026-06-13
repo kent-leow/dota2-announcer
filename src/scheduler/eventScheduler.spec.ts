@@ -36,7 +36,7 @@ describe('eventScheduler', () => {
 
       tick(240_000);
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith('First Night', 60);
+      expect(callback).toHaveBeenCalledWith('First Night', 60, 'first-night');
 
       tick(240_000);
       expect(callback).toHaveBeenCalledTimes(1);
@@ -63,19 +63,19 @@ describe('eventScheduler', () => {
 
       tick(120_000);
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith('Bounty Rune', 60);
+      expect(callback).toHaveBeenCalledWith('Bounty Rune', 60, 'bounty-rune');
 
       tick(150_000);
       expect(callback).toHaveBeenCalledTimes(2);
-      expect(callback).toHaveBeenCalledWith('Bounty Rune', 30);
+      expect(callback).toHaveBeenCalledWith('Bounty Rune', 30, 'bounty-rune');
 
       tick(300_000);
       expect(callback).toHaveBeenCalledTimes(3);
-      expect(callback).toHaveBeenCalledWith('Bounty Rune', 60);
+      expect(callback).toHaveBeenCalledWith('Bounty Rune', 60, 'bounty-rune');
 
       tick(330_000);
       expect(callback).toHaveBeenCalledTimes(4);
-      expect(callback).toHaveBeenCalledWith('Bounty Rune', 30);
+      expect(callback).toHaveBeenCalledWith('Bounty Rune', 30, 'bounty-rune');
     });
 
     it('fires both warnings at once if tick jumps past both', () => {
@@ -199,7 +199,7 @@ describe('eventScheduler', () => {
       tick(90_000);
 
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith('Power Rune', 30);
+      expect(callback).toHaveBeenCalledWith('Power Rune', 30, 'rune');
     });
 
     it('duplicate tick at same ms does not re-fire', () => {
