@@ -4,7 +4,7 @@ import { registerIpcHandlers } from './ipcHandlers';
 import { loadEvents } from 'src/config/eventsLoader';
 import { loadMuteState } from 'src/tts/muteManager';
 import { loadVolume } from 'src/tts/volumeController';
-import { createOverlayWindow, showOverlay, hideOverlay, destroyOverlay, getOverlayWindow } from './overlayWindow';
+import { createOverlayWindow, showOverlay, hideOverlay, destroyOverlay } from './overlayWindow';
 import * as matchStateManager from 'src/dota/matchStateManager';
 import { readAppState } from 'src/tts/stateStore';
 import { buildAppMenu } from './appMenu';
@@ -145,18 +145,6 @@ function createTray(): void {
   tray.on('click', () => mainWindow?.show());
 }
 
-let overlayVisible = false;
-
-function toggleOverlay(): void {
-  const overlay = getOverlayWindow();
-  if (!overlay || overlay.isDestroyed()) return;
-  if (overlayVisible) {
-    hideOverlay();
-  } else {
-    showOverlay();
-  }
-  overlayVisible = !overlayVisible;
-}
 
 app.whenReady().then(() => {
   loadEvents();
@@ -169,7 +157,6 @@ app.whenReady().then(() => {
 
   const menu = buildAppMenu({
     getWindow: () => mainWindow,
-    toggleOverlay,
     getAppVersion: () => app.getVersion(),
   });
   Menu.setApplicationMenu(menu);

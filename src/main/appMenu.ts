@@ -1,32 +1,18 @@
 import { app, Menu, dialog, BrowserWindow, MenuItemConstructorOptions } from 'electron';
 import { resetClosePreference } from 'src/config/preferences';
-import { reload as reloadEvents } from 'src/config/eventsLoader';
 
 interface MenuDeps {
   getWindow: () => BrowserWindow | null;
-  toggleOverlay: () => void;
   getAppVersion: () => string;
 }
 
 export function buildAppMenu(deps: MenuDeps): Menu {
-  const { getWindow, toggleOverlay, getAppVersion } = deps;
+  const { getWindow, getAppVersion } = deps;
 
   const template: MenuItemConstructorOptions[] = [
     {
       label: 'File',
       submenu: [
-        {
-          label: 'Reload Config',
-          accelerator: 'CmdOrCtrl+Shift+R',
-          click: () => {
-            const config = reloadEvents();
-            const win = getWindow();
-            if (win && !win.isDestroyed()) {
-              win.webContents.send('config:eventsChanged', config);
-            }
-          },
-        },
-        { type: 'separator' },
         {
           label: 'Quit',
           accelerator: 'CmdOrCtrl+Q',
@@ -39,10 +25,6 @@ export function buildAppMenu(deps: MenuDeps): Menu {
     {
       label: 'View',
       submenu: [
-        {
-          label: 'Toggle Overlay',
-          click: () => toggleOverlay(),
-        },
         ...(!app.isPackaged ? [{
           label: 'Toggle DevTools',
           accelerator: 'CmdOrCtrl+Shift+I',
