@@ -1,13 +1,30 @@
 import * as http from 'http';
-import { GsiPayload, ParsedGameState } from './gsiTypes';
+import { GsiPayload, ParsedGameState, GAME_STATES } from './gsiTypes';
 
 export type GsiStateCallback = (state: ParsedGameState) => void;
 
 const GSI_PORT = 3001;
+const GSI_TIMEOUT_MS = 15_000;
 
 let server: http.Server | null = null;
 let listeners: GsiStateCallback[] = [];
 let lastState: ParsedGameState | null = null;
+let heartbeatTimer: ReturnType<typeof setTimeout> | null = null;
+
+function resetHeartbeat(): void {
+  if (heartbeatTimer) clearTimeout(heartbeatTimer);
+  heartbeatTimer = setTimeout(onHeartbeatTimeout, GSI_TIMEOUT_MS);
+}
+
+function onHeartbeatTimeout(): void {
+  heartbeatTimer = null;
+  if (lastState && lastState.gameState !== GAME_STATES.POST_GAME && lastState.gameState !== GAME_STATES.DISCONNECT) {
+    notifyListeners({
+      ...lastState,
+      gameState: GAME_STATES.DISCONNECT,
+    });
+  }
+}
 
 function parsePayload(body: string): ParsedGameState | null {
   try {
@@ -45,6 +62,7 @@ function handleRequest(req: http.IncomingMessage, res: http.ServerResponse): voi
   req.on('end', () => {
     const state = parsePayload(body);
     if (state) {
+      resetHeartbeat();
       notifyListeners(state);
     }
     res.writeHead(200);
@@ -65,6 +83,10 @@ export function start(port: number = GSI_PORT): Promise<void> {
 }
 
 export function stop(): Promise<void> {
+  if (heartbeatTimer) {
+    clearTimeout(heartbeatTimer);
+    heartbeatTimer = null;
+  }
   return new Promise((resolve) => {
     if (!server) {
       resolve();
@@ -89,6 +111,10 @@ export function getLastState(): ParsedGameState | null {
 }
 
 export function _resetForTesting(): void {
+  if (heartbeatTimer) {
+    clearTimeout(heartbeatTimer);
+    heartbeatTimer = null;
+  }
   listeners = [];
   lastState = null;
 }

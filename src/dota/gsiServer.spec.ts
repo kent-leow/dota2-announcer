@@ -155,4 +155,64 @@ describe('gsiServer', () => {
 
     expect(received).toHaveLength(0);
   });
+
+  it('emits DISCONNECT after heartbeat timeout when GSI stops sending', async () => {
+    jest.useFakeTimers();
+    await start(13001);
+    const received: ParsedGameState[] = [];
+    onStateChange((s) => received.push(s));
+
+    const payload = JSON.stringify({
+      map: { matchid: '333', game_time: 60, clock_time: 50, game_state: GAME_STATES.GAME_IN_PROGRESS, paused: false, daytime: true },
+    });
+    await simulatePost(payload);
+    expect(received).toHaveLength(1);
+
+    jest.advanceTimersByTime(15_000);
+
+    expect(received).toHaveLength(2);
+    expect(received[1].gameState).toBe(GAME_STATES.DISCONNECT);
+    expect(received[1].matchId).toBe('333');
+    jest.useRealTimers();
+  });
+
+  it('does not emit DISCONNECT if already in POST_GAME', async () => {
+    jest.useFakeTimers();
+    await start(13001);
+    const received: ParsedGameState[] = [];
+    onStateChange((s) => received.push(s));
+
+    const payload = JSON.stringify({
+      map: { matchid: '444', game_time: 60, clock_time: 50, game_state: GAME_STATES.POST_GAME, paused: false, daytime: true },
+    });
+    await simulatePost(payload);
+    expect(received).toHaveLength(1);
+
+    jest.advanceTimersByTime(15_000);
+
+    expect(received).toHaveLength(1);
+    jest.useRealTimers();
+  });
+
+  it('resets heartbeat on each new GSI message', async () => {
+    jest.useFakeTimers();
+    await start(13001);
+    const received: ParsedGameState[] = [];
+    onStateChange((s) => received.push(s));
+
+    const makePayload = (clock: number) => JSON.stringify({
+      map: { matchid: '555', game_time: clock, clock_time: clock, game_state: GAME_STATES.GAME_IN_PROGRESS, paused: false, daytime: true },
+    });
+
+    await simulatePost(makePayload(10));
+    jest.advanceTimersByTime(10_000);
+    await simulatePost(makePayload(20));
+    jest.advanceTimersByTime(10_000);
+    await simulatePost(makePayload(30));
+    jest.advanceTimersByTime(10_000);
+
+    // No disconnect because each message resets the 15s timer
+    expect(received.every((s) => s.gameState === GAME_STATES.GAME_IN_PROGRESS)).toBe(true);
+    jest.useRealTimers();
+  });
 });
