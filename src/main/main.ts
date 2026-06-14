@@ -147,6 +147,11 @@ function createTray(): void {
 
 
 app.whenReady().then(() => {
+  if (process.platform === 'darwin' && app.dock) {
+    const dockIcon = nativeImage.createFromPath(getAppIconPath());
+    if (!dockIcon.isEmpty()) app.dock.setIcon(dockIcon);
+  }
+
   loadEvents();
   loadMuteState();
   loadVolume();
