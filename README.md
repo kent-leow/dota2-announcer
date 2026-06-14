@@ -29,23 +29,23 @@ Opens at `http://localhost:5173`. Build with `npm run build`.
 
 ### Deployment
 
-Automatically deployed to Vercel on push to `main` when files in `landing/` change (via `.github/workflows/deploy-landing.yml`).
+Vercel is connected to this repo via its GitHub integration. Deploys automatically on every push to `main` — no secrets or workflows needed.
 
-**Required GitHub Secrets:**
+- Root Directory configured in Vercel: `landing`
+- Framework: Vite
+- Pushes to `main` that touch `landing/` → auto-deploy to production
+- Pull requests → preview deployments
 
-| Secret | Source |
-|--------|--------|
-| `VERCEL_TOKEN` | Vercel Dashboard → Settings → Tokens |
-| `VERCEL_ORG_ID` | Run `vercel link` in `landing/` → `.vercel/project.json` |
-| `VERCEL_PROJECT_ID` | Same as above |
-
-## Releasing
+## Releasing the App
 
 The release pipeline (`.github/workflows/release-app.yml`) builds the Electron app for Windows and macOS and publishes installers to GitHub Releases.
 
-### How to Publish a Release
+### How to Publish a New App Version
 
 ```bash
+# 1. Bump version in application/package.json
+# 2. Commit the change
+# 3. Tag and push
 git tag v0.2.0
 git push origin v0.2.0
 ```
@@ -56,3 +56,13 @@ The pipeline will:
 3. Upload `.exe` and `.dmg` installers as release assets
 
 No additional secrets required — uses the auto-provided `GITHUB_TOKEN`.
+
+### Website vs App — What Triggers What?
+
+| You do this | Result |
+|-------------|--------|
+| Push to `main` | Website auto-deploys via Vercel (if `landing/` changed) |
+| Push a `v*` tag | App builds + GitHub Release created with installers |
+| Push to `main` (only `application/` changes) | Nothing happens — no release until you tag |
+
+The website and app releases are fully independent.
