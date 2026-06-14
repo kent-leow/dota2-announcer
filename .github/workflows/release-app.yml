@@ -25,6 +25,10 @@ jobs:
           cache: npm
           cache-dependency-path: application/package-lock.json
 
+      - name: Sync package.json version from tag
+        run: npm version ${GITHUB_REF_NAME#v} --no-git-tag-version
+        shell: bash
+
       - run: npm ci
       - run: npm run build
 
