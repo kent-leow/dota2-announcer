@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-dota-black text-dota-grey font-sans m-0 p-0 min-h-screen;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a2e;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c8aa6e;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d4b87a;
+}
