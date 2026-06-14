@@ -33,13 +33,9 @@ describe('Hero', () => {
     expect(screen.getByText('Announcer')).toBeInTheDocument();
   });
 
-  it('renders download link pointing to GitHub Releases latest', () => {
+  it('renders download CTA that scrolls to download section', () => {
     render(<Hero />);
     const link = screen.getByRole('link', { name: /download now/i });
-    expect(link).toHaveAttribute(
-      'href',
-      'https://github.com/kent-leow/dota2-announcer/releases/latest'
-    );
-    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('href', '#download');
   });
 });

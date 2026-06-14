@@ -1,25 +1,66 @@
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Download } from './Download';
+
+const mockRelease = {
+  tag_name: 'v0.2.0',
+  assets: [
+    { name: 'Dota 2 Announcer Setup 0.2.0.exe', browser_download_url: 'https://github.com/kent-leow/dota2-announcer/releases/download/v0.2.0/Dota.2.Announcer.Setup.0.2.0.exe' },
+    { name: 'Dota 2 Announcer-0.2.0.dmg', browser_download_url: 'https://github.com/kent-leow/dota2-announcer/releases/download/v0.2.0/Dota.2.Announcer-0.2.0.dmg' },
+  ],
+};
+
+beforeEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('Download', () => {
   it('renders download heading', () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: false } as Response);
     render(<Download />);
     expect(screen.getByText(/Ready to/)).toBeInTheDocument();
   });
 
-  it('CTA link has correct href and opens in new tab', () => {
+  it('renders Windows and macOS download buttons with direct URLs when release exists', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockRelease),
+    } as Response);
+
     render(<Download />);
-    const link = screen.getByRole('link', { name: /download latest release/i });
-    expect(link).toHaveAttribute(
-      'href',
-      'https://github.com/kent-leow/dota2-announcer/releases/latest'
-    );
-    expect(link).toHaveAttribute('target', '_blank');
+
+    await waitFor(() => {
+      expect(screen.getByText(/Download for Windows/)).toBeInTheDocument();
+    });
+
+    const winLink = screen.getByText(/Download for Windows/).closest('a');
+    const macLink = screen.getByText(/Download for macOS/).closest('a');
+
+    expect(winLink).toHaveAttribute('href', mockRelease.assets[0].browser_download_url);
+    expect(macLink).toHaveAttribute('href', mockRelease.assets[1].browser_download_url);
   });
 
-  it('mentions Windows and macOS', () => {
+  it('falls back to GitHub Releases page when no release exists', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: false } as Response);
+
     render(<Download />);
-    expect(screen.getByText(/Windows and macOS/)).toBeInTheDocument();
+
+    await waitFor(() => {
+      const winLink = screen.getByText(/Download for Windows/).closest('a');
+      expect(winLink).toHaveAttribute('href', 'https://github.com/kent-leow/dota2-announcer/releases/latest');
+    });
+  });
+
+  it('shows version tag when release exists', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockRelease),
+    } as Response);
+
+    render(<Download />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/v0.2.0/)).toBeInTheDocument();
+    });
   });
 });

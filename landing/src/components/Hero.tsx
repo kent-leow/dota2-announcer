@@ -30,9 +30,7 @@ export function Hero() {
           day/night cycles, and more. Never miss a timing again.
         </p>
         <a
-          href="https://github.com/kent-leow/dota2-announcer/releases/latest"
-          target="_blank"
-          rel="noopener noreferrer"
+          href="#download"
           className="inline-block px-8 py-4 bg-dota-gold text-dota-black font-bold text-lg rounded-lg hover:bg-dota-amber transition-colors"
         >
           Download Now
