@@ -37,4 +37,50 @@ describe('SEO Meta Tags', () => {
     expect(jsonLd.offers.price).toBe('0');
     expect(jsonLd.offers.priceCurrency).toBe('USD');
   });
+
+  it('meta description contains primary SEO keywords', () => {
+    const descMatch = html.match(/<meta name="description" content="([^"]+)"/);
+    expect(descMatch).not.toBeNull();
+    const description = descMatch![1];
+    expect(description).toContain('Dota 2 announcer');
+    expect(description).toContain('game timer');
+    expect(description).toContain('voice alerts');
+    expect(description).toContain('Roshan');
+    expect(description).toContain('Game State Integration');
+  });
+
+  it('OG and Twitter descriptions match meta description', () => {
+    const metaDesc = html.match(/<meta name="description" content="([^"]+)"/)?.[1];
+    const ogDesc = html.match(/<meta property="og:description" content="([^"]+)"/)?.[1];
+    const twDesc = html.match(/<meta name="twitter:description" content="([^"]+)"/)?.[1];
+    expect(ogDesc).toBe(metaDesc);
+    expect(twDesc).toBe(metaDesc);
+  });
+
+  it('has valid JSON-LD FAQPage schema', () => {
+    const matches = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+    const faqMatch = matches.find((m) => m[1].includes('FAQPage'));
+    expect(faqMatch).not.toBeUndefined();
+    const faqSchema = JSON.parse(faqMatch![1]);
+    expect(faqSchema['@context']).toBe('https://schema.org');
+    expect(faqSchema['@type']).toBe('FAQPage');
+    expect(faqSchema.mainEntity).toBeInstanceOf(Array);
+    expect(faqSchema.mainEntity.length).toBeGreaterThanOrEqual(3);
+    faqSchema.mainEntity.forEach((item: any) => {
+      expect(item['@type']).toBe('Question');
+      expect(item.name).toBeTruthy();
+      expect(item.acceptedAnswer['@type']).toBe('Answer');
+      expect(item.acceptedAnswer.text).toBeTruthy();
+    });
+  });
+
+  it('has keywords meta tag', () => {
+    expect(html).toContain('name="keywords"');
+    const keywordsMatch = html.match(/<meta name="keywords" content="([^"]+)"/);
+    expect(keywordsMatch).not.toBeNull();
+    const keywords = keywordsMatch![1];
+    expect(keywords).toContain('Dota 2 announcer');
+    expect(keywords).toContain('roshan timer');
+    expect(keywords).toContain('game state integration');
+  });
 });
