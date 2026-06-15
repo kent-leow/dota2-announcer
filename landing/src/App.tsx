@@ -1,7 +1,6 @@
 import { Hero } from './components/Hero';
 import { Features } from './components/Features';
 import { Download } from './components/Download';
-import { Roadmap } from './components/Roadmap';
 import { Feedback } from './components/Feedback';
 import { Support } from './components/Support';
 import { Footer } from './components/Footer';
@@ -13,7 +12,6 @@ export function App() {
         <Hero />
         <Features />
         <Download />
-        <Roadmap />
         <Feedback />
         <Support />
       </main>
