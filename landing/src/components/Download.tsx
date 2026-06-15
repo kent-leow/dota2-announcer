@@ -36,7 +36,7 @@ export function Download() {
   const { assets, loading } = useLatestRelease();
 
   return (
-    <section id="download" className="py-20 px-4 text-center">
+    <section id="download" aria-label="Download" className="py-20 px-4 text-center">
       <div className="max-w-2xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
           Ready to <span className="text-dota-gold">Level Up</span> Your Game?
@@ -52,6 +52,7 @@ export function Download() {
             href={assets.windows ?? FALLBACK_URL}
             target={assets.windows ? undefined : '_blank'}
             rel={assets.windows ? undefined : 'noopener noreferrer'}
+            aria-label="Download Dota 2 Announcer for Windows"
             className={`inline-flex items-center gap-2 px-8 py-4 font-bold text-lg rounded-lg transition-colors ${
               loading
                 ? 'bg-dota-grey/30 text-dota-grey cursor-wait'
@@ -64,6 +65,7 @@ export function Download() {
             href={assets.mac ?? FALLBACK_URL}
             target={assets.mac ? undefined : '_blank'}
             rel={assets.mac ? undefined : 'noopener noreferrer'}
+            aria-label="Download Dota 2 Announcer for macOS"
             className={`inline-flex items-center gap-2 px-8 py-4 font-bold text-lg rounded-lg transition-colors ${
               loading
                 ? 'bg-dota-grey/30 text-dota-grey cursor-wait'

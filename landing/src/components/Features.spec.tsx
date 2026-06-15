@@ -25,4 +25,10 @@ describe('Features', () => {
     const grid = container.querySelector('.grid');
     expect(grid).toHaveClass('grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3');
   });
+
+  it('section has aria-label="Features"', () => {
+    const { container } = render(<Features />);
+    const section = container.querySelector('section');
+    expect(section).toHaveAttribute('aria-label', 'Features');
+  });
 });

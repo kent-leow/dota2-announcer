@@ -12,4 +12,15 @@ describe('App', () => {
     const { container } = render(<App />);
     expect(container.firstChild).toHaveClass('bg-dota-black');
   });
+
+  it('renders Support section between Download and Footer', () => {
+    const { container } = render(<App />);
+    const sections = container.querySelectorAll('section, footer');
+    const labels = Array.from(sections).map((s) => s.getAttribute('aria-label'));
+    const downloadIdx = labels.indexOf('Download');
+    const supportIdx = labels.indexOf('Support');
+    const footerIdx = labels.indexOf('Footer');
+    expect(supportIdx).toBeGreaterThan(downloadIdx);
+    expect(supportIdx).toBeLessThan(footerIdx);
+  });
 });

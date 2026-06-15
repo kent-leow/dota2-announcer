@@ -38,4 +38,16 @@ describe('Hero', () => {
     const link = screen.getByRole('link', { name: /download now/i });
     expect(link).toHaveAttribute('href', '#download');
   });
+
+  it('section has aria-label="Hero"', () => {
+    const { container } = render(<Hero />);
+    const section = container.querySelector('section');
+    expect(section).toHaveAttribute('aria-label', 'Hero');
+  });
+
+  it('contains exactly one h1 element', () => {
+    const { container } = render(<Hero />);
+    const h1s = container.querySelectorAll('h1');
+    expect(h1s).toHaveLength(1);
+  });
 });
