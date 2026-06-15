@@ -63,4 +63,27 @@ describe('Download', () => {
       expect(screen.getByText(/v0.2.0/)).toBeInTheDocument();
     });
   });
+
+  it('section has aria-label="Download"', () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: false } as Response);
+    const { container } = render(<Download />);
+    const section = container.querySelector('section');
+    expect(section).toHaveAttribute('aria-label', 'Download');
+  });
+
+  it('download links have descriptive aria-labels', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockRelease),
+    } as Response);
+
+    const { container } = render(<Download />);
+
+    await waitFor(() => {
+      const links = container.querySelectorAll('a[aria-label]');
+      const labels = Array.from(links).map((l) => l.getAttribute('aria-label'));
+      expect(labels).toContain('Download Dota 2 Announcer for Windows');
+      expect(labels).toContain('Download Dota 2 Announcer for macOS');
+    });
+  });
 });

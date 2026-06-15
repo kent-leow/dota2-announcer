@@ -1,6 +1,6 @@
 export function Hero() {
   return (
-    <section className="relative h-screen w-full overflow-hidden flex items-center justify-center">
+    <section aria-label="Hero" className="relative h-screen w-full overflow-hidden flex items-center justify-center">
       <video
         autoPlay
         muted
@@ -31,6 +31,7 @@ export function Hero() {
         </p>
         <a
           href="#download"
+          aria-label="Download Now — scroll to download section"
           className="inline-block px-8 py-4 bg-dota-gold text-dota-black font-bold text-lg rounded-lg hover:bg-dota-amber transition-colors"
         >
           Download Now

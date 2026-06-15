@@ -10,10 +10,22 @@ describe('Footer', () => {
 
   it('GitHub link points to repo', () => {
     render(<Footer />);
-    const link = screen.getByRole('link', { name: /github/i });
+    const link = screen.getByRole('link', { name: /view source code on github/i });
     expect(link).toHaveAttribute(
       'href',
       'https://github.com/kent-leow/dota2-announcer'
     );
+  });
+
+  it('footer has aria-label="Footer"', () => {
+    const { container } = render(<Footer />);
+    const footer = container.querySelector('footer');
+    expect(footer).toHaveAttribute('aria-label', 'Footer');
+  });
+
+  it('GitHub link has accessible aria-label', () => {
+    render(<Footer />);
+    const link = screen.getByRole('link', { name: /view source code on github/i });
+    expect(link).toHaveAttribute('aria-label', 'View source code on GitHub');
   });
 });
