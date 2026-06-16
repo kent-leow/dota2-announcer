@@ -1,5 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { GameEvent, EventsConfig } from 'src/config/events.schema';
+import { PLACEHOLDER_ICON, DEFAULT_EVENT_ICONS } from 'src/config/defaultIcons';
+import { IconCropDialog } from './IconCropDialog';
 
 interface EditableEvent extends GameEvent {
   enabled: boolean;
@@ -21,6 +23,9 @@ export function TimingConfig() {
   const [addError, setAddError] = useState('');
   const [notifConfig, setNotifConfig] = useState<NotificationOverlayConfig>({ enabled: true, position: 'right', fontSize: { name: 16, offset: 13 } });
   const [persistConfig, setPersistConfig] = useState<PersistentOverlayConfig>({ enabled: false, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5 });
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const [cropTargetId, setCropTargetId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     window.electronAPI.getEvents().then((config) => {
@@ -101,7 +106,7 @@ export function TimingConfig() {
       name,
       spawnTime: 0,
       enabled: true,
-      warnings: [{ offsetSeconds: 30 }],
+      warnings: [{ offsetSeconds: 0 }],
     };
     setEvents((prev) => {
       const updated = [...prev, newEvent];
@@ -128,8 +133,57 @@ export function TimingConfig() {
     window.electronAPI.setPersistentConfig(patch);
   }, []);
 
+  const handleIconUpload = useCallback((eventId: string) => {
+    setCropTargetId(eventId);
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCropFile(file);
+    }
+    e.target.value = '';
+  }, []);
+
+  const handleCropConfirm = useCallback((dataUri: string) => {
+    if (!cropTargetId) return;
+    setEvents((prev) => {
+      const updated = prev.map((ev) =>
+        ev.id === cropTargetId ? { ...ev, icon: dataUri } : ev
+      );
+      saveEvents(updated);
+      return updated;
+    });
+    setCropFile(null);
+    setCropTargetId(null);
+  }, [cropTargetId, saveEvents]);
+
+  const handleCropCancel = useCallback(() => {
+    setCropFile(null);
+    setCropTargetId(null);
+  }, []);
+
+  const handleRemoveIcon = useCallback((eventId: string) => {
+    setEvents((prev) => {
+      const updated = prev.map((ev) =>
+        ev.id === eventId ? { ...ev, icon: undefined } : ev
+      );
+      saveEvents(updated);
+      return updated;
+    });
+  }, [saveEvents]);
+
   return (
     <div className="bg-dota-dark rounded-lg p-4 space-y-4 flex-1 flex flex-col min-h-0">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/svg+xml"
+        className="hidden"
+        data-testid="icon-file-input"
+        onChange={handleFileChange}
+      />
       <div className="space-y-3 border-b border-dota-gold/10 pb-3">
         <h3 className="text-dota-gold text-xs font-semibold uppercase tracking-wide">Notification Overlay</h3>
         <div className="flex items-center justify-between">
@@ -308,6 +362,34 @@ export function TimingConfig() {
                   onChange={() => handleToggleEvent(idx)}
                   className="accent-dota-gold"
                 />
+                <div className="flex items-center gap-2">
+                  <img
+                    src={event.icon || DEFAULT_EVENT_ICONS[event.id] || PLACEHOLDER_ICON}
+                    alt=""
+                    width={24}
+                    height={24}
+                    className="rounded-sm"
+                    data-testid={`event-icon-${event.id}`}
+                  />
+                  <button
+                    onClick={(e) => { e.preventDefault(); handleIconUpload(event.id); }}
+                    className="text-dota-gold/60 hover:text-dota-gold text-xs transition-colors"
+                    title="Upload icon"
+                    data-testid={`upload-icon-${event.id}`}
+                  >
+                    ↑
+                  </button>
+                  {event.icon && (
+                    <button
+                      onClick={(e) => { e.preventDefault(); handleRemoveIcon(event.id); }}
+                      className="text-red-400/60 hover:text-red-400 text-xs transition-colors"
+                      title="Remove custom icon"
+                      data-testid={`remove-icon-${event.id}`}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
                 <span className="text-sm font-medium text-dota-grey">{event.name}</span>
               </label>
               <div className="flex items-center gap-3">
@@ -376,6 +458,14 @@ export function TimingConfig() {
           </div>
         ))}
       </div>
+
+      {cropFile && (
+        <IconCropDialog
+          imageFile={cropFile}
+          onConfirm={handleCropConfirm}
+          onCancel={handleCropCancel}
+        />
+      )}
     </div>
   );
 }
