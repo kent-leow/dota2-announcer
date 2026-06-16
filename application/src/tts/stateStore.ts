@@ -20,6 +20,7 @@ export interface PersistentOverlayConfig {
   position: OverlayPosition;
   fontSize: OverlayFontSize;
   eventCount: number;
+  lookaheadSeconds: number;
 }
 
 export interface AppState {
@@ -44,6 +45,7 @@ const DEFAULT_PERSISTENT: PersistentOverlayConfig = {
   position: 'right',
   fontSize: { name: 16, offset: 13 },
   eventCount: 5,
+  lookaheadSeconds: 30,
 };
 
 function getStatePath(): string {
@@ -90,6 +92,7 @@ function migrateFromLegacy(parsed: Record<string, unknown>): { notification: Not
       position: oldPosition,
       fontSize: oldFontSize,
       eventCount: oldEventCount,
+      lookaheadSeconds: DEFAULT_PERSISTENT.lookaheadSeconds,
     },
   };
 }
@@ -109,6 +112,7 @@ function parseOverlayConfig(parsed: Record<string, unknown>): { notification: No
         position: parsePosition(p.position),
         fontSize: parseFontSize(p.fontSize),
         eventCount: typeof p.eventCount === 'number' ? Math.max(1, Math.min(10, p.eventCount)) : DEFAULT_PERSISTENT.eventCount,
+        lookaheadSeconds: typeof p.lookaheadSeconds === 'number' ? Math.max(5, Math.min(300, p.lookaheadSeconds)) : DEFAULT_PERSISTENT.lookaheadSeconds,
       },
     };
   }

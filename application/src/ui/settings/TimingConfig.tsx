@@ -24,7 +24,7 @@ export function TimingConfig() {
   const [newName, setNewName] = useState('');
   const [addError, setAddError] = useState('');
   const [notifConfig, setNotifConfig] = useState<NotificationOverlayConfig>({ enabled: true, position: 'right', fontSize: { name: 16, offset: 13 } });
-  const [persistConfig, setPersistConfig] = useState<PersistentOverlayConfig>({ enabled: false, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5 });
+  const [persistConfig, setPersistConfig] = useState<PersistentOverlayConfig>({ enabled: false, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5, lookaheadSeconds: 30 });
   const [overlaySize, setOverlaySize] = useState(DEFAULT_OVERLAY_SIZE);
   const [cropFile, setCropFile] = useState<File | null>(null);
   const [cropTargetId, setCropTargetId] = useState<string | null>(null);
@@ -296,6 +296,18 @@ export function TimingConfig() {
             max="10"
             value={persistConfig.eventCount}
             onChange={(e) => updatePersistConfig({ eventCount: Math.max(1, Math.min(10, Number(e.target.value) || 1)) })}
+            className="w-16 px-2 py-1 rounded text-xs bg-dota-black border border-dota-gold/20 text-dota-grey"
+          />
+        </label>
+        <label className="flex items-center gap-3">
+          <span className="text-xs text-dota-grey/70 w-24">Lookahead (s)</span>
+          <input
+            data-testid="lookahead-seconds"
+            type="number"
+            min="5"
+            max="300"
+            value={persistConfig.lookaheadSeconds}
+            onChange={(e) => updatePersistConfig({ lookaheadSeconds: Math.max(5, Math.min(300, Number(e.target.value) || 30)) })}
             className="w-16 px-2 py-1 rounded text-xs bg-dota-black border border-dota-gold/20 text-dota-grey"
           />
         </label>
