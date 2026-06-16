@@ -8,6 +8,7 @@ import {
   _resetForTesting,
 } from './eventScheduler';
 import { EventsConfig } from 'src/config/events.schema';
+import { PLACEHOLDER_ICON, BOUNTY_RUNE_ICON } from 'src/config/defaultIcons';
 
 describe('eventScheduler', () => {
   beforeEach(() => {
@@ -37,7 +38,7 @@ describe('eventScheduler', () => {
 
       tick(240_000);
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith('First Night', 60, 'first-night', undefined);
+      expect(callback).toHaveBeenCalledWith('First Night', 60, 'first-night', PLACEHOLDER_ICON);
 
       tick(240_000);
       expect(callback).toHaveBeenCalledTimes(1);
@@ -64,19 +65,19 @@ describe('eventScheduler', () => {
 
       tick(120_000);
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith('Bounty Rune', 60, 'bounty-rune', undefined);
+      expect(callback).toHaveBeenCalledWith('Bounty Rune', 60, 'bounty-rune', BOUNTY_RUNE_ICON);
 
       tick(150_000);
       expect(callback).toHaveBeenCalledTimes(2);
-      expect(callback).toHaveBeenCalledWith('Bounty Rune', 30, 'bounty-rune', undefined);
+      expect(callback).toHaveBeenCalledWith('Bounty Rune', 30, 'bounty-rune', BOUNTY_RUNE_ICON);
 
       tick(300_000);
       expect(callback).toHaveBeenCalledTimes(3);
-      expect(callback).toHaveBeenCalledWith('Bounty Rune', 60, 'bounty-rune', undefined);
+      expect(callback).toHaveBeenCalledWith('Bounty Rune', 60, 'bounty-rune', BOUNTY_RUNE_ICON);
 
       tick(330_000);
       expect(callback).toHaveBeenCalledTimes(4);
-      expect(callback).toHaveBeenCalledWith('Bounty Rune', 30, 'bounty-rune', undefined);
+      expect(callback).toHaveBeenCalledWith('Bounty Rune', 30, 'bounty-rune', BOUNTY_RUNE_ICON);
     });
 
     it('fires both warnings at once if tick jumps past both', () => {
@@ -200,7 +201,7 @@ describe('eventScheduler', () => {
       tick(90_000);
 
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith('Power Rune', 30, 'rune', undefined);
+      expect(callback).toHaveBeenCalledWith('Power Rune', 30, 'rune', PLACEHOLDER_ICON);
     });
 
     it('duplicate tick at same ms does not re-fire', () => {
@@ -274,7 +275,7 @@ describe('eventScheduler', () => {
       expect(upcoming[0].icon).toBe('data:image/png;base64,testrune');
     });
 
-    it('upcoming events without icon field produce undefined', () => {
+    it('upcoming events without icon field resolve to PLACEHOLDER_ICON', () => {
       const config: EventsConfig = {
         events: [
           { id: 'test', name: 'Test', spawnTime: 120, warnings: [{ offsetSeconds: 30 }] },
@@ -283,7 +284,7 @@ describe('eventScheduler', () => {
 
       loadSchedule(config);
       const upcoming = getUpcoming(0);
-      expect(upcoming[0].icon).toBeUndefined();
+      expect(upcoming[0].icon).toBe(PLACEHOLDER_ICON);
     });
 
     it('upcoming occurrences include icon', () => {
