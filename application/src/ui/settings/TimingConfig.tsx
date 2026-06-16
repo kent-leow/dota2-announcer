@@ -200,9 +200,9 @@ export function TimingConfig() {
       />
 
       <div className="space-y-3 border-b border-dota-gold/10 pb-3">
-        <h3 className="text-dota-gold text-xs font-semibold uppercase tracking-wide">Overlay Settings</h3>
+        <h3 className="text-dota-gold text-xs font-semibold uppercase tracking-wide">Notification Overlay</h3>
         <div className="flex items-center justify-between">
-          <span className="text-xs text-dota-grey/70">Notification</span>
+          <span className="text-xs text-dota-grey/70">Enabled</span>
           <button
             data-testid="notif-enabled"
             onClick={() => updateNotifConfig({ enabled: !notifConfig.enabled })}
@@ -216,7 +216,46 @@ export function TimingConfig() {
           </button>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-xs text-dota-grey/70">Persistent</span>
+          <span className="text-xs text-dota-grey/70">Position</span>
+          <div className="flex gap-1">
+            {(['left', 'right'] as OverlayPosition[]).map((pos) => (
+              <button
+                key={pos}
+                data-testid={`notif-pos-${pos}`}
+                onClick={() => updateNotifConfig({ position: pos })}
+                className={`px-2 py-1 rounded text-xs transition-colors ${
+                  notifConfig.position === pos
+                    ? 'bg-dota-gold/30 text-dota-gold border border-dota-gold/60'
+                    : 'bg-dota-black/40 text-dota-grey/60 border border-dota-grey/20 hover:border-dota-gold/30'
+                }`}
+              >
+                {pos === 'left' ? 'Left' : 'Right'}
+              </button>
+            ))}
+          </div>
+        </div>
+        <label className="flex items-center gap-3">
+          <span className="text-xs text-dota-grey/70 w-24">Size</span>
+          <input
+            type="range"
+            min="1"
+            max="10"
+            value={overlaySize}
+            data-testid="overlay-size"
+            onChange={(e) => handleOverlaySizeChange(Number(e.target.value))}
+            className="flex-1 h-1.5 rounded-full appearance-none bg-dota-grey/20 accent-dota-gold cursor-pointer"
+          />
+          <span className="text-xs text-dota-grey w-10 text-right">{overlaySize}</span>
+        </label>
+        <div className="text-xs text-dota-grey/50 pl-28">
+          Event {px.name}px / Timer {px.offset}px / Icon {px.icon}px
+        </div>
+      </div>
+
+      <div className="space-y-3 border-b border-dota-gold/10 pb-3">
+        <h3 className="text-dota-gold text-xs font-semibold uppercase tracking-wide">Persistent Overlay</h3>
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-dota-grey/70">Enabled</span>
           <button
             data-testid="persist-enabled"
             onClick={() => updatePersistConfig({ enabled: !persistConfig.enabled })}
@@ -235,13 +274,10 @@ export function TimingConfig() {
             {(['left', 'right'] as OverlayPosition[]).map((pos) => (
               <button
                 key={pos}
-                data-testid={`notif-pos-${pos}`}
-                onClick={() => {
-                  updateNotifConfig({ position: pos });
-                  updatePersistConfig({ position: pos });
-                }}
+                data-testid={`persist-pos-${pos}`}
+                onClick={() => updatePersistConfig({ position: pos })}
                 className={`px-2 py-1 rounded text-xs transition-colors ${
-                  notifConfig.position === pos
+                  persistConfig.position === pos
                     ? 'bg-dota-gold/30 text-dota-gold border border-dota-gold/60'
                     : 'bg-dota-black/40 text-dota-grey/60 border border-dota-grey/20 hover:border-dota-gold/30'
                 }`}
@@ -250,22 +286,6 @@ export function TimingConfig() {
               </button>
             ))}
           </div>
-        </div>
-        <label className="flex items-center gap-3">
-          <span className="text-xs text-dota-grey/70 w-24">Overlay Size</span>
-          <input
-            type="range"
-            min="1"
-            max="10"
-            value={overlaySize}
-            data-testid="overlay-size"
-            onChange={(e) => handleOverlaySizeChange(Number(e.target.value))}
-            className="flex-1 h-1.5 rounded-full appearance-none bg-dota-grey/20 accent-dota-gold cursor-pointer"
-          />
-          <span className="text-xs text-dota-grey w-10 text-right">{overlaySize}</span>
-        </label>
-        <div className="text-xs text-dota-grey/50 pl-28">
-          Event {px.name}px / Timer {px.offset}px / Icon {px.icon}px
         </div>
         <label className="flex items-center gap-3">
           <span className="text-xs text-dota-grey/70 w-24">Events Shown</span>
@@ -279,6 +299,22 @@ export function TimingConfig() {
             className="w-16 px-2 py-1 rounded text-xs bg-dota-black border border-dota-gold/20 text-dota-grey"
           />
         </label>
+        <label className="flex items-center gap-3">
+          <span className="text-xs text-dota-grey/70 w-24">Size</span>
+          <input
+            type="range"
+            min="1"
+            max="10"
+            value={overlaySize}
+            data-testid="overlay-size-persistent"
+            onChange={(e) => handleOverlaySizeChange(Number(e.target.value))}
+            className="flex-1 h-1.5 rounded-full appearance-none bg-dota-grey/20 accent-dota-gold cursor-pointer"
+          />
+          <span className="text-xs text-dota-grey w-10 text-right">{overlaySize}</span>
+        </label>
+        <div className="text-xs text-dota-grey/50 pl-28">
+          Event {px.name}px / Timer {px.offset}px / Icon {px.icon}px
+        </div>
       </div>
 
       <div className="flex items-center justify-between">
