@@ -1,4 +1,4 @@
-let capturedCallback: ((name: string, offset: number, id: string) => void) | null = null;
+let capturedCallback: ((name: string, offset: number, id: string, icon?: string) => void) | null = null;
 
 jest.mock('src/scheduler/eventScheduler', () => ({
   onAnnouncement: jest.fn((cb) => { capturedCallback = cb; }),
@@ -35,6 +35,20 @@ describe('overlayNotifier', () => {
       eventName: 'Bounty Rune',
       offsetSeconds: 30,
       eventId: 'bounty-rune',
+      icon: undefined,
+      timestamp: expect.any(Number),
+    });
+  });
+
+  it('includes icon field in notification payload', () => {
+    initOverlayNotifier(() => mockOverlay as any);
+    capturedCallback!('Bounty Rune', 30, 'bounty-rune', 'data:image/png;base64,icon');
+
+    expect(mockSend).toHaveBeenCalledWith('overlay:notify', {
+      eventName: 'Bounty Rune',
+      offsetSeconds: 30,
+      eventId: 'bounty-rune',
+      icon: 'data:image/png;base64,icon',
       timestamp: expect.any(Number),
     });
   });

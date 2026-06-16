@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
+import { PLACEHOLDER_ICON } from 'src/config/defaultIcons';
 
 interface OccurrenceItem {
   eventId: string;
   eventName: string;
   happenTimeMs: number;
+  icon?: string;
 }
 
 interface PersistentPanelProps {
@@ -67,6 +69,13 @@ export function PersistentPanel({ position, fontSize, onHeightChange }: Persiste
       <div className="persistent-panel__box">
         {visible.map((o) => (
           <div key={`${o.eventId}:${o.happenTimeMs}`} className="persistent-panel__item">
+            <img
+              className="persistent-panel__icon"
+              src={o.icon || PLACEHOLDER_ICON}
+              alt=""
+              width={20}
+              height={20}
+            />
             <span className="persistent-panel__name" style={{ fontSize: `${fontSize.name}px` }}>{o.eventName}</span>
             <span className="persistent-panel__timing">
               <span className="persistent-panel__countdown" style={{ fontSize: `${fontSize.offset}px` }}>{formatCountdown(o.happenTimeMs, gameTimeMs)}</span>

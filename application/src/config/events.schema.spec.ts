@@ -64,4 +64,28 @@ describe('events.schema', () => {
     const result = eventsConfigSchema.safeParse(minimal);
     expect(result.success).toBe(true);
   });
+
+  it('accepts event with optional icon field', () => {
+    const withIcon = {
+      events: [{ id: 'test', name: 'Test', spawnTime: 0, icon: 'data:image/png;base64,abc123' }],
+    };
+    const result = eventsConfigSchema.safeParse(withIcon);
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts event without icon field', () => {
+    const withoutIcon = {
+      events: [{ id: 'test', name: 'Test', spawnTime: 0 }],
+    };
+    const result = eventsConfigSchema.safeParse(withoutIcon);
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects non-string icon value', () => {
+    const invalid = {
+      events: [{ id: 'test', name: 'Test', spawnTime: 0, icon: 123 }],
+    };
+    const result = eventsConfigSchema.safeParse(invalid);
+    expect(result.success).toBe(false);
+  });
 });

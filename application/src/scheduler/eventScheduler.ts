@@ -49,6 +49,7 @@ function computeFiresForEvent(event: GameEvent, currentMs: number, windowMs: num
           eventName: event.name,
           offsetSeconds: warning.offsetSeconds,
           fireAtMs,
+          icon: event.icon,
         });
       }
     }
@@ -96,7 +97,7 @@ export function tick(elapsedMs: number): void {
 
   for (const fire of pendingFires) {
     firedIds.add(fire.fireId);
-    announcementCallback?.(fire.eventName, fire.offsetSeconds, fire.eventId);
+    announcementCallback?.(fire.eventName, fire.offsetSeconds, fire.eventId, fire.icon);
   }
 }
 
@@ -113,6 +114,7 @@ export function getUpcoming(elapsedMs: number, limit: number = 10): UpcomingEven
           eventName: fire.eventName,
           fireAtMs: fire.fireAtMs,
           offsetSeconds: fire.offsetSeconds,
+          icon: fire.icon,
         });
       }
     }
@@ -136,11 +138,11 @@ export function getUpcomingOccurrences(elapsedMs: number, limit: number = 5): Up
         : 0;
       if (periodsElapsed < maxOcc) {
         const nextOccurrence = spawnTimeMs + periodsElapsed * repeatMs;
-        occurrences.push({ eventId: event.id, eventName: event.name, happenTimeMs: nextOccurrence });
+        occurrences.push({ eventId: event.id, eventName: event.name, happenTimeMs: nextOccurrence, icon: event.icon });
       }
     } else {
       if (spawnTimeMs > elapsedMs) {
-        occurrences.push({ eventId: event.id, eventName: event.name, happenTimeMs: spawnTimeMs });
+        occurrences.push({ eventId: event.id, eventName: event.name, happenTimeMs: spawnTimeMs, icon: event.icon });
       }
     }
   }

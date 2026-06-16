@@ -37,7 +37,7 @@ describe('eventScheduler', () => {
 
       tick(240_000);
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith('First Night', 60, 'first-night');
+      expect(callback).toHaveBeenCalledWith('First Night', 60, 'first-night', undefined);
 
       tick(240_000);
       expect(callback).toHaveBeenCalledTimes(1);
@@ -64,19 +64,19 @@ describe('eventScheduler', () => {
 
       tick(120_000);
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith('Bounty Rune', 60, 'bounty-rune');
+      expect(callback).toHaveBeenCalledWith('Bounty Rune', 60, 'bounty-rune', undefined);
 
       tick(150_000);
       expect(callback).toHaveBeenCalledTimes(2);
-      expect(callback).toHaveBeenCalledWith('Bounty Rune', 30, 'bounty-rune');
+      expect(callback).toHaveBeenCalledWith('Bounty Rune', 30, 'bounty-rune', undefined);
 
       tick(300_000);
       expect(callback).toHaveBeenCalledTimes(3);
-      expect(callback).toHaveBeenCalledWith('Bounty Rune', 60, 'bounty-rune');
+      expect(callback).toHaveBeenCalledWith('Bounty Rune', 60, 'bounty-rune', undefined);
 
       tick(330_000);
       expect(callback).toHaveBeenCalledTimes(4);
-      expect(callback).toHaveBeenCalledWith('Bounty Rune', 30, 'bounty-rune');
+      expect(callback).toHaveBeenCalledWith('Bounty Rune', 30, 'bounty-rune', undefined);
     });
 
     it('fires both warnings at once if tick jumps past both', () => {
@@ -200,7 +200,7 @@ describe('eventScheduler', () => {
       tick(90_000);
 
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith('Power Rune', 30, 'rune');
+      expect(callback).toHaveBeenCalledWith('Power Rune', 30, 'rune', undefined);
     });
 
     it('duplicate tick at same ms does not re-fire', () => {
@@ -252,6 +252,65 @@ describe('eventScheduler', () => {
       expect(upcoming.length).toBeGreaterThanOrEqual(2);
       expect(upcoming[0].eventName).toBe('Near Event');
       expect(upcoming[1].eventName).toBe('Far Event');
+    });
+  });
+
+  describe('icon propagation', () => {
+    it('scheduled fires include icon from event config', () => {
+      const config: EventsConfig = {
+        events: [
+          {
+            id: 'rune',
+            name: 'Rune',
+            spawnTime: 120,
+            warnings: [{ offsetSeconds: 30 }],
+            icon: 'data:image/png;base64,testrune',
+          },
+        ],
+      };
+
+      loadSchedule(config);
+      const upcoming = getUpcoming(0);
+      expect(upcoming[0].icon).toBe('data:image/png;base64,testrune');
+    });
+
+    it('upcoming events without icon field produce undefined', () => {
+      const config: EventsConfig = {
+        events: [
+          { id: 'test', name: 'Test', spawnTime: 120, warnings: [{ offsetSeconds: 30 }] },
+        ],
+      };
+
+      loadSchedule(config);
+      const upcoming = getUpcoming(0);
+      expect(upcoming[0].icon).toBeUndefined();
+    });
+
+    it('upcoming occurrences include icon', () => {
+      const config: EventsConfig = {
+        events: [
+          { id: 'test', name: 'Test', spawnTime: 120, warnings: [{ offsetSeconds: 30 }], icon: 'data:image/svg+xml;base64,abc' },
+        ],
+      };
+
+      loadSchedule(config);
+      const occ = getUpcomingOccurrences(0, 5);
+      expect(occ[0].icon).toBe('data:image/svg+xml;base64,abc');
+    });
+
+    it('announcement callback receives icon', () => {
+      const config: EventsConfig = {
+        events: [
+          { id: 'rune', name: 'Rune', spawnTime: 60, warnings: [{ offsetSeconds: 15 }], icon: 'data:image/png;base64,x' },
+        ],
+      };
+
+      const callback = jest.fn();
+      onAnnouncement(callback);
+      loadSchedule(config);
+      tick(45_000);
+
+      expect(callback).toHaveBeenCalledWith('Rune', 15, 'rune', 'data:image/png;base64,x');
     });
   });
 

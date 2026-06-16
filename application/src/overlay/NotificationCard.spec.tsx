@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { NotificationCard } from './NotificationCard';
+import { PLACEHOLDER_ICON } from 'src/config/defaultIcons';
 
 describe('NotificationCard', () => {
   it('renders event name', () => {
@@ -55,6 +56,27 @@ describe('NotificationCard', () => {
 
       rerender(<NotificationCard eventName="Rune" offsetSeconds={60} happenTimeMs={120000} gameTimeMs={90000} status="visible" />);
       expect(screen.getByText('in 30s')).toBeInTheDocument();
+    });
+  });
+
+  describe('icon', () => {
+    it('renders img with custom icon src', () => {
+      render(<NotificationCard eventName="Test" offsetSeconds={0} status="visible" icon="data:image/png;base64,custom" />);
+      const img = screen.getByTestId('notification-icon');
+      expect(img).toHaveAttribute('src', 'data:image/png;base64,custom');
+    });
+
+    it('renders placeholder when icon is undefined', () => {
+      render(<NotificationCard eventName="Test" offsetSeconds={0} status="visible" />);
+      const img = screen.getByTestId('notification-icon');
+      expect(img).toHaveAttribute('src', PLACEHOLDER_ICON);
+    });
+
+    it('img has correct dimensions', () => {
+      render(<NotificationCard eventName="Test" offsetSeconds={0} status="visible" icon="data:image/png;base64,x" />);
+      const img = screen.getByTestId('notification-icon');
+      expect(img).toHaveAttribute('width', '24');
+      expect(img).toHaveAttribute('height', '24');
     });
   });
 });

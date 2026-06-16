@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getUpcoming } from 'src/scheduler/eventScheduler';
 import { UpcomingEvent } from 'src/scheduler/eventSchedulerTypes';
+import { PLACEHOLDER_ICON } from 'src/config/defaultIcons';
 
 function formatCountdown(ms: number, currentMs: number): string {
   const remainingSeconds = Math.max(0, Math.floor((ms - currentMs) / 1000));
@@ -50,7 +51,17 @@ export function UpcomingEvents() {
                 idx % 2 === 0 ? 'bg-dota-black/40' : 'bg-dota-black/20'
               }`}
             >
-              <span data-testid="event-name" className="text-dota-grey font-medium">{event.eventName}</span>
+              <span className="flex items-center gap-2">
+                <img
+                  data-testid="event-icon"
+                  src={event.icon || PLACEHOLDER_ICON}
+                  alt=""
+                  width={16}
+                  height={16}
+                  className="rounded-sm"
+                />
+                <span data-testid="event-name" className="text-dota-grey font-medium">{event.eventName}</span>
+              </span>
               <span className="flex gap-2 items-center">
                 <span data-testid="event-countdown" className="font-mono text-dota-amber">{formatCountdown(event.fireAtMs, elapsed)}</span>
                 <span data-testid="event-spawn-time" className="font-mono text-dota-grey/60 text-xs">@{formatGameTime(spawnAtMs)}</span>
