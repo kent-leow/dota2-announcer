@@ -1,10 +1,15 @@
 import { GameEvent, EventsConfig } from 'src/config/events.schema';
+import { DEFAULT_EVENT_ICONS, PLACEHOLDER_ICON } from 'src/config/defaultIcons';
 import {
   ScheduledFire,
   UpcomingEvent,
   UpcomingOccurrence,
   AnnouncementCallback,
 } from './eventSchedulerTypes';
+
+function resolveIcon(event: GameEvent): string {
+  return event.icon || DEFAULT_EVENT_ICONS[event.id] || PLACEHOLDER_ICON;
+}
 
 let firedIds: Set<string> = new Set();
 let announcementCallback: AnnouncementCallback | null = null;
@@ -49,7 +54,7 @@ function computeFiresForEvent(event: GameEvent, currentMs: number, windowMs: num
           eventName: event.name,
           offsetSeconds: warning.offsetSeconds,
           fireAtMs,
-          icon: event.icon,
+          icon: resolveIcon(event),
         });
       }
     }
@@ -138,11 +143,11 @@ export function getUpcomingOccurrences(elapsedMs: number, limit: number = 5): Up
         : 0;
       if (periodsElapsed < maxOcc) {
         const nextOccurrence = spawnTimeMs + periodsElapsed * repeatMs;
-        occurrences.push({ eventId: event.id, eventName: event.name, happenTimeMs: nextOccurrence, icon: event.icon });
+        occurrences.push({ eventId: event.id, eventName: event.name, happenTimeMs: nextOccurrence, icon: resolveIcon(event) });
       }
     } else {
       if (spawnTimeMs > elapsedMs) {
-        occurrences.push({ eventId: event.id, eventName: event.name, happenTimeMs: spawnTimeMs, icon: event.icon });
+        occurrences.push({ eventId: event.id, eventName: event.name, happenTimeMs: spawnTimeMs, icon: resolveIcon(event) });
       }
     }
   }

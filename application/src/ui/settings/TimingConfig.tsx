@@ -355,43 +355,41 @@ export function TimingConfig() {
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <label className="flex items-center gap-2 cursor-pointer">
+              <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={event.enabled}
                   onChange={() => handleToggleEvent(idx)}
-                  className="accent-dota-gold"
+                  className="accent-dota-gold cursor-pointer"
                 />
-                <div className="flex items-center gap-2">
-                  <img
-                    src={event.icon || DEFAULT_EVENT_ICONS[event.id] || PLACEHOLDER_ICON}
-                    alt=""
-                    width={24}
-                    height={24}
-                    className="rounded-sm"
-                    data-testid={`event-icon-${event.id}`}
-                  />
+                <img
+                  src={event.icon || DEFAULT_EVENT_ICONS[event.id] || PLACEHOLDER_ICON}
+                  alt=""
+                  width={24}
+                  height={24}
+                  className="rounded-sm"
+                  data-testid={`event-icon-${event.id}`}
+                />
+                <button
+                  onClick={() => handleIconUpload(event.id)}
+                  className="text-dota-gold/60 hover:text-dota-gold text-xs transition-colors"
+                  title="Upload icon"
+                  data-testid={`upload-icon-${event.id}`}
+                >
+                  ↑
+                </button>
+                {event.icon && (
                   <button
-                    onClick={(e) => { e.preventDefault(); handleIconUpload(event.id); }}
-                    className="text-dota-gold/60 hover:text-dota-gold text-xs transition-colors"
-                    title="Upload icon"
-                    data-testid={`upload-icon-${event.id}`}
+                    onClick={() => handleRemoveIcon(event.id)}
+                    className="text-red-400/60 hover:text-red-400 text-xs transition-colors"
+                    title="Remove custom icon"
+                    data-testid={`remove-icon-${event.id}`}
                   >
-                    ↑
+                    ✕
                   </button>
-                  {event.icon && (
-                    <button
-                      onClick={(e) => { e.preventDefault(); handleRemoveIcon(event.id); }}
-                      className="text-red-400/60 hover:text-red-400 text-xs transition-colors"
-                      title="Remove custom icon"
-                      data-testid={`remove-icon-${event.id}`}
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
+                )}
                 <span className="text-sm font-medium text-dota-grey">{event.name}</span>
-              </label>
+              </div>
               <div className="flex items-center gap-3">
                 <span className="text-xs text-dota-grey/50 font-mono">{event.id}</span>
                 <button
