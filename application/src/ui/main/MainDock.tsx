@@ -70,10 +70,10 @@ export function MainDock() {
       window.speechSynthesis.onvoiceschanged = loadVoices;
     }
 
-    eventScheduler.onAnnouncement((name, offset, eventId) => {
+    eventScheduler.onAnnouncement((name, offset, eventId, icon) => {
       announcer.speak(announcer.formatMessage(name, offset));
       if (notificationEnabledRef.current) {
-        window.electronAPI.sendOverlayNotification({ eventName: name, offsetSeconds: offset, eventId, happenTimeMs: elapsedRef.current + offset * 1000 });
+        window.electronAPI.sendOverlayNotification({ eventName: name, offsetSeconds: offset, eventId, happenTimeMs: elapsedRef.current + offset * 1000, icon });
       }
     });
 

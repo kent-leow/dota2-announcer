@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('overlayAPI', {
   },
   getNotificationConfig: () => ipcRenderer.invoke('overlay:notification:getConfig'),
   getPersistentConfig: () => ipcRenderer.invoke('overlay:persistent:getConfig'),
+  getOverlaySize: () => ipcRenderer.invoke('overlay:getSize'),
   onConfigChange: (callback: (config: { notification: unknown; persistent: unknown }) => void) => {
     const handler = (_event: unknown, config: { notification: unknown; persistent: unknown }) => callback(config);
     ipcRenderer.on('overlay:config', handler);

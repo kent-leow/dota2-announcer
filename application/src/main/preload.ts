@@ -59,6 +59,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setNotificationConfig: (config: unknown) => ipcRenderer.invoke('overlay:notification:setConfig', config),
   getPersistentConfig: () => ipcRenderer.invoke('overlay:persistent:getConfig'),
   setPersistentConfig: (config: unknown) => ipcRenderer.invoke('overlay:persistent:setConfig', config),
+  getOverlaySize: () => ipcRenderer.invoke('overlay:getSize'),
+  setOverlaySize: (size: number) => ipcRenderer.invoke('overlay:setSize', size),
   onOverlayConfigChanged: (callback: (config: unknown) => void) => {
     const handler = (_event: unknown, config: unknown) => callback(config);
     ipcRenderer.on('overlay:configChanged', handler);

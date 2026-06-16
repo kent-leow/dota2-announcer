@@ -16,6 +16,7 @@ const defaultPersist = { enabled: false, position: 'right', fontSize: { name: 16
   onNotification: jest.fn(() => () => {}),
   onTick: jest.fn(() => () => {}),
   onUpcoming: jest.fn(() => () => {}),
+  getOverlaySize: jest.fn(() => Promise.resolve(5)),
 };
 
 jest.mock('./NotificationStack', () => ({

@@ -11,6 +11,8 @@ interface OccurrenceItem {
 interface PersistentPanelProps {
   position: 'left' | 'right';
   fontSize: { name: number; offset: number };
+  iconSize?: number;
+  spawnFontSize?: number;
   onHeightChange: (height: number) => void;
 }
 
@@ -32,7 +34,7 @@ function formatSpawnTime(happenTimeMs: number): string {
   return `@${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
-export function PersistentPanel({ position, fontSize, onHeightChange }: PersistentPanelProps) {
+export function PersistentPanel({ position, fontSize, iconSize = 20, spawnFontSize, onHeightChange }: PersistentPanelProps) {
   const [occurrences, setOccurrences] = useState<OccurrenceItem[]>([]);
   const [gameTimeMs, setGameTimeMs] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -73,13 +75,12 @@ export function PersistentPanel({ position, fontSize, onHeightChange }: Persiste
               className="persistent-panel__icon"
               src={o.icon || PLACEHOLDER_ICON}
               alt=""
-              width={20}
-              height={20}
+              style={{ width: `${iconSize}px`, height: `${iconSize}px` }}
             />
             <span className="persistent-panel__name" style={{ fontSize: `${fontSize.name}px` }}>{o.eventName}</span>
             <span className="persistent-panel__timing">
               <span className="persistent-panel__countdown" style={{ fontSize: `${fontSize.offset}px` }}>{formatCountdown(o.happenTimeMs, gameTimeMs)}</span>
-              <span className="persistent-panel__spawn" style={{ fontSize: `${fontSize.offset - 2}px` }}>{formatSpawnTime(o.happenTimeMs)}</span>
+              <span className="persistent-panel__spawn" style={{ fontSize: `${spawnFontSize ?? (fontSize.offset - 2)}px` }}>{formatSpawnTime(o.happenTimeMs)}</span>
             </span>
           </div>
         ))}

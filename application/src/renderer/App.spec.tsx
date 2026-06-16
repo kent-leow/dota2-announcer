@@ -63,6 +63,8 @@ const mockElectronAPI = {
   getPersistentConfig: jest.fn(() => Promise.resolve({ enabled: false, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5 })),
   setPersistentConfig: jest.fn((c: unknown) => Promise.resolve(c)),
   onOverlayConfigChanged: jest.fn(() => () => {}),
+  getOverlaySize: jest.fn(() => Promise.resolve(5)),
+  setOverlaySize: jest.fn((s: number) => Promise.resolve(s)),
 };
 
 (window as any).electronAPI = mockElectronAPI;

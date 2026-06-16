@@ -36,6 +36,7 @@ export interface PersistentOverlayConfig {
 export interface OverlayConfig {
   notification: NotificationOverlayConfig;
   persistent: PersistentOverlayConfig;
+  overlaySize: number;
 }
 
 export interface ElectronAPI {
@@ -66,13 +67,15 @@ export interface ElectronAPI {
   gsiIsConnected: () => Promise<boolean>;
   gsiGetInstallPath: () => Promise<string | null>;
   onGsiStatusUpdate: (callback: (status: GsiStatusUpdate) => void) => () => void;
-  sendOverlayNotification: (payload: { eventName: string; offsetSeconds: number; eventId: string; happenTimeMs: number }) => void;
-  sendOverlayUpcoming: (occurrences: Array<{ eventId: string; eventName: string; happenTimeMs: number }>) => void;
+  sendOverlayNotification: (payload: { eventName: string; offsetSeconds: number; eventId: string; happenTimeMs: number; icon?: string }) => void;
+  sendOverlayUpcoming: (occurrences: Array<{ eventId: string; eventName: string; happenTimeMs: number; icon?: string }>) => void;
   onEventsChanged: (callback: (config: EventsConfig) => void) => () => void;
   getNotificationConfig: () => Promise<NotificationOverlayConfig>;
   setNotificationConfig: (config: Partial<NotificationOverlayConfig>) => Promise<NotificationOverlayConfig>;
   getPersistentConfig: () => Promise<PersistentOverlayConfig>;
   setPersistentConfig: (config: Partial<PersistentOverlayConfig>) => Promise<PersistentOverlayConfig>;
+  getOverlaySize: () => Promise<number>;
+  setOverlaySize: (size: number) => Promise<number>;
   onOverlayConfigChanged: (callback: (config: OverlayConfig) => void) => () => void;
 }
 

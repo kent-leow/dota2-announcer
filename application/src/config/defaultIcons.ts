@@ -7,7 +7,7 @@ export const PLACEHOLDER_ICON = svgToDataUri(
 );
 
 export const BOUNTY_RUNE_ICON = svgToDataUri(
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64"><circle cx="32" cy="32" r="26" fill="#1a1a2e"/><path d="M32 12 L38 28 L54 28 L41 38 L46 54 L32 44 L18 54 L23 38 L10 28 L26 28 Z" fill="#f5a623" stroke="#d4920a" stroke-width="1.5"/></svg>`
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64"><circle cx="32" cy="32" r="26" fill="#1a1a2e"/><circle cx="32" cy="32" r="20" fill="#f5a623" stroke="#d4920a" stroke-width="2"/><circle cx="32" cy="32" r="15" fill="none" stroke="#d4920a" stroke-width="1" opacity="0.6"/><text x="32" y="38" text-anchor="middle" font-size="16" font-weight="bold" font-family="sans-serif" fill="#1a1a2e">$</text></svg>`
 );
 
 export const WATER_RUNE_ICON = svgToDataUri(

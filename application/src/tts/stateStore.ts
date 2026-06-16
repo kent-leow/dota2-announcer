@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { DEFAULT_OVERLAY_SIZE, fontSizeToOverlaySize } from 'src/config/overlaySize';
 
 export type OverlayPosition = 'left' | 'right';
 
@@ -29,6 +30,7 @@ export interface AppState {
   voiceUri: string;
   notification: NotificationOverlayConfig;
   persistent: PersistentOverlayConfig;
+  overlaySize: number;
 }
 
 const DEFAULT_NOTIFICATION: NotificationOverlayConfig = {
@@ -116,6 +118,13 @@ function parseOverlayConfig(parsed: Record<string, unknown>): { notification: No
   return { notification: { ...DEFAULT_NOTIFICATION }, persistent: { ...DEFAULT_PERSISTENT } };
 }
 
+function parseOverlaySize(parsed: Record<string, unknown>, notification: NotificationOverlayConfig): number {
+  if (typeof parsed.overlaySize === 'number') {
+    return Math.max(1, Math.min(10, parsed.overlaySize));
+  }
+  return fontSizeToOverlaySize(notification.fontSize.name);
+}
+
 export function readAppState(): AppState {
   try {
     const raw = fs.readFileSync(getStatePath(), 'utf-8');
@@ -129,6 +138,7 @@ export function readAppState(): AppState {
       voiceUri: typeof parsed.voiceUri === 'string' ? parsed.voiceUri : '',
       notification: overlays.notification,
       persistent: overlays.persistent,
+      overlaySize: parseOverlaySize(parsed, overlays.notification),
     };
   } catch {
     return {
@@ -139,6 +149,7 @@ export function readAppState(): AppState {
       voiceUri: '',
       notification: { ...DEFAULT_NOTIFICATION },
       persistent: { ...DEFAULT_PERSISTENT },
+      overlaySize: DEFAULT_OVERLAY_SIZE,
     };
   }
 }
