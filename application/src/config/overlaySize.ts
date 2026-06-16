@@ -1,14 +1,14 @@
 const SIZE_TABLE: Array<{ name: number; offset: number; icon: number; spawn: number }> = [
-  { name: 9, offset: 7, icon: 9, spawn: 7 },
-  { name: 11, offset: 9, icon: 11, spawn: 9 },
-  { name: 13, offset: 10, icon: 13, spawn: 10 },
-  { name: 14, offset: 11, icon: 14, spawn: 11 },
-  { name: 15, offset: 12, icon: 15, spawn: 12 },
-  { name: 17, offset: 14, icon: 17, spawn: 14 },
-  { name: 19, offset: 15, icon: 19, spawn: 15 },
-  { name: 21, offset: 17, icon: 21, spawn: 17 },
-  { name: 23, offset: 19, icon: 23, spawn: 19 },
-  { name: 26, offset: 21, icon: 26, spawn: 21 },
+  { name: 9, offset: 7, icon: 18, spawn: 7 },
+  { name: 11, offset: 9, icon: 22, spawn: 9 },
+  { name: 13, offset: 10, icon: 26, spawn: 10 },
+  { name: 14, offset: 11, icon: 28, spawn: 11 },
+  { name: 15, offset: 12, icon: 30, spawn: 12 },
+  { name: 17, offset: 14, icon: 34, spawn: 14 },
+  { name: 19, offset: 15, icon: 38, spawn: 15 },
+  { name: 21, offset: 17, icon: 42, spawn: 17 },
+  { name: 23, offset: 19, icon: 46, spawn: 19 },
+  { name: 26, offset: 21, icon: 52, spawn: 21 },
 ];
 
 export const DEFAULT_OVERLAY_SIZE = 5;
