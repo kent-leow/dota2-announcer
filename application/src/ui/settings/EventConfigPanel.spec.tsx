@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { PLACEHOLDER_ICON } from 'src/config/defaultIcons';
 
 const defaults = {
   events: [
@@ -9,6 +10,7 @@ const defaults = {
       spawnTime: 180,
       repeatEvery: 180,
       warnings: [{ offsetSeconds: 60 }, { offsetSeconds: 30 }],
+      icon: 'data:image/png;base64,bountyicon',
     },
     {
       id: 'power-rune',
@@ -41,6 +43,7 @@ const mockElectronAPI = {
   getVolume: jest.fn(() => Promise.resolve(100)),
   getEvents: jest.fn(() => Promise.resolve(defaults)),
   reloadEvents: jest.fn(() => Promise.resolve(reloaded)),
+  saveEvents: jest.fn(() => Promise.resolve({ success: true, config: defaults })),
 };
 
 (window as any).electronAPI = mockElectronAPI;
@@ -89,6 +92,56 @@ describe('EventConfigPanel', () => {
     await waitFor(() => {
       expect(screen.getByText('Reloaded Event')).toBeInTheDocument();
       expect(screen.getByText('reloaded-event')).toBeInTheDocument();
+    });
+  });
+
+  describe('icon column', () => {
+    it('renders icon for each event', async () => {
+      render(<EventConfigPanel />);
+      await waitFor(() => {
+        const bountyIcon = screen.getByTestId('event-icon-bounty-rune') as HTMLImageElement;
+        expect(bountyIcon.src).toBe('data:image/png;base64,bountyicon');
+      });
+    });
+
+    it('renders placeholder for events without icon', async () => {
+      render(<EventConfigPanel />);
+      await waitFor(() => {
+        const powerIcon = screen.getByTestId('event-icon-power-rune') as HTMLImageElement;
+        expect(powerIcon.src).toBe(PLACEHOLDER_ICON);
+      });
+    });
+
+    it('renders upload button for each event', async () => {
+      render(<EventConfigPanel />);
+      await waitFor(() => {
+        expect(screen.getByTestId('upload-icon-bounty-rune')).toBeInTheDocument();
+        expect(screen.getByTestId('upload-icon-power-rune')).toBeInTheDocument();
+      });
+    });
+
+    it('renders remove button only for events with icon', async () => {
+      render(<EventConfigPanel />);
+      await waitFor(() => {
+        expect(screen.getByTestId('remove-icon-bounty-rune')).toBeInTheDocument();
+        expect(screen.queryByTestId('remove-icon-power-rune')).not.toBeInTheDocument();
+      });
+    });
+
+    it('remove button clears icon and calls saveEvents', async () => {
+      const noIconConfig = {
+        events: defaults.events.map((e) => e.id === 'bounty-rune' ? { ...e, icon: undefined } : e),
+      };
+      mockElectronAPI.saveEvents.mockResolvedValue({ success: true, config: noIconConfig });
+
+      render(<EventConfigPanel />);
+      await waitFor(() => screen.getByTestId('remove-icon-bounty-rune'));
+
+      fireEvent.click(screen.getByTestId('remove-icon-bounty-rune'));
+
+      await waitFor(() => {
+        expect(mockElectronAPI.saveEvents).toHaveBeenCalled();
+      });
     });
   });
 });

@@ -13,6 +13,7 @@ export const eventSchema = z.object({
   repeatEvery: positiveNumber.optional(),
   maxOccurrences: z.number().int().positive().optional(),
   warnings: z.array(warningSchema).optional(),
+  icon: z.string().optional(),
 });
 
 export const eventsConfigSchema = z.object({

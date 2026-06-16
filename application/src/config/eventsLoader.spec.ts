@@ -138,4 +138,30 @@ describe('eventsLoader', () => {
 
     expect(mockedFs.mkdirSync).toHaveBeenCalledWith('/new/dir', { recursive: true });
   });
+
+  it('loads config without icon field successfully', () => {
+    const noIcon = {
+      events: [{ id: 'test', name: 'Test', spawnTime: 60 }],
+    };
+    mockedFs.readFileSync.mockReturnValue(JSON.stringify(noIcon));
+    const result = loadEvents('/fake/path.json');
+    expect(result.events[0].id).toBe('test');
+    expect(result.events[0].icon).toBeUndefined();
+  });
+
+  it('loads config with icon field and persists through save/load cycle', () => {
+    const withIcon = {
+      events: [{ id: 'test', name: 'Test', spawnTime: 60, icon: 'data:image/png;base64,abc' }],
+    };
+    mockedFs.readFileSync.mockReturnValue(JSON.stringify(withIcon));
+    mockedFs.writeFileSync.mockReturnValue(undefined);
+
+    const loaded = loadEvents('/fake/path.json');
+    expect(loaded.events[0].icon).toBe('data:image/png;base64,abc');
+
+    saveEvents(loaded, '/fake/path.json');
+    const savedJson = (mockedFs.writeFileSync as jest.Mock).mock.calls[0][1];
+    const parsed = JSON.parse(savedJson);
+    expect(parsed.events[0].icon).toBe('data:image/png;base64,abc');
+  });
 });

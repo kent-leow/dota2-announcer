@@ -1,5 +1,6 @@
 import { render, screen, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { PLACEHOLDER_ICON } from 'src/config/defaultIcons';
 
 let tickCallback: ((ms: number) => void) | null = null;
 
@@ -93,5 +94,33 @@ describe('UpcomingEvents', () => {
     });
 
     expect(screen.getByTestId('event-countdown')).toHaveTextContent('01:00');
+  });
+
+  describe('icon', () => {
+    it('renders icon img for events with icon', () => {
+      mockGetUpcoming.mockReturnValue([
+        { eventId: 'test', eventName: 'Test', fireAtMs: 90_000, offsetSeconds: 30, icon: 'data:image/png;base64,abc' },
+      ]);
+
+      render(<UpcomingEvents />);
+      act(() => { tickCallback?.(30_000); });
+
+      const icon = screen.getByTestId('event-icon') as HTMLImageElement;
+      expect(icon.src).toBe('data:image/png;base64,abc');
+      expect(icon).toHaveAttribute('width', '16');
+      expect(icon).toHaveAttribute('height', '16');
+    });
+
+    it('renders placeholder for events without icon', () => {
+      mockGetUpcoming.mockReturnValue([
+        { eventId: 'test', eventName: 'Test', fireAtMs: 90_000, offsetSeconds: 30 },
+      ]);
+
+      render(<UpcomingEvents />);
+      act(() => { tickCallback?.(30_000); });
+
+      const icon = screen.getByTestId('event-icon') as HTMLImageElement;
+      expect(icon.src).toBe(PLACEHOLDER_ICON);
+    });
   });
 });

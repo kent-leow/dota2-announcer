@@ -4,6 +4,7 @@ export interface ScheduledFire {
   eventName: string;
   offsetSeconds: number;
   fireAtMs: number;
+  icon?: string;
 }
 
 export interface UpcomingEvent {
@@ -11,12 +12,14 @@ export interface UpcomingEvent {
   eventName: string;
   fireAtMs: number;
   offsetSeconds: number;
+  icon?: string;
 }
 
 export interface UpcomingOccurrence {
   eventId: string;
   eventName: string;
   happenTimeMs: number;
+  icon?: string;
 }
 
-export type AnnouncementCallback = (eventName: string, offsetSeconds: number, eventId: string) => void;
+export type AnnouncementCallback = (eventName: string, offsetSeconds: number, eventId: string, icon?: string) => void;

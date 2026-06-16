@@ -1,8 +1,9 @@
 import { render, screen, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { PLACEHOLDER_ICON } from 'src/config/defaultIcons';
 
 let tickCallback: ((ms: number) => void) | null = null;
-let upcomingCallback: ((occ: Array<{ eventId: string; eventName: string; happenTimeMs: number }>) => void) | null = null;
+let upcomingCallback: ((occ: Array<{ eventId: string; eventName: string; happenTimeMs: number; icon?: string }>) => void) | null = null;
 
 (window as any).overlayAPI = {
   onTick: jest.fn((cb) => {
@@ -110,5 +111,33 @@ describe('PersistentPanel', () => {
       upcomingCallback!([{ eventId: 'a', eventName: 'Rune', happenTimeMs: 120000 }]);
     });
     expect(container.querySelector('.persistent-panel--left')).toBeInTheDocument();
+  });
+
+  describe('icon', () => {
+    it('renders icon for each occurrence', () => {
+      const { container } = render(<PersistentPanel {...defaultProps} />);
+      act(() => {
+        tickCallback!(0);
+        upcomingCallback!([
+          { eventId: 'a', eventName: 'Rune', happenTimeMs: 120000, icon: 'data:image/svg+xml;base64,abc' },
+        ]);
+      });
+      const icon = container.querySelector('.persistent-panel__icon') as HTMLImageElement;
+      expect(icon).toBeInTheDocument();
+      expect(icon.src).toBe('data:image/svg+xml;base64,abc');
+    });
+
+    it('falls back to placeholder for missing icon', () => {
+      const { container } = render(<PersistentPanel {...defaultProps} />);
+      act(() => {
+        tickCallback!(0);
+        upcomingCallback!([
+          { eventId: 'a', eventName: 'Rune', happenTimeMs: 120000 },
+        ]);
+      });
+      const icon = container.querySelector('.persistent-panel__icon') as HTMLImageElement;
+      expect(icon).toBeInTheDocument();
+      expect(icon.src).toBe(PLACEHOLDER_ICON);
+    });
   });
 });

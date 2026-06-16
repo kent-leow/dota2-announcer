@@ -1,5 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { GameEvent, EventsConfig } from 'src/config/events.schema';
+import { PLACEHOLDER_ICON } from 'src/config/defaultIcons';
+import { IconCropDialog } from './IconCropDialog';
 
 interface NewEventForm {
   id: string;
@@ -9,13 +11,16 @@ interface NewEventForm {
   warnings: string;
 }
 
-const EMPTY_FORM: NewEventForm = { id: '', name: '', spawnTime: '', repeatEvery: '', warnings: '60,30' };
+const EMPTY_FORM: NewEventForm = { id: '', name: '', spawnTime: '', repeatEvery: '', warnings: '0' };
 
 export function EventConfigPanel() {
   const [config, setConfig] = useState<EventsConfig>({ events: [] });
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<NewEventForm>(EMPTY_FORM);
   const [error, setError] = useState('');
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const [cropTargetId, setCropTargetId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     window.electronAPI.getEvents().then(setConfig);
@@ -52,7 +57,7 @@ export function EventConfigPanel() {
     const warnings = form.warnings
       .split(',')
       .map((s) => parseInt(s.trim(), 10))
-      .filter((n) => !isNaN(n) && n > 0);
+      .filter((n) => !isNaN(n) && n >= 0);
     if (warnings.length > 0) {
       newEvent.warnings = warnings.map((offsetSeconds) => ({ offsetSeconds }));
     }
@@ -70,6 +75,51 @@ export function EventConfigPanel() {
 
   const handleRemove = useCallback(async (id: string) => {
     const updated: EventsConfig = { events: config.events.filter((e) => e.id !== id) };
+    const result = await window.electronAPI.saveEvents(updated);
+    if (result.success && result.config) {
+      setConfig(result.config);
+    }
+  }, [config]);
+
+  const handleIconUpload = useCallback((eventId: string) => {
+    setCropTargetId(eventId);
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCropFile(file);
+    }
+    e.target.value = '';
+  }, []);
+
+  const handleCropConfirm = useCallback(async (dataUri: string) => {
+    if (!cropTargetId) return;
+    const updated: EventsConfig = {
+      events: config.events.map((ev) =>
+        ev.id === cropTargetId ? { ...ev, icon: dataUri } : ev
+      ),
+    };
+    const result = await window.electronAPI.saveEvents(updated);
+    if (result.success && result.config) {
+      setConfig(result.config);
+    }
+    setCropFile(null);
+    setCropTargetId(null);
+  }, [cropTargetId, config]);
+
+  const handleCropCancel = useCallback(() => {
+    setCropFile(null);
+    setCropTargetId(null);
+  }, []);
+
+  const handleRemoveIcon = useCallback(async (eventId: string) => {
+    const updated: EventsConfig = {
+      events: config.events.map((ev) =>
+        ev.id === eventId ? { ...ev, icon: undefined } : ev
+      ),
+    };
     const result = await window.electronAPI.saveEvents(updated);
     if (result.success && result.config) {
       setConfig(result.config);
@@ -144,10 +194,20 @@ export function EventConfigPanel() {
         </div>
       )}
 
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/svg+xml"
+        className="hidden"
+        data-testid="icon-file-input"
+        onChange={handleFileChange}
+      />
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-dota-gold/20">
+              <th className="text-left py-2 px-2 text-dota-gold font-medium">Icon</th>
               <th className="text-left py-2 px-2 text-dota-gold font-medium">ID</th>
               <th className="text-left py-2 px-2 text-dota-gold font-medium">Name</th>
               <th className="text-left py-2 px-2 text-dota-gold font-medium">Spawn Time</th>
@@ -163,6 +223,36 @@ export function EventConfigPanel() {
                   idx % 2 === 0 ? 'bg-dota-black/20' : ''
                 }`}
               >
+                <td className="py-2 px-2">
+                  <div className="flex items-center gap-1">
+                    <img
+                      src={event.icon || PLACEHOLDER_ICON}
+                      alt=""
+                      width={24}
+                      height={24}
+                      className="rounded-sm"
+                      data-testid={`event-icon-${event.id}`}
+                    />
+                    <button
+                      onClick={() => handleIconUpload(event.id)}
+                      className="text-dota-gold/60 hover:text-dota-gold text-xs transition-colors"
+                      title="Upload icon"
+                      data-testid={`upload-icon-${event.id}`}
+                    >
+                      ↑
+                    </button>
+                    {event.icon && (
+                      <button
+                        onClick={() => handleRemoveIcon(event.id)}
+                        className="text-red-400/60 hover:text-red-400 text-xs transition-colors"
+                        title="Remove icon"
+                        data-testid={`remove-icon-${event.id}`}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                </td>
                 <td className="py-2 px-2 font-mono text-dota-grey/80">{event.id}</td>
                 <td className="py-2 px-2 text-dota-grey">{event.name}</td>
                 <td className="py-2 px-2 font-mono text-dota-amber">{event.spawnTime}s</td>
@@ -185,6 +275,14 @@ export function EventConfigPanel() {
           </tbody>
         </table>
       </div>
+
+      {cropFile && (
+        <IconCropDialog
+          imageFile={cropFile}
+          onConfirm={handleCropConfirm}
+          onCancel={handleCropCancel}
+        />
+      )}
     </div>
   );
 }
