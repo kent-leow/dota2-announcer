@@ -187,7 +187,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
   });
 
 
-  ipcMain.on('overlay:announcement', (_event, payload: { eventName: string; offsetSeconds: number; eventId: string; happenTimeMs?: number }) => {
+  ipcMain.on('overlay:announcement', (_event, payload: { eventName: string; offsetSeconds: number; eventId: string; happenTimeMs?: number; icon?: string }) => {
     const overlay = getOverlayWindow();
     if (!overlay || overlay.isDestroyed()) return;
     overlay.webContents.send('overlay:notify', {
@@ -196,7 +196,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     });
   });
 
-  ipcMain.on('overlay:sendUpcoming', (_event, occurrences: Array<{ eventId: string; eventName: string; happenTimeMs: number }>) => {
+  ipcMain.on('overlay:sendUpcoming', (_event, occurrences: Array<{ eventId: string; eventName: string; happenTimeMs: number; icon?: string }>) => {
     const overlay = getOverlayWindow();
     if (!overlay || overlay.isDestroyed()) return;
     overlay.webContents.send('overlay:upcoming', occurrences);
@@ -236,6 +236,15 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     broadcastOverlayConfig(state, getWindow, getOverlayWindow);
     return state.persistent;
   });
+
+  ipcMain.handle('overlay:getSize', () => readAppState().overlaySize);
+  ipcMain.handle('overlay:setSize', (_event, size: number) => {
+    const state = readAppState();
+    state.overlaySize = Math.max(1, Math.min(10, size));
+    writeAppState(state);
+    broadcastOverlayConfig(state, getWindow, getOverlayWindow);
+    return state.overlaySize;
+  });
 }
 
 function broadcastOverlayConfig(
@@ -243,18 +252,17 @@ function broadcastOverlayConfig(
   getWindow: () => BrowserWindow | null,
   getOverlay: typeof getOverlayWindow,
 ): void {
+  const payload = {
+    notification: state.notification,
+    persistent: state.persistent,
+    overlaySize: state.overlaySize,
+  };
   const overlay = getOverlay();
   if (overlay && !overlay.isDestroyed()) {
-    overlay.webContents.send('overlay:config', {
-      notification: state.notification,
-      persistent: state.persistent,
-    });
+    overlay.webContents.send('overlay:config', payload);
   }
   const win = getWindow();
   if (win && !win.isDestroyed()) {
-    win.webContents.send('overlay:configChanged', {
-      notification: state.notification,
-      persistent: state.persistent,
-    });
+    win.webContents.send('overlay:configChanged', payload);
   }
 }

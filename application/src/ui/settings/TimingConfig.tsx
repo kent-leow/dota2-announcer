@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GameEvent, EventsConfig } from 'src/config/events.schema';
 import { PLACEHOLDER_ICON, DEFAULT_EVENT_ICONS } from 'src/config/defaultIcons';
+import { DEFAULT_EVENTS } from 'src/config/defaults';
+import { sizeToPixels, DEFAULT_OVERLAY_SIZE } from 'src/config/overlaySize';
 import { IconCropDialog } from './IconCropDialog';
 
 interface EditableEvent extends GameEvent {
@@ -23,8 +25,10 @@ export function TimingConfig() {
   const [addError, setAddError] = useState('');
   const [notifConfig, setNotifConfig] = useState<NotificationOverlayConfig>({ enabled: true, position: 'right', fontSize: { name: 16, offset: 13 } });
   const [persistConfig, setPersistConfig] = useState<PersistentOverlayConfig>({ enabled: false, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5 });
+  const [overlaySize, setOverlaySize] = useState(DEFAULT_OVERLAY_SIZE);
   const [cropFile, setCropFile] = useState<File | null>(null);
   const [cropTargetId, setCropTargetId] = useState<string | null>(null);
+  const [resetKey, setResetKey] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -33,6 +37,7 @@ export function TimingConfig() {
     });
     window.electronAPI.getNotificationConfig().then(setNotifConfig);
     window.electronAPI.getPersistentConfig().then(setPersistConfig);
+    window.electronAPI.getOverlaySize().then(setOverlaySize);
   }, []);
 
   const saveEvents = useCallback((updated: EditableEvent[]) => {
@@ -117,10 +122,12 @@ export function TimingConfig() {
     setShowAdd(false);
   }, [newName, events, saveEvents]);
 
-  const handleReload = useCallback(() => {
-    window.electronAPI.reloadEvents().then((config) => {
-      setEvents(config.events.map((e) => ({ ...e, enabled: true })));
-    });
+  const handleResetDefaults = useCallback(async () => {
+    const result = await window.electronAPI.saveEvents(DEFAULT_EVENTS);
+    if (result.success && result.config) {
+      setEvents(result.config.events.map((e) => ({ ...e, enabled: true })));
+      setResetKey((k) => k + 1);
+    }
   }, []);
 
   const updateNotifConfig = useCallback((patch: Partial<NotificationOverlayConfig>) => {
@@ -131,6 +138,11 @@ export function TimingConfig() {
   const updatePersistConfig = useCallback((patch: Partial<PersistentOverlayConfig>) => {
     setPersistConfig((prev) => ({ ...prev, ...patch }));
     window.electronAPI.setPersistentConfig(patch);
+  }, []);
+
+  const handleOverlaySizeChange = useCallback((size: number) => {
+    setOverlaySize(size);
+    window.electronAPI.setOverlaySize(size);
   }, []);
 
   const handleIconUpload = useCallback((eventId: string) => {
@@ -174,6 +186,8 @@ export function TimingConfig() {
     });
   }, [saveEvents]);
 
+  const px = sizeToPixels(overlaySize);
+
   return (
     <div className="bg-dota-dark rounded-lg p-4 space-y-4 flex-1 flex flex-col min-h-0">
       <input
@@ -184,10 +198,11 @@ export function TimingConfig() {
         data-testid="icon-file-input"
         onChange={handleFileChange}
       />
+
       <div className="space-y-3 border-b border-dota-gold/10 pb-3">
-        <h3 className="text-dota-gold text-xs font-semibold uppercase tracking-wide">Notification Overlay</h3>
+        <h3 className="text-dota-gold text-xs font-semibold uppercase tracking-wide">Overlay Settings</h3>
         <div className="flex items-center justify-between">
-          <span className="text-xs text-dota-grey/70">Enabled</span>
+          <span className="text-xs text-dota-grey/70">Notification</span>
           <button
             data-testid="notif-enabled"
             onClick={() => updateNotifConfig({ enabled: !notifConfig.enabled })}
@@ -201,44 +216,7 @@ export function TimingConfig() {
           </button>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-xs text-dota-grey/70">Position</span>
-          <div className="flex gap-1">
-            {(['left', 'right'] as OverlayPosition[]).map((pos) => (
-              <button
-                key={pos}
-                data-testid={`notif-pos-${pos}`}
-                onClick={() => updateNotifConfig({ position: pos })}
-                className={`px-2 py-1 rounded text-xs transition-colors ${
-                  notifConfig.position === pos
-                    ? 'bg-dota-gold/30 text-dota-gold border border-dota-gold/60'
-                    : 'bg-dota-black/40 text-dota-grey/60 border border-dota-grey/20 hover:border-dota-gold/30'
-                }`}
-              >
-                {pos === 'left' ? 'Left' : 'Right'}
-              </button>
-            ))}
-          </div>
-        </div>
-        <label className="flex items-center gap-3">
-          <span className="text-xs text-dota-grey/70 w-24">Event Font</span>
-          <input type="range" min="10" max="32" value={notifConfig.fontSize.name}
-            onChange={(e) => updateNotifConfig({ fontSize: { ...notifConfig.fontSize, name: Number(e.target.value) } })}
-            className="flex-1 h-1.5 rounded-full appearance-none bg-dota-grey/20 accent-dota-gold cursor-pointer" />
-          <span className="text-xs text-dota-grey w-10 text-right">{notifConfig.fontSize.name}px</span>
-        </label>
-        <label className="flex items-center gap-3">
-          <span className="text-xs text-dota-grey/70 w-24">Timer Font</span>
-          <input type="range" min="8" max="28" value={notifConfig.fontSize.offset}
-            onChange={(e) => updateNotifConfig({ fontSize: { ...notifConfig.fontSize, offset: Number(e.target.value) } })}
-            className="flex-1 h-1.5 rounded-full appearance-none bg-dota-grey/20 accent-dota-gold cursor-pointer" />
-          <span className="text-xs text-dota-grey w-10 text-right">{notifConfig.fontSize.offset}px</span>
-        </label>
-      </div>
-
-      <div className="space-y-3 border-b border-dota-gold/10 pb-3">
-        <h3 className="text-dota-gold text-xs font-semibold uppercase tracking-wide">Persistent Overlay</h3>
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-dota-grey/70">Enabled</span>
+          <span className="text-xs text-dota-grey/70">Persistent</span>
           <button
             data-testid="persist-enabled"
             onClick={() => updatePersistConfig({ enabled: !persistConfig.enabled })}
@@ -257,10 +235,13 @@ export function TimingConfig() {
             {(['left', 'right'] as OverlayPosition[]).map((pos) => (
               <button
                 key={pos}
-                data-testid={`persist-pos-${pos}`}
-                onClick={() => updatePersistConfig({ position: pos })}
+                data-testid={`notif-pos-${pos}`}
+                onClick={() => {
+                  updateNotifConfig({ position: pos });
+                  updatePersistConfig({ position: pos });
+                }}
                 className={`px-2 py-1 rounded text-xs transition-colors ${
-                  persistConfig.position === pos
+                  notifConfig.position === pos
                     ? 'bg-dota-gold/30 text-dota-gold border border-dota-gold/60'
                     : 'bg-dota-black/40 text-dota-grey/60 border border-dota-grey/20 hover:border-dota-gold/30'
                 }`}
@@ -271,19 +252,21 @@ export function TimingConfig() {
           </div>
         </div>
         <label className="flex items-center gap-3">
-          <span className="text-xs text-dota-grey/70 w-24">Event Font</span>
-          <input type="range" min="10" max="32" value={persistConfig.fontSize.name}
-            onChange={(e) => updatePersistConfig({ fontSize: { ...persistConfig.fontSize, name: Number(e.target.value) } })}
-            className="flex-1 h-1.5 rounded-full appearance-none bg-dota-grey/20 accent-dota-gold cursor-pointer" />
-          <span className="text-xs text-dota-grey w-10 text-right">{persistConfig.fontSize.name}px</span>
+          <span className="text-xs text-dota-grey/70 w-24">Overlay Size</span>
+          <input
+            type="range"
+            min="1"
+            max="10"
+            value={overlaySize}
+            data-testid="overlay-size"
+            onChange={(e) => handleOverlaySizeChange(Number(e.target.value))}
+            className="flex-1 h-1.5 rounded-full appearance-none bg-dota-grey/20 accent-dota-gold cursor-pointer"
+          />
+          <span className="text-xs text-dota-grey w-10 text-right">{overlaySize}</span>
         </label>
-        <label className="flex items-center gap-3">
-          <span className="text-xs text-dota-grey/70 w-24">Timer Font</span>
-          <input type="range" min="8" max="28" value={persistConfig.fontSize.offset}
-            onChange={(e) => updatePersistConfig({ fontSize: { ...persistConfig.fontSize, offset: Number(e.target.value) } })}
-            className="flex-1 h-1.5 rounded-full appearance-none bg-dota-grey/20 accent-dota-gold cursor-pointer" />
-          <span className="text-xs text-dota-grey w-10 text-right">{persistConfig.fontSize.offset}px</span>
-        </label>
+        <div className="text-xs text-dota-grey/50 pl-28">
+          Event {px.name}px / Timer {px.offset}px / Icon {px.icon}px
+        </div>
         <label className="flex items-center gap-3">
           <span className="text-xs text-dota-grey/70 w-24">Events Shown</span>
           <input
@@ -297,6 +280,7 @@ export function TimingConfig() {
           />
         </label>
       </div>
+
       <div className="flex items-center justify-between">
         <h2 className="text-dota-gold text-sm font-semibold uppercase tracking-wide">Event Timings</h2>
         <div className="flex gap-2">
@@ -307,7 +291,7 @@ export function TimingConfig() {
             {showAdd ? 'Cancel' : '+ Add'}
           </button>
           <button
-            onClick={handleReload}
+            onClick={handleResetDefaults}
             className="px-3 py-1.5 rounded text-xs font-medium bg-dota-gold/20 text-dota-gold border border-dota-gold/40 hover:bg-dota-gold/30 transition-colors"
           >
             Reset Defaults
@@ -370,27 +354,27 @@ export function TimingConfig() {
                   className="rounded-sm"
                   data-testid={`event-icon-${event.id}`}
                 />
+                <span className="text-sm font-medium text-dota-grey">{event.name}</span>
+              </div>
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleIconUpload(event.id)}
-                  className="text-dota-gold/60 hover:text-dota-gold text-xs transition-colors"
-                  title="Upload icon"
+                  className="px-2 py-0.5 rounded text-xs bg-dota-gold/10 text-dota-gold/80 border border-dota-gold/30 hover:bg-dota-gold/20 transition-colors"
+                  title="Upload custom icon"
                   data-testid={`upload-icon-${event.id}`}
                 >
-                  ↑
+                  Change
                 </button>
                 {event.icon && (
                   <button
                     onClick={() => handleRemoveIcon(event.id)}
-                    className="text-red-400/60 hover:text-red-400 text-xs transition-colors"
-                    title="Remove custom icon"
+                    className="px-2 py-0.5 rounded text-xs bg-red-600/10 text-red-400/80 border border-red-500/30 hover:bg-red-600/20 transition-colors"
+                    title="Reset to default icon"
                     data-testid={`remove-icon-${event.id}`}
                   >
-                    ✕
+                    Reset
                   </button>
                 )}
-                <span className="text-sm font-medium text-dota-grey">{event.name}</span>
-              </div>
-              <div className="flex items-center gap-3">
                 <span className="text-xs text-dota-grey/50 font-mono">{event.id}</span>
                 <button
                   onClick={() => handleRemoveEvent(idx)}
@@ -403,55 +387,53 @@ export function TimingConfig() {
             </div>
 
             {event.enabled && (
-              <>
-                <div className="grid grid-cols-4 gap-3 text-xs">
-                  <label className="space-y-1">
-                    <span className="text-dota-grey/70">Spawn (s)</span>
-                    <input
-                      type="number"
-                      min="0"
-                      key={`${event.id}-spawn`}
-                      defaultValue={event.spawnTime}
-                      onBlur={(e) => commitField(idx, 'spawnTime', e.target.value)}
-                      className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
-                    />
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-dota-grey/70">Repeat (s)</span>
-                    <input
-                      type="number"
-                      min="0"
-                      key={`${event.id}-repeat`}
-                      defaultValue={event.repeatEvery ?? 0}
-                      onBlur={(e) => commitField(idx, 'repeatEvery', e.target.value)}
-                      className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
-                    />
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-dota-grey/70">Max Iterations</span>
-                    <input
-                      type="number"
-                      min="0"
-                      key={`${event.id}-max`}
-                      defaultValue={event.maxOccurrences ?? 0}
-                      onBlur={(e) => commitField(idx, 'maxOccurrences', e.target.value)}
-                      placeholder="∞"
-                      className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
-                    />
-                  </label>
-                  <label className="space-y-1">
-                    <span className="text-dota-grey/70">Warnings (s)</span>
-                    <input
-                      type="text"
-                      key={`${event.id}-warn`}
-                      defaultValue={(event.warnings ?? []).map((w) => w.offsetSeconds).join(', ')}
-                      onBlur={(e) => commitField(idx, 'warnings', e.target.value)}
-                      placeholder="60, 30, 0"
-                      className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
-                    />
-                  </label>
-                </div>
-              </>
+              <div className="grid grid-cols-4 gap-3 text-xs">
+                <label className="space-y-1">
+                  <span className="text-dota-grey/70">Spawn (s)</span>
+                  <input
+                    type="number"
+                    min="0"
+                    key={`${event.id}-spawn-${resetKey}`}
+                    defaultValue={event.spawnTime}
+                    onBlur={(e) => commitField(idx, 'spawnTime', e.target.value)}
+                    className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-dota-grey/70">Repeat (s)</span>
+                  <input
+                    type="number"
+                    min="0"
+                    key={`${event.id}-repeat-${resetKey}`}
+                    defaultValue={event.repeatEvery ?? 0}
+                    onBlur={(e) => commitField(idx, 'repeatEvery', e.target.value)}
+                    className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-dota-grey/70">Max Iterations</span>
+                  <input
+                    type="number"
+                    min="0"
+                    key={`${event.id}-max-${resetKey}`}
+                    defaultValue={event.maxOccurrences ?? 0}
+                    onBlur={(e) => commitField(idx, 'maxOccurrences', e.target.value)}
+                    placeholder="∞"
+                    className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-dota-grey/70">Warnings (s)</span>
+                  <input
+                    type="text"
+                    key={`${event.id}-warn-${resetKey}`}
+                    defaultValue={(event.warnings ?? []).map((w) => w.offsetSeconds).join(', ')}
+                    onBlur={(e) => commitField(idx, 'warnings', e.target.value)}
+                    placeholder="60, 30, 0"
+                    className="w-full bg-dota-black/60 text-dota-grey border border-dota-gold/20 rounded px-2 py-1"
+                  />
+                </label>
+              </div>
             )}
           </div>
         ))}

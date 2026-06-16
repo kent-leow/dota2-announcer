@@ -11,6 +11,7 @@ interface NotificationCardProps {
   align?: 'left' | 'right';
   fontSizeName?: number;
   fontSizeOffset?: number;
+  iconSize?: number;
   icon?: string;
 }
 
@@ -26,7 +27,7 @@ function computeCountdown(happenTimeMs: number | undefined, gameTimeMs: number |
   return `in ${offsetSeconds}s`;
 }
 
-export function NotificationCard({ eventName, offsetSeconds, happenTimeMs, gameTimeMs, status, align = 'right', fontSizeName = 16, fontSizeOffset = 13, icon }: NotificationCardProps) {
+export function NotificationCard({ eventName, offsetSeconds, happenTimeMs, gameTimeMs, status, align = 'right', fontSizeName = 16, fontSizeOffset = 13, iconSize = 24, icon }: NotificationCardProps) {
   return (
     <div className={`notification-card notification-card--${status} notification-card--${align}`}>
       <div className="notification-card__content">
@@ -35,8 +36,7 @@ export function NotificationCard({ eventName, offsetSeconds, happenTimeMs, gameT
           data-testid="notification-icon"
           src={icon || PLACEHOLDER_ICON}
           alt=""
-          width={24}
-          height={24}
+          style={{ width: `${iconSize}px`, height: `${iconSize}px` }}
         />
         <div className="notification-card__text">
           <div className="notification-card__name" style={{ fontSize: `${fontSizeName}px` }}>{eventName}</div>

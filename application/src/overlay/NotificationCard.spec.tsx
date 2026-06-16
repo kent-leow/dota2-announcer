@@ -73,10 +73,9 @@ describe('NotificationCard', () => {
     });
 
     it('img has correct dimensions', () => {
-      render(<NotificationCard eventName="Test" offsetSeconds={0} status="visible" icon="data:image/png;base64,x" />);
+      render(<NotificationCard eventName="Test" offsetSeconds={0} status="visible" icon="data:image/png;base64,x" iconSize={24} />);
       const img = screen.getByTestId('notification-icon');
-      expect(img).toHaveAttribute('width', '24');
-      expect(img).toHaveAttribute('height', '24');
+      expect(img).toHaveStyle({ width: '24px', height: '24px' });
     });
   });
 });

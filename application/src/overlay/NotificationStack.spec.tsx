@@ -20,6 +20,7 @@ import { NotificationStack } from './NotificationStack';
 const defaultProps = {
   position: 'right' as const,
   fontSize: { name: 16, offset: 13 },
+  iconSize: 15,
   topOffset: 0,
 };
 

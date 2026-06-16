@@ -9,11 +9,13 @@ interface NotificationItem {
   offsetSeconds: number;
   happenTimeMs: number;
   status: NotificationStatus;
+  icon?: string;
 }
 
 interface NotificationStackProps {
   position: Align;
   fontSize: { name: number; offset: number };
+  iconSize: number;
   topOffset: number;
 }
 
@@ -23,7 +25,7 @@ const EXIT_DURATION_MS = 400;
 
 let nextId = 0;
 
-export function NotificationStack({ position, fontSize, topOffset }: NotificationStackProps) {
+export function NotificationStack({ position, fontSize, iconSize, topOffset }: NotificationStackProps) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [gameTimeMs, setGameTimeMs] = useState(0);
   const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
@@ -37,9 +39,9 @@ export function NotificationStack({ position, fontSize, topOffset }: Notificatio
     return timer;
   }, []);
 
-  const addNotification = useCallback((eventName: string, offsetSeconds: number, happenTimeMs: number) => {
+  const addNotification = useCallback((eventName: string, offsetSeconds: number, happenTimeMs: number, icon?: string) => {
     const id = nextId++;
-    setNotifications((prev) => [...prev, { id, eventName, offsetSeconds, happenTimeMs, status: 'entering' }]);
+    setNotifications((prev) => [...prev, { id, eventName, offsetSeconds, happenTimeMs, status: 'entering', icon }]);
 
     scheduleTimer(() => {
       setNotifications((prev) =>
@@ -61,7 +63,7 @@ export function NotificationStack({ position, fontSize, topOffset }: Notificatio
   useEffect(() => {
     if (!window.overlayAPI) return;
     const unsubNotify = window.overlayAPI.onNotification((payload) => {
-      addNotification(payload.eventName, payload.offsetSeconds, payload.happenTimeMs ?? 0);
+      addNotification(payload.eventName, payload.offsetSeconds, payload.happenTimeMs ?? 0, payload.icon);
     });
     const unsubTick = window.overlayAPI.onTick((ms) => {
       setGameTimeMs(ms);
@@ -94,6 +96,8 @@ export function NotificationStack({ position, fontSize, topOffset }: Notificatio
           align={position}
           fontSizeName={fontSize.name}
           fontSizeOffset={fontSize.offset}
+          iconSize={iconSize}
+          icon={n.icon}
         />
       ))}
     </div>
