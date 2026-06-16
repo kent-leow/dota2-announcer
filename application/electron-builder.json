@@ -12,7 +12,8 @@
   ],
   "win": {
     "target": "nsis",
-    "icon": "assets/dota2-announcer.png"
+    "icon": "assets/dota2-announcer.png",
+    "publisherName": "kentleow"
   },
   "mac": {
     "icon": "assets/dota2-announcer.png"
