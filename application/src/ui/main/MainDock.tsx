@@ -18,6 +18,7 @@ export function MainDock() {
   const notificationEnabledRef = useRef<boolean>(true);
   const persistentEnabledRef = useRef<boolean>(false);
   const persistentEventCountRef = useRef<number>(5);
+  const persistentLookaheadRef = useRef<number>(30);
   const [gamePaused, setGamePaused] = useState<boolean>(false);
   const [muted, setMuted] = useState<boolean>(false);
   const [volume, setVolume] = useState<number>(100);
@@ -47,6 +48,7 @@ export function MainDock() {
     window.electronAPI.getPersistentConfig().then((c) => {
       persistentEnabledRef.current = c.enabled;
       persistentEventCountRef.current = c.eventCount;
+      persistentLookaheadRef.current = c.lookaheadSeconds;
     });
     window.electronAPI.getIncludeTimeSuffix().then((v) => {
       setTimeSuffix(v);
@@ -89,7 +91,7 @@ export function MainDock() {
       setElapsed(ms);
       eventScheduler.tick(ms);
       if (persistentEnabledRef.current) {
-        const upcoming = eventScheduler.getUpcomingOccurrences(ms, persistentEventCountRef.current);
+        const upcoming = eventScheduler.getUpcomingOccurrences(ms, persistentEventCountRef.current, persistentLookaheadRef.current * 1000);
         window.electronAPI.sendOverlayUpcoming(upcoming);
       }
     });
@@ -112,6 +114,7 @@ export function MainDock() {
       notificationEnabledRef.current = config.notification.enabled;
       persistentEnabledRef.current = config.persistent.enabled;
       persistentEventCountRef.current = config.persistent.eventCount;
+      persistentLookaheadRef.current = config.persistent.lookaheadSeconds;
     });
 
     return () => {

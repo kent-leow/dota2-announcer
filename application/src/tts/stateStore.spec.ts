@@ -21,7 +21,7 @@ describe('stateStore', () => {
     it('returns default persistent config', () => {
       (fs.readFileSync as jest.Mock).mockImplementation(() => { throw new Error('no file'); });
       const state = readAppState();
-      expect(state.persistent).toEqual({ enabled: false, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5 });
+      expect(state.persistent).toEqual({ enabled: false, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5, lookaheadSeconds: 30 });
     });
   });
 

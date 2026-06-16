@@ -232,6 +232,9 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     if (typeof config.eventCount === 'number') {
       state.persistent.eventCount = Math.max(1, Math.min(10, config.eventCount));
     }
+    if (typeof config.lookaheadSeconds === 'number') {
+      state.persistent.lookaheadSeconds = Math.max(5, Math.min(300, config.lookaheadSeconds));
+    }
     writeAppState(state);
     broadcastOverlayConfig(state, getWindow, getOverlayWindow);
     return state.persistent;

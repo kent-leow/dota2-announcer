@@ -129,8 +129,9 @@ export function getUpcoming(elapsedMs: number, limit: number = 10): UpcomingEven
   return upcoming.slice(0, limit);
 }
 
-export function getUpcomingOccurrences(elapsedMs: number, limit: number = 5): UpcomingOccurrence[] {
+export function getUpcomingOccurrences(elapsedMs: number, limit: number = 5, lookaheadMs?: number): UpcomingOccurrence[] {
   const occurrences: UpcomingOccurrence[] = [];
+  const maxTimeMs = lookaheadMs != null ? elapsedMs + lookaheadMs : Infinity;
 
   for (const event of currentEvents) {
     const spawnTimeMs = event.spawnTime * 1000;
@@ -143,10 +144,12 @@ export function getUpcomingOccurrences(elapsedMs: number, limit: number = 5): Up
         : 0;
       if (periodsElapsed < maxOcc) {
         const nextOccurrence = spawnTimeMs + periodsElapsed * repeatMs;
-        occurrences.push({ eventId: event.id, eventName: event.name, happenTimeMs: nextOccurrence, icon: resolveIcon(event) });
+        if (nextOccurrence <= maxTimeMs) {
+          occurrences.push({ eventId: event.id, eventName: event.name, happenTimeMs: nextOccurrence, icon: resolveIcon(event) });
+        }
       }
     } else {
-      if (spawnTimeMs > elapsedMs) {
+      if (spawnTimeMs > elapsedMs && spawnTimeMs <= maxTimeMs) {
         occurrences.push({ eventId: event.id, eventName: event.name, happenTimeMs: spawnTimeMs, icon: resolveIcon(event) });
       }
     }

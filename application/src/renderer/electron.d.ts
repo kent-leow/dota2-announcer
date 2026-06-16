@@ -31,6 +31,7 @@ export interface PersistentOverlayConfig {
   position: OverlayPosition;
   fontSize: OverlayFontSize;
   eventCount: number;
+  lookaheadSeconds: number;
 }
 
 export interface OverlayConfig {

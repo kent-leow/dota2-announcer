@@ -30,6 +30,7 @@ interface PersistentOverlayConfig {
   position: 'left' | 'right';
   fontSize: OverlayFontSize;
   eventCount: number;
+  lookaheadSeconds: number;
 }
 
 interface OverlayConfigPayload {
