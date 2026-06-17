@@ -33,11 +33,16 @@ describe('gameStatusTracker', () => {
       expect(getStatus().roshan.state).toBe('alive');
     });
 
-    it('handles respawn_extra state', () => {
-      updateFromGsi(true, 'respawn_extra', 660);
+    it('handles respawn_variable state', () => {
+      updateFromGsi(true, 'respawn_variable', 180);
       const status = getStatus();
-      expect(status.roshan.state).toBe('respawn_extra');
-      expect(status.roshan.endSeconds).toBe(660);
+      expect(status.roshan.state).toBe('respawn_variable');
+      expect(status.roshan.endSeconds).toBe(180);
+    });
+
+    it('maps respawn_extra to alive (legacy/invalid state)', () => {
+      updateFromGsi(true, 'respawn_extra', 660);
+      expect(getStatus().roshan.state).toBe('alive');
     });
   });
 

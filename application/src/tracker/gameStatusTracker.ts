@@ -9,7 +9,7 @@ export function updateFromGsi(daytime: boolean, roshanState: string, roshanState
   state.daytime = daytime;
 
   const mapped = roshanState === 'respawn_base' ? 'respawn_base'
-    : roshanState === 'respawn_extra' ? 'respawn_extra'
+    : roshanState === 'respawn_variable' ? 'respawn_variable'
     : 'alive';
   state.roshan = { state: mapped, endSeconds: roshanStateEndSeconds };
 }

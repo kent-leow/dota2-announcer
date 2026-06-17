@@ -48,25 +48,25 @@ describe('GameStatusPanel', () => {
     expect(screen.getByText('Nighttime')).toBeInTheDocument();
   });
 
-  it('shows roshan respawn countdown', () => {
+  it('shows roshan dead state with countdown', () => {
     render(<GameStatusPanel />);
 
     act(() => {
       gsiCallback?.({ daytime: true, roshanState: 'respawn_base', roshanStateEndSeconds: 600, clockTime: 120 });
     });
 
-    expect(screen.getByText('May respawn')).toBeInTheDocument();
+    expect(screen.getByText('Dead')).toBeInTheDocument();
     expect(screen.getByText('08:00')).toBeInTheDocument();
   });
 
-  it('shows confirmed respawn state', () => {
+  it('shows respawn_variable state', () => {
     render(<GameStatusPanel />);
 
     act(() => {
-      gsiCallback?.({ daytime: true, roshanState: 'respawn_extra', roshanStateEndSeconds: 780, clockTime: 600 });
+      gsiCallback?.({ daytime: true, roshanState: 'respawn_variable', roshanStateEndSeconds: 780, clockTime: 600 });
     });
 
-    expect(screen.getByText('Will respawn')).toBeInTheDocument();
+    expect(screen.getByText('May respawn')).toBeInTheDocument();
     expect(screen.getByText('03:00')).toBeInTheDocument();
   });
 

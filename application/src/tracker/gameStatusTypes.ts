@@ -1,5 +1,5 @@
 export interface RoshanStatus {
-  state: 'alive' | 'respawn_base' | 'respawn_extra';
+  state: 'alive' | 'respawn_base' | 'respawn_variable';
   endSeconds: number;
 }
 
