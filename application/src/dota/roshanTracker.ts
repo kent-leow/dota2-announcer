@@ -37,7 +37,7 @@ function handleGsiState(state: ParsedGameState): void {
 
   if (roshanKillEvent && previousRoshanState === 'alive') {
     lastProcessedRoshanKillTime = roshanKillEvent.game_time;
-    roshanKillGameTime = roshanKillEvent.game_time;
+    roshanKillGameTime = state.clockTime;
     previousRoshanState = 'respawn_base';
     if (config.notifications.kill) {
       notify({ type: 'killed', killedByTeam: roshanKillEvent.killed_by_team });

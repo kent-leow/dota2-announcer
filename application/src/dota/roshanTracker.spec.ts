@@ -152,6 +152,16 @@ describe('roshanTracker', () => {
     expect(events[0].type).toBe('respawn');
   });
 
+  it('uses clockTime not event game_time for timer calculations', () => {
+    gsiCallback?.(makeState(600, [{ game_time: 780, event_type: 'roshan_killed', killed_by_team: 'radiant', killer_player_id: 0 }]));
+    const timer = getRoshanTimerState();
+    expect(timer.minRespawnGameTime).toBe(1080);
+    expect(timer.maxRespawnGameTime).toBe(1260);
+
+    gsiCallback?.(makeState(1080, []));
+    expect(getRoshanState()).toBe('respawn_variable');
+  });
+
   it('resets state correctly', () => {
     gsiCallback?.(makeState(823, [{ game_time: 823, event_type: 'roshan_killed', killed_by_team: 'radiant', killer_player_id: 0 }]));
     _resetForTesting();
