@@ -1,4 +1,4 @@
-import { EventsConfig } from './events.schema';
+import { EventsConfig, DynamicEventsConfig } from './events.schema';
 import {
   BOUNTY_RUNE_ICON,
   WATER_RUNE_ICON,
@@ -110,6 +110,21 @@ export const DEFAULT_EVENTS: EventsConfig = {
       repeatEvery: 60,
       warnings: [{ offsetSeconds: 0 }],
       icon: FLAGBEARER_CREEP_ICON,
+    },
+  ],
+};
+
+export const DEFAULT_DYNAMIC_EVENTS: DynamicEventsConfig = {
+  dynamicEvents: [
+    {
+      id: 'roshan',
+      name: 'Roshan',
+      enabled: true,
+      notifications: {
+        kill: true,
+        countdown: true,
+        respawn: true,
+      },
     },
   ],
 };

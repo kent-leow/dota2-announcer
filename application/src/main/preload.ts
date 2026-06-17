@@ -66,4 +66,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('overlay:configChanged', handler);
     return () => { ipcRenderer.removeListener('overlay:configChanged', handler); };
   },
+  getDynamicEvents: () => ipcRenderer.invoke('config:getDynamicEvents'),
+  setDynamicEvents: (config: unknown) => ipcRenderer.invoke('config:setDynamicEvents', config),
 });

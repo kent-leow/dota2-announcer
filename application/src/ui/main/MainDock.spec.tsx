@@ -57,6 +57,7 @@ const mockElectronAPI = {
   getPersistentConfig: jest.fn(() => Promise.resolve({ enabled: false, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5 })),
   getNotificationConfig: jest.fn(() => Promise.resolve({ enabled: true, position: 'right', fontSize: { name: 16, offset: 13 } })),
   onOverlayConfigChanged: jest.fn(() => () => {}),
+  onGsiStatusUpdate: jest.fn(() => () => {}),
 };
 
 (window as any).electronAPI = mockElectronAPI;

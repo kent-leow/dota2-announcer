@@ -1,6 +1,6 @@
 import * as fs from 'fs';
-import { loadEvents, reload, getEvents, saveEvents } from './eventsLoader';
-import { DEFAULT_EVENTS } from './defaults';
+import { loadEvents, reload, getEvents, saveEvents, getDynamicEvents, saveDynamicEvents } from './eventsLoader';
+import { DEFAULT_EVENTS, DEFAULT_DYNAMIC_EVENTS } from './defaults';
 
 jest.mock('fs');
 
@@ -163,5 +163,59 @@ describe('eventsLoader', () => {
     const savedJson = (mockedFs.writeFileSync as jest.Mock).mock.calls[0][1];
     const parsed = JSON.parse(savedJson);
     expect(parsed.events[0].icon).toBe('data:image/png;base64,abc');
+  });
+
+  describe('dynamic events', () => {
+    it('returns defaults when config has no dynamicEvents field', () => {
+      mockedFs.readFileSync.mockReturnValue(JSON.stringify(validConfig));
+      loadEvents('/fake/path.json');
+      const dynamic = getDynamicEvents();
+      expect(dynamic).toEqual(DEFAULT_DYNAMIC_EVENTS);
+    });
+
+    it('loads valid dynamicEvents from config', () => {
+      const configWithDynamic = {
+        ...validConfig,
+        dynamicEvents: [
+          { id: 'roshan', name: 'Roshan', enabled: false, notifications: { kill: true, countdown: false, respawn: true } },
+        ],
+      };
+      mockedFs.readFileSync.mockReturnValue(JSON.stringify(configWithDynamic));
+      loadEvents('/fake/path.json');
+      const dynamic = getDynamicEvents();
+      expect(dynamic.dynamicEvents[0].enabled).toBe(false);
+      expect(dynamic.dynamicEvents[0].notifications.countdown).toBe(false);
+    });
+
+    it('saveDynamicEvents persists alongside existing events', () => {
+      mockedFs.readFileSync.mockReturnValue(JSON.stringify(validConfig));
+      mockedFs.writeFileSync.mockReturnValue(undefined);
+
+      const newDynamic = {
+        dynamicEvents: [
+          { id: 'roshan', name: 'Roshan', enabled: true, notifications: { kill: true, countdown: true, respawn: false } },
+        ],
+      };
+      saveDynamicEvents(newDynamic, '/fake/path.json');
+
+      const savedJson = (mockedFs.writeFileSync as jest.Mock).mock.calls[0][1];
+      const parsed = JSON.parse(savedJson);
+      expect(parsed.events).toEqual(validConfig.events);
+      expect(parsed.dynamicEvents[0].notifications.respawn).toBe(false);
+    });
+
+    it('saveDynamicEvents round-trips through load', () => {
+      const saved = {
+        dynamicEvents: [
+          { id: 'roshan', name: 'Roshan', enabled: false, notifications: { kill: false, countdown: true, respawn: true } },
+        ],
+      };
+      const fullConfig = { ...validConfig, dynamicEvents: saved.dynamicEvents };
+      mockedFs.readFileSync.mockReturnValue(JSON.stringify(fullConfig));
+      loadEvents('/fake/path.json');
+      const loaded = getDynamicEvents();
+      expect(loaded.dynamicEvents[0].enabled).toBe(false);
+      expect(loaded.dynamicEvents[0].notifications.kill).toBe(false);
+    });
   });
 });

@@ -1,5 +1,5 @@
-import { DEFAULT_EVENTS, EVENT_GROUP_IDS } from './defaults';
-import { eventsConfigSchema } from './events.schema';
+import { DEFAULT_EVENTS, DEFAULT_DYNAMIC_EVENTS, EVENT_GROUP_IDS } from './defaults';
+import { eventsConfigSchema, dynamicEventsConfigSchema } from './events.schema';
 
 describe('defaults', () => {
   it('contains all twelve event groups', () => {
@@ -39,5 +39,29 @@ describe('defaults', () => {
       expect(event.icon).toBeTruthy();
       expect(event.icon).toMatch(/^data:image\//);
     }
+  });
+});
+
+describe('DEFAULT_DYNAMIC_EVENTS', () => {
+  it('contains roshan entry', () => {
+    const ids = DEFAULT_DYNAMIC_EVENTS.dynamicEvents.map((e) => e.id);
+    expect(ids).toContain('roshan');
+  });
+
+  it('roshan config passes dynamic schema validation', () => {
+    const result = dynamicEventsConfigSchema.safeParse(DEFAULT_DYNAMIC_EVENTS);
+    expect(result.success).toBe(true);
+  });
+
+  it('roshan has all notification flags defaulting to true', () => {
+    const roshan = DEFAULT_DYNAMIC_EVENTS.dynamicEvents.find((e) => e.id === 'roshan')!;
+    expect(roshan.notifications.kill).toBe(true);
+    expect(roshan.notifications.countdown).toBe(true);
+    expect(roshan.notifications.respawn).toBe(true);
+  });
+
+  it('roshan is enabled by default', () => {
+    const roshan = DEFAULT_DYNAMIC_EVENTS.dynamicEvents.find((e) => e.id === 'roshan')!;
+    expect(roshan.enabled).toBe(true);
   });
 });

@@ -4,6 +4,7 @@ import { PLACEHOLDER_ICON, DEFAULT_EVENT_ICONS } from 'src/config/defaultIcons';
 import { DEFAULT_EVENTS } from 'src/config/defaults';
 import { sizeToPixels, DEFAULT_OVERLAY_SIZE } from 'src/config/overlaySize';
 import { IconCropDialog } from './IconCropDialog';
+import { DynamicEventConfig } from './DynamicEventConfig';
 
 interface EditableEvent extends GameEvent {
   enabled: boolean;
@@ -328,6 +329,8 @@ export function TimingConfig() {
           Event {px.name}px / Timer {px.offset}px / Icon {px.icon}px
         </div>
       </div>
+
+      <DynamicEventConfig />
 
       <div className="flex items-center justify-between">
         <h2 className="text-dota-gold text-sm font-semibold uppercase tracking-wide">Event Timings</h2>
