@@ -55,6 +55,7 @@ const mockElectronAPI = {
   gsiIsConnected: jest.fn(() => Promise.resolve(false)),
   gsiGetInstallPath: jest.fn(() => Promise.resolve(null)),
   onGsiStatusUpdate: jest.fn(() => () => {}),
+  onRoshanEvent: jest.fn(() => () => {}),
   sendOverlayNotification: jest.fn(),
   sendOverlayUpcoming: jest.fn(),
   onEventsChanged: jest.fn(() => () => {}),
