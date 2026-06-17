@@ -97,9 +97,6 @@ export function MainDock() {
       };
       const text = names[eventType] || eventType;
       announcer.speak(text, 'high');
-      if (notificationEnabledRef.current) {
-        window.electronAPI.sendOverlayNotification({ eventName: text, offsetSeconds: 0, eventId: 'roshan', happenTimeMs: elapsedRef.current, icon: 'roshan' });
-      }
     });
 
     const unsubGsi = window.electronAPI.onGsiStatusUpdate((gsi) => {
@@ -124,10 +121,10 @@ export function MainDock() {
         const upcoming = eventScheduler.getUpcomingOccurrences(ms, persistentEventCountRef.current, persistentLookaheadRef.current * 1000);
         const rosh = roshanStateRef.current;
         if (rosh.state === 'respawn_base' || rosh.state === 'respawn_variable') {
-          upcoming.unshift(
-            { eventId: 'roshan-must', eventName: 'Roshan must respawn', happenTimeMs: rosh.maxRespawnMs },
-            { eventId: 'roshan-may', eventName: 'Roshan may respawn', happenTimeMs: rosh.minRespawnMs },
-          );
+          upcoming.unshift({ eventId: 'roshan-must', eventName: 'Roshan must respawn', happenTimeMs: rosh.maxRespawnMs });
+          if (rosh.minRespawnMs > ms) {
+            upcoming.unshift({ eventId: 'roshan-may', eventName: 'Roshan may respawn', happenTimeMs: rosh.minRespawnMs });
+          }
         }
         window.electronAPI.sendOverlayUpcoming(upcoming);
       }

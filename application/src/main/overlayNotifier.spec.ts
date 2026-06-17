@@ -86,7 +86,6 @@ describe('overlayNotifier', () => {
         eventName: 'Roshan is dead',
         offsetSeconds: 0,
         eventId: 'roshan',
-        icon: 'roshan',
         timestamp: expect.any(Number),
       });
     });
@@ -99,7 +98,6 @@ describe('overlayNotifier', () => {
         eventName: 'Roshan may respawn',
         offsetSeconds: 0,
         eventId: 'roshan',
-        icon: 'roshan',
         timestamp: expect.any(Number),
       });
     });
@@ -112,7 +110,6 @@ describe('overlayNotifier', () => {
         eventName: 'Roshan has respawned',
         offsetSeconds: 0,
         eventId: 'roshan',
-        icon: 'roshan',
         timestamp: expect.any(Number),
       });
     });

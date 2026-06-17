@@ -28,7 +28,6 @@ export function initOverlayNotifier(getOverlay: () => BrowserWindow | null): voi
       eventName: formatRoshanEventName(event),
       offsetSeconds: 0,
       eventId: 'roshan',
-      icon: 'roshan',
       timestamp: Date.now(),
     });
   });
