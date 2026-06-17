@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { updateFromGsi, clearAll, getStatus } from 'src/tracker/gameStatusTracker';
 import { GameStatusState } from 'src/tracker/gameStatusTypes';
 
-function formatCountdown(endSeconds: number, currentSeconds: number): string {
-  const remaining = Math.max(0, endSeconds - currentSeconds);
-  const minutes = Math.floor(remaining / 60);
-  const seconds = remaining % 60;
+function formatCountdown(remainingSeconds: number): string {
+  const clamped = Math.max(0, remainingSeconds);
+  const minutes = Math.floor(clamped / 60);
+  const seconds = clamped % 60;
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
@@ -23,20 +23,17 @@ function getRoshanColor(state: string): string {
 
 export function GameStatusPanel() {
   const [status, setStatus] = useState<GameStatusState>(getStatus());
-  const [clockTime, setClockTime] = useState<number>(0);
 
   useEffect(() => {
     const unsubGsi = window.electronAPI.onGsiStatusUpdate((gsi) => {
       updateFromGsi(gsi.daytime, gsi.roshanState, gsi.roshanStateEndSeconds);
       setStatus(getStatus());
-      setClockTime(gsi.clockTime);
     });
 
     const unsubState = window.electronAPI.onStateChange((newState) => {
       if (newState === 'idle') {
         clearAll();
         setStatus(getStatus());
-        setClockTime(0);
       }
     });
 
@@ -68,7 +65,7 @@ export function GameStatusPanel() {
                 {status.roshan.state === 'respawn_base' ? 'Until may respawn' : 'Until respawn'}
               </span>
               <span className="text-xs font-mono">
-                {formatCountdown(status.roshan.endSeconds, clockTime)}
+                {formatCountdown(status.roshan.endSeconds)}
               </span>
             </div>
           )}
