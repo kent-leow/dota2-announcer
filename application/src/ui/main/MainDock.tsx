@@ -87,6 +87,16 @@ export function MainDock() {
       }
     });
 
+    const unsubRoshan = window.electronAPI.onRoshanEvent((eventType) => {
+      const names: Record<string, string> = {
+        killed: 'Roshan is dead',
+        may_respawn: 'Roshan may respawn',
+        respawn: 'Roshan has respawned',
+      };
+      const text = names[eventType] || eventType;
+      announcer.speak(text, 'high');
+    });
+
     const unsubGsi = window.electronAPI.onGsiStatusUpdate((gsi) => {
       const prev = roshanStateRef.current;
       const newState = gsi.roshanState;
@@ -111,7 +121,7 @@ export function MainDock() {
         if (rosh.state === 'respawn_base' || rosh.state === 'respawn_variable') {
           upcoming.unshift({
             eventId: 'roshan',
-            eventName: `Roshan (${rosh.state === 'respawn_base' ? 'dead' : 'may respawn'})`,
+            eventName: rosh.state === 'respawn_base' ? 'Roshan may respawn' : 'Roshan must respawn',
             happenTimeMs: rosh.happenTimeMs,
           });
         }
@@ -142,6 +152,7 @@ export function MainDock() {
 
     return () => {
       unsubState();
+      unsubRoshan();
       unsubGsi();
       unsubTick();
       unsubPause();

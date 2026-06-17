@@ -48,6 +48,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('dota:gsiStatusUpdate', handler);
     return () => { ipcRenderer.removeListener('dota:gsiStatusUpdate', handler); };
   },
+  onRoshanEvent: (callback: (eventType: string) => void) => {
+    const handler = (_event: unknown, eventType: string) => callback(eventType);
+    ipcRenderer.on('dota:roshanEvent', handler);
+    return () => { ipcRenderer.removeListener('dota:roshanEvent', handler); };
+  },
   sendOverlayNotification: (payload: { eventName: string; offsetSeconds: number; eventId: string; happenTimeMs: number }) => ipcRenderer.send('overlay:announcement', payload),
   sendOverlayUpcoming: (occurrences: Array<{ eventId: string; eventName: string; happenTimeMs: number }>) => ipcRenderer.send('overlay:sendUpcoming', occurrences),
   onEventsChanged: (callback: (config: unknown) => void) => {

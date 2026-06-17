@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as gsiServer from 'src/dota/gsiServer';
 import * as matchStateManager from 'src/dota/matchStateManager';
+import * as roshanTracker from 'src/dota/roshanTracker';
 import * as gameTimer from 'src/timer/gameTimer';
 import * as muteManager from 'src/tts/muteManager';
 import * as volumeController from 'src/tts/volumeController';
@@ -63,6 +64,13 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
         roshanStateEndSeconds: state.roshanStateEndSeconds,
         clockTime: state.clockTime,
       });
+    }
+  });
+
+  roshanTracker.onRoshanEvent((event) => {
+    const win = getWindow();
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('dota:roshanEvent', event.type);
     }
   });
 
