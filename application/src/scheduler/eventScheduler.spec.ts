@@ -394,4 +394,92 @@ describe('eventScheduler', () => {
       expect(occ[0].happenTimeMs).toBe(720000);
     });
   });
+
+  describe('rejoin suppression', () => {
+    it('suppresses old events when tick lands far past their fire time', () => {
+      const config: EventsConfig = {
+        events: [
+          { id: 'rune', name: 'Rune', spawnTime: 120, warnings: [{ offsetSeconds: 30 }] },
+          { id: 'bounty', name: 'Bounty', spawnTime: 180, repeatEvery: 180, warnings: [{ offsetSeconds: 60 }] },
+        ],
+      };
+
+      const callback = jest.fn();
+      onAnnouncement(callback);
+      loadSchedule(config);
+
+      tick(600_000);
+
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it('marks suppressed events as fired so they do not fire later', () => {
+      const config: EventsConfig = {
+        events: [
+          { id: 'rune', name: 'Rune', spawnTime: 120, warnings: [{ offsetSeconds: 30 }] },
+        ],
+      };
+
+      const callback = jest.fn();
+      onAnnouncement(callback);
+      loadSchedule(config);
+
+      tick(600_000);
+      tick(600_250);
+
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it('still fires future events normally after suppression', () => {
+      const config: EventsConfig = {
+        events: [
+          { id: 'bounty', name: 'Bounty', spawnTime: 180, repeatEvery: 180, warnings: [{ offsetSeconds: 30 }] },
+        ],
+      };
+
+      const callback = jest.fn();
+      onAnnouncement(callback);
+      loadSchedule(config);
+
+      tick(320_000);
+      expect(callback).not.toHaveBeenCalled();
+
+      tick(330_000);
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith('Bounty', 30, 'bounty', PLACEHOLDER_ICON);
+    });
+
+    it('does not suppress when event fires within announce window', () => {
+      const config: EventsConfig = {
+        events: [
+          { id: 'rune', name: 'Rune', spawnTime: 120, warnings: [{ offsetSeconds: 30 }] },
+        ],
+      };
+
+      const callback = jest.fn();
+      onAnnouncement(callback);
+      loadSchedule(config);
+
+      tick(90_000);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith('Rune', 30, 'rune', PLACEHOLDER_ICON);
+    });
+
+    it('loadSchedule with currentElapsedMs pre-populates fired state', () => {
+      const config: EventsConfig = {
+        events: [
+          { id: 'bounty', name: 'Bounty', spawnTime: 180, repeatEvery: 180, warnings: [{ offsetSeconds: 30 }] },
+        ],
+      };
+
+      const callback = jest.fn();
+      onAnnouncement(callback);
+      loadSchedule(config, 320_000);
+
+      tick(330_000);
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith('Bounty', 30, 'bounty', PLACEHOLDER_ICON);
+    });
+  });
 });

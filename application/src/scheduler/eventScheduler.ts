@@ -11,6 +11,8 @@ function resolveIcon(event: GameEvent): string {
   return event.icon || DEFAULT_EVENT_ICONS[event.id] || PLACEHOLDER_ICON;
 }
 
+const ANNOUNCE_WINDOW_MS = 60_000;
+
 let firedIds: Set<string> = new Set();
 let announcementCallback: AnnouncementCallback | null = null;
 let currentEvents: GameEvent[] = [];
@@ -102,7 +104,9 @@ export function tick(elapsedMs: number): void {
 
   for (const fire of pendingFires) {
     firedIds.add(fire.fireId);
-    announcementCallback?.(fire.eventName, fire.offsetSeconds, fire.eventId, fire.icon);
+    if (elapsedMs - fire.fireAtMs <= ANNOUNCE_WINDOW_MS) {
+      announcementCallback?.(fire.eventName, fire.offsetSeconds, fire.eventId, fire.icon);
+    }
   }
 }
 

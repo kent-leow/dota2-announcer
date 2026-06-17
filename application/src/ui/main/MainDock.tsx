@@ -84,6 +84,12 @@ export function MainDock() {
       setStatus(newState as DotaState);
       if (newState === 'idle') {
         eventScheduler.resetScheduler();
+      } else if (newState === 'in-match') {
+        window.electronAPI.getElapsed().then((ms) => {
+          window.electronAPI.getEvents().then((config) => {
+            eventScheduler.loadSchedule(config, ms);
+          });
+        });
       }
     });
 
