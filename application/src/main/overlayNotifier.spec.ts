@@ -78,36 +78,36 @@ describe('overlayNotifier', () => {
   });
 
   describe('roshan events', () => {
-    it('sends Roshan Killed notification', () => {
+    it('sends Roshan is dead notification', () => {
       initOverlayNotifier(() => mockOverlay as any);
       capturedRoshanCallback!({ type: 'killed' });
 
       expect(mockSend).toHaveBeenCalledWith('overlay:notify', {
-        eventName: 'Roshan Killed',
+        eventName: 'Roshan is dead',
         offsetSeconds: 0,
         eventId: 'roshan',
         timestamp: expect.any(Number),
       });
     });
 
-    it('sends countdown notification with remaining minutes', () => {
+    it('sends Roshan may respawn notification', () => {
       initOverlayNotifier(() => mockOverlay as any);
-      capturedRoshanCallback!({ type: 'countdown', remainingSeconds: 180 });
+      capturedRoshanCallback!({ type: 'may_respawn' });
 
       expect(mockSend).toHaveBeenCalledWith('overlay:notify', {
-        eventName: 'Roshan — may respawn in 3m',
+        eventName: 'Roshan may respawn',
         offsetSeconds: 0,
         eventId: 'roshan',
         timestamp: expect.any(Number),
       });
     });
 
-    it('sends Roshan Alive notification', () => {
+    it('sends Roshan has respawned notification', () => {
       initOverlayNotifier(() => mockOverlay as any);
       capturedRoshanCallback!({ type: 'respawn' });
 
       expect(mockSend).toHaveBeenCalledWith('overlay:notify', {
-        eventName: 'Roshan Alive',
+        eventName: 'Roshan has respawned',
         offsetSeconds: 0,
         eventId: 'roshan',
         timestamp: expect.any(Number),

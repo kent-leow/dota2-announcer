@@ -2,11 +2,10 @@ import * as gsiServer from './gsiServer';
 import { ParsedGameState } from './gsiTypes';
 import { getDynamicEvents } from 'src/config/eventsLoader';
 
-export type RoshanEventType = 'killed' | 'countdown' | 'respawn';
+export type RoshanEventType = 'killed' | 'may_respawn' | 'respawn';
 
 export interface RoshanEvent {
   type: RoshanEventType;
-  remainingSeconds?: number;
 }
 
 export type RoshanEventCallback = (event: RoshanEvent) => void;
@@ -14,7 +13,6 @@ export type RoshanEventCallback = (event: RoshanEvent) => void;
 let listeners: RoshanEventCallback[] = [];
 let unsubGsi: (() => void) | null = null;
 let previousRoshanState: string = 'alive';
-let lastCountdownMinute: number = -1;
 
 function getConfig() {
   const dynamic = getDynamicEvents();
@@ -31,15 +29,11 @@ function handleGsiState(state: ParsedGameState): void {
     if (config.notifications.kill) {
       notify({ type: 'killed' });
     }
-    lastCountdownMinute = -1;
   }
 
-  if ((currentState === 'respawn_base' || currentState === 'respawn_variable') && config.notifications.countdown) {
-    const endSeconds = state.roshanStateEndSeconds;
-    const currentMinute = Math.ceil(endSeconds / 60);
-    if (currentMinute > 0 && currentMinute !== lastCountdownMinute) {
-      lastCountdownMinute = currentMinute;
-      notify({ type: 'countdown', remainingSeconds: endSeconds });
+  if (previousRoshanState === 'respawn_base' && currentState === 'respawn_variable') {
+    if (config.notifications.countdown) {
+      notify({ type: 'may_respawn' });
     }
   }
 
@@ -47,7 +41,6 @@ function handleGsiState(state: ParsedGameState): void {
     if (config.notifications.respawn) {
       notify({ type: 'respawn' });
     }
-    lastCountdownMinute = -1;
   }
 
   previousRoshanState = currentState;
@@ -83,6 +76,5 @@ export function getRoshanState(): string {
 export function _resetForTesting(): void {
   stopListening();
   previousRoshanState = 'alive';
-  lastCountdownMinute = -1;
   listeners = [];
 }

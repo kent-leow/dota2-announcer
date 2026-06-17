@@ -3,10 +3,9 @@ import { onAnnouncement } from 'src/scheduler/eventScheduler';
 import { onRoshanEvent, RoshanEvent } from 'src/dota/roshanTracker';
 
 function formatRoshanEventName(event: RoshanEvent): string {
-  if (event.type === 'killed') return 'Roshan Killed';
-  if (event.type === 'respawn') return 'Roshan Alive';
-  const minutes = Math.ceil((event.remainingSeconds ?? 0) / 60);
-  return `Roshan — may respawn in ${minutes}m`;
+  if (event.type === 'killed') return 'Roshan is dead';
+  if (event.type === 'may_respawn') return 'Roshan may respawn';
+  return 'Roshan has respawned';
 }
 
 export function initOverlayNotifier(getOverlay: () => BrowserWindow | null): void {

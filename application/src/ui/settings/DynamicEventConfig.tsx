@@ -93,8 +93,8 @@ export function DynamicEventConfig() {
             <div className="flex gap-3 text-xs">
               {([
                 { key: 'kill' as const, tooltip: 'Notify when Roshan is killed' },
-                { key: 'countdown' as const, tooltip: 'Notify each minute during respawn window' },
-                { key: 'respawn' as const, tooltip: 'Notify when Roshan is confirmed alive' },
+                { key: 'countdown' as const, tooltip: 'Notify when Roshan may respawn (8 min mark)' },
+                { key: 'respawn' as const, tooltip: 'Notify when Roshan has respawned' },
               ]).map(({ key, tooltip }) => (
                 <label key={key} className="flex items-center gap-1.5 cursor-pointer">
                   <input

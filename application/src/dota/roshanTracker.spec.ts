@@ -57,7 +57,7 @@ describe('roshanTracker', () => {
 
   it('detects kill on alive→respawn_base transition', () => {
     gsiCallback?.(makeState('respawn_base', 480));
-    expect(events).toHaveLength(2);
+    expect(events).toHaveLength(1);
     expect(events[0]).toEqual({ type: 'killed' });
   });
 
@@ -68,30 +68,22 @@ describe('roshanTracker', () => {
     expect(kills).toHaveLength(1);
   });
 
-  it('fires countdown at minute boundaries', () => {
-    gsiCallback?.(makeState('respawn_base', 480));
-    events = [];
-
-    gsiCallback?.(makeState('respawn_base', 420));
-    expect(events).toHaveLength(1);
-    expect(events[0]).toEqual({ type: 'countdown', remainingSeconds: 420 });
-  });
-
-  it('does not fire countdown for same minute', () => {
-    gsiCallback?.(makeState('respawn_base', 480));
-    events = [];
-
-    gsiCallback?.(makeState('respawn_base', 475));
-    expect(events).toHaveLength(0);
-  });
-
-  it('detects transition from respawn_base to respawn_variable', () => {
+  it('fires may_respawn on respawn_base→respawn_variable transition', () => {
     gsiCallback?.(makeState('respawn_base', 480));
     events = [];
 
     gsiCallback?.(makeState('respawn_variable', 180));
-    const countdowns = events.filter((e) => e.type === 'countdown');
-    expect(countdowns.length).toBeGreaterThan(0);
+    expect(events).toHaveLength(1);
+    expect(events[0]).toEqual({ type: 'may_respawn' });
+  });
+
+  it('does not fire may_respawn on repeated respawn_variable', () => {
+    gsiCallback?.(makeState('respawn_base', 480));
+    gsiCallback?.(makeState('respawn_variable', 180));
+    events = [];
+
+    gsiCallback?.(makeState('respawn_variable', 170));
+    expect(events).toHaveLength(0);
   });
 
   it('detects confirmed respawn on respawn_variable→alive', () => {
@@ -130,6 +122,9 @@ describe('roshanTracker', () => {
       ],
     });
     gsiCallback?.(makeState('respawn_base', 480));
+    expect(events).toHaveLength(0);
+
+    gsiCallback?.(makeState('respawn_variable', 180));
     expect(events).toHaveLength(0);
 
     gsiCallback?.(makeState('alive', 0));
