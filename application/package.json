@@ -1,6 +1,6 @@
 {
   "name": "dota2-announcer",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "author": "Kent Leow",
   "description": "Dota 2 voice timer announcer for game events",
   "main": "dist/main/main.js",
