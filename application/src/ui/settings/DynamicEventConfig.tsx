@@ -59,8 +59,12 @@ export function DynamicEventConfig() {
           </div>
           {event.enabled && (
             <div className="flex gap-3 text-xs">
-              {(['kill', 'countdown', 'respawn'] as const).map((key) => (
-                <label key={key} className="flex items-center gap-1.5 cursor-pointer">
+              {([
+                { key: 'kill' as const, tooltip: 'Notify when Roshan is killed' },
+                { key: 'countdown' as const, tooltip: 'Notify each minute during respawn window' },
+                { key: 'respawn' as const, tooltip: 'Notify when Roshan is confirmed alive' },
+              ]).map(({ key, tooltip }) => (
+                <label key={key} className="flex items-center gap-1.5 cursor-pointer" title={tooltip}>
                   <input
                     type="checkbox"
                     checked={event.notifications[key]}
