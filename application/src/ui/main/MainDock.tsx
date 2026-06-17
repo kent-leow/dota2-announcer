@@ -19,7 +19,7 @@ export function MainDock() {
   const persistentEnabledRef = useRef<boolean>(false);
   const persistentEventCountRef = useRef<number>(5);
   const persistentLookaheadRef = useRef<number>(30);
-  const roshanStateRef = useRef<{ state: string; endSeconds: number }>({ state: 'alive', endSeconds: 0 });
+  const roshanStateRef = useRef<{ state: string; endSeconds: number; happenTimeMs: number }>({ state: 'alive', endSeconds: 0, happenTimeMs: 0 });
   const [gamePaused, setGamePaused] = useState<boolean>(false);
   const [muted, setMuted] = useState<boolean>(false);
   const [volume, setVolume] = useState<number>(100);
@@ -88,7 +88,17 @@ export function MainDock() {
     });
 
     const unsubGsi = window.electronAPI.onGsiStatusUpdate((gsi) => {
-      roshanStateRef.current = { state: gsi.roshanState, endSeconds: gsi.roshanStateEndSeconds };
+      const prev = roshanStateRef.current;
+      const newState = gsi.roshanState;
+      if (prev.state !== newState || prev.happenTimeMs === 0) {
+        roshanStateRef.current = {
+          state: newState,
+          endSeconds: gsi.roshanStateEndSeconds,
+          happenTimeMs: elapsedRef.current + gsi.roshanStateEndSeconds * 1000,
+        };
+      } else {
+        roshanStateRef.current = { ...prev, endSeconds: gsi.roshanStateEndSeconds };
+      }
     });
 
     const unsubTick = window.electronAPI.onClockTick((ms) => {
@@ -102,7 +112,7 @@ export function MainDock() {
           upcoming.unshift({
             eventId: 'roshan',
             eventName: `Roshan (${rosh.state === 'respawn_base' ? 'dead' : 'may respawn'})`,
-            happenTimeMs: ms + rosh.endSeconds * 1000,
+            happenTimeMs: rosh.happenTimeMs,
           });
         }
         window.electronAPI.sendOverlayUpcoming(upcoming);
