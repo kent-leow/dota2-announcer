@@ -52,7 +52,7 @@ describe('GameStatusPanel', () => {
     render(<GameStatusPanel />);
 
     act(() => {
-      gsiCallback?.({ daytime: true, roshanState: 'respawn_base', roshanStateEndSeconds: 600, clockTime: 120 });
+      gsiCallback?.({ daytime: true, roshanState: 'respawn_base', roshanStateEndSeconds: 480, clockTime: 120 });
     });
 
     expect(screen.getByText('Dead')).toBeInTheDocument();
@@ -63,7 +63,7 @@ describe('GameStatusPanel', () => {
     render(<GameStatusPanel />);
 
     act(() => {
-      gsiCallback?.({ daytime: true, roshanState: 'respawn_variable', roshanStateEndSeconds: 780, clockTime: 600 });
+      gsiCallback?.({ daytime: true, roshanState: 'respawn_variable', roshanStateEndSeconds: 180, clockTime: 600 });
     });
 
     expect(screen.getByText('May respawn')).toBeInTheDocument();
