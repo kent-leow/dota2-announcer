@@ -1,5 +1,5 @@
 import * as gsiServer from './gsiServer';
-import { ParsedGameState } from './gsiTypes';
+import { ParsedGameState, GsiEvent } from './gsiTypes';
 import { getDynamicEvents } from 'src/config/eventsLoader';
 import { isNotableItem } from './itemFilter';
 import { formatItemName, formatHeroName } from './itemNameFormatter';
@@ -20,6 +20,7 @@ let unsubGsi: (() => void) | null = null;
 let previousItems: Map<string, number> = new Map();
 let previousMatchId: string = '';
 let initialized = false;
+let lastProcessedAegisTime: number = -1;
 
 function getConfig() {
   const dynamic = getDynamicEvents();
@@ -34,9 +35,31 @@ function toMultiset(items: string[]): Map<string, number> {
   return map;
 }
 
+function processEventItems(state: ParsedGameState, notifications: { acquired?: boolean }): void {
+  if (!notifications.acquired) return;
+
+  const aegisEvent = state.events.find(
+    (e: GsiEvent) => e.event_type === 'aegis_picked_up' && e.game_time !== lastProcessedAegisTime,
+  );
+
+  if (aegisEvent) {
+    lastProcessedAegisTime = aegisEvent.game_time;
+    notify({
+      type: 'item_acquired',
+      heroName: formatHeroName(state.heroName),
+      itemName: 'item_aegis',
+      displayName: 'Aegis of the Immortal',
+    });
+  }
+}
+
 function handleGsiState(state: ParsedGameState): void {
   const config = getConfig();
   if (!config || !config.enabled) return;
+
+  const notifications = config.notifications as { acquired?: boolean; sold?: boolean };
+
+  processEventItems(state, notifications);
 
   if (state.matchId !== previousMatchId) {
     previousMatchId = state.matchId;
@@ -52,7 +75,6 @@ function handleGsiState(state: ParsedGameState): void {
   }
 
   const currentItems = toMultiset(state.items);
-  const notifications = config.notifications as { acquired?: boolean; sold?: boolean };
 
   if (notifications.acquired) {
     for (const [item, count] of currentItems) {
@@ -118,6 +140,7 @@ export function reset(): void {
   previousItems = new Map();
   previousMatchId = '';
   initialized = false;
+  lastProcessedAegisTime = -1;
 }
 
 export function _resetForTesting(): void {

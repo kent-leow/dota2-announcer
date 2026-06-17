@@ -6,6 +6,7 @@ export type RoshanEventType = 'killed' | 'may_respawn' | 'respawn';
 
 export interface RoshanEvent {
   type: RoshanEventType;
+  killedByTeam?: string;
 }
 
 export type RoshanEventCallback = (event: RoshanEvent) => void;
@@ -13,6 +14,11 @@ export type RoshanEventCallback = (event: RoshanEvent) => void;
 let listeners: RoshanEventCallback[] = [];
 let unsubGsi: (() => void) | null = null;
 let previousRoshanState: string = 'alive';
+let lastProcessedRoshanKillTime: number = -1;
+let roshanKillGameTime: number = 0;
+
+const ROSHAN_MIN_RESPAWN_S = 480;
+const ROSHAN_MAX_RESPAWN_S = 660;
 
 function getConfig() {
   const dynamic = getDynamicEvents();
@@ -23,27 +29,68 @@ function handleGsiState(state: ParsedGameState): void {
   const config = getConfig();
   if (!config || !config.enabled) return;
 
-  const currentState = state.roshanState;
+  const roshanKillEvent = state.events.find(
+    (e) => e.event_type === 'roshan_killed' && e.game_time !== lastProcessedRoshanKillTime,
+  );
 
-  if (previousRoshanState === 'alive' && (currentState === 'respawn_base' || currentState === 'respawn_variable')) {
+  if (roshanKillEvent && previousRoshanState === 'alive') {
+    lastProcessedRoshanKillTime = roshanKillEvent.game_time;
+    roshanKillGameTime = roshanKillEvent.game_time;
+    previousRoshanState = 'respawn_base';
     if (config.notifications.kill) {
-      notify({ type: 'killed' });
+      notify({ type: 'killed', killedByTeam: roshanKillEvent.killed_by_team });
+    }
+    return;
+  }
+
+  const hasExplicitRoshanState = state.roshanState !== 'alive' || roshanKillGameTime > 0;
+
+  if (hasExplicitRoshanState && roshanKillGameTime > 0) {
+    if (previousRoshanState === 'respawn_base') {
+      const elapsed = state.clockTime - roshanKillGameTime;
+      if (elapsed >= ROSHAN_MIN_RESPAWN_S) {
+        previousRoshanState = 'respawn_variable';
+        if (config.notifications.countdown) {
+          notify({ type: 'may_respawn' });
+        }
+        return;
+      }
+    }
+
+    if (previousRoshanState === 'respawn_variable') {
+      const elapsed = state.clockTime - roshanKillGameTime;
+      if (elapsed >= ROSHAN_MAX_RESPAWN_S) {
+        previousRoshanState = 'alive';
+        roshanKillGameTime = 0;
+        if (config.notifications.respawn) {
+          notify({ type: 'respawn' });
+        }
+        return;
+      }
     }
   }
 
-  if (previousRoshanState === 'respawn_base' && currentState === 'respawn_variable') {
-    if (config.notifications.countdown) {
-      notify({ type: 'may_respawn' });
+  const currentState = state.roshanState;
+  if (currentState && currentState !== 'alive') {
+    if (previousRoshanState === 'alive' && (currentState === 'respawn_base' || currentState === 'respawn_variable')) {
+      previousRoshanState = currentState;
+      if (lastProcessedRoshanKillTime !== state.clockTime) {
+        if (config.notifications.kill) {
+          notify({ type: 'killed' });
+        }
+      }
+    } else if (previousRoshanState === 'respawn_base' && currentState === 'respawn_variable') {
+      previousRoshanState = currentState;
+      if (config.notifications.countdown) {
+        notify({ type: 'may_respawn' });
+      }
     }
-  }
-
-  if ((previousRoshanState === 'respawn_base' || previousRoshanState === 'respawn_variable') && currentState === 'alive') {
+  } else if (currentState === 'alive' && previousRoshanState !== 'alive' && roshanKillGameTime === 0) {
+    previousRoshanState = 'alive';
     if (config.notifications.respawn) {
       notify({ type: 'respawn' });
     }
   }
-
-  previousRoshanState = currentState;
 }
 
 function notify(event: RoshanEvent): void {
@@ -75,6 +122,8 @@ export function getRoshanState(): string {
 
 export function reset(): void {
   previousRoshanState = 'alive';
+  lastProcessedRoshanKillTime = -1;
+  roshanKillGameTime = 0;
 }
 
 export function _resetForTesting(): void {

@@ -25,7 +25,7 @@ import {
 } from './itemsTracker';
 import { getDynamicEvents } from 'src/config/eventsLoader';
 
-function makeState(items: string[], heroName: string = 'ursa', matchId: string = 'match-1'): ParsedGameState {
+function makeState(items: string[], heroName: string = 'ursa', matchId: string = 'match-1', events: Array<{ game_time: number; event_type: string; [key: string]: unknown }> = []): ParsedGameState {
   return {
     gameState: 'DOTA_GAMERULES_STATE_GAME_IN_PROGRESS',
     clockTime: 600,
@@ -36,6 +36,7 @@ function makeState(items: string[], heroName: string = 'ursa', matchId: string =
     roshanStateEndSeconds: 0,
     heroName,
     items,
+    events,
   };
 }
 

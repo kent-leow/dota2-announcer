@@ -90,6 +90,7 @@ describe('gsiServer', () => {
       roshanStateEndSeconds: 0,
       heroName: '',
       items: [],
+      events: [],
     });
   });
 

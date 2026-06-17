@@ -26,10 +26,10 @@ import {
 } from './roshanTracker';
 import { getDynamicEvents } from 'src/config/eventsLoader';
 
-function makeState(roshanState: string, roshanStateEndSeconds: number = 0): ParsedGameState {
+function makeState(roshanState: string, roshanStateEndSeconds: number = 0, clockTime: number = 600, events: Array<{ game_time: number; event_type: string; [key: string]: unknown }> = []): ParsedGameState {
   return {
     gameState: 'DOTA_GAMERULES_STATE_GAME_IN_PROGRESS',
-    clockTime: 600,
+    clockTime,
     matchId: 'test-match',
     paused: false,
     daytime: true,
@@ -37,6 +37,7 @@ function makeState(roshanState: string, roshanStateEndSeconds: number = 0): Pars
     roshanStateEndSeconds,
     heroName: 'ursa',
     items: [],
+    events,
   };
 }
 
@@ -138,5 +139,42 @@ describe('roshanTracker', () => {
     gsiCallback?.(makeState('respawn_base', 480));
     _resetForTesting();
     expect(getRoshanState()).toBe('alive');
+  });
+
+  describe('events-based detection (player mode)', () => {
+    it('detects kill from events array when roshanState stays alive', () => {
+      gsiCallback?.(makeState('alive', 0, 823, [{ game_time: 823, event_type: 'roshan_killed', killed_by_team: 'radiant', killer_player_id: 0 }]));
+      expect(events).toHaveLength(1);
+      expect(events[0].type).toBe('killed');
+    });
+
+    it('does not fire duplicate kill for same game_time', () => {
+      const evts = [{ game_time: 823, event_type: 'roshan_killed', killed_by_team: 'radiant', killer_player_id: 0 }];
+      gsiCallback?.(makeState('alive', 0, 823, evts));
+      gsiCallback?.(makeState('alive', 0, 824, evts));
+      const kills = events.filter((e) => e.type === 'killed');
+      expect(kills).toHaveLength(1);
+    });
+
+    it('fires may_respawn after 8 minutes elapsed from kill', () => {
+      gsiCallback?.(makeState('alive', 0, 100, [{ game_time: 100, event_type: 'roshan_killed', killed_by_team: 'radiant', killer_player_id: 0 }]));
+      events = [];
+
+      gsiCallback?.(makeState('alive', 0, 580, []));
+      expect(events).toHaveLength(1);
+      expect(events[0].type).toBe('may_respawn');
+    });
+
+    it('fires respawn after 11 minutes elapsed from kill', () => {
+      gsiCallback?.(makeState('alive', 0, 100, [{ game_time: 100, event_type: 'roshan_killed', killed_by_team: 'radiant', killer_player_id: 0 }]));
+      events = [];
+
+      gsiCallback?.(makeState('alive', 0, 580, []));
+      events = [];
+
+      gsiCallback?.(makeState('alive', 0, 760, []));
+      expect(events).toHaveLength(1);
+      expect(events[0].type).toBe('respawn');
+    });
   });
 });

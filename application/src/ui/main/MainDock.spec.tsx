@@ -59,6 +59,7 @@ const mockElectronAPI = {
   onOverlayConfigChanged: jest.fn(() => () => {}),
   onGsiStatusUpdate: jest.fn(() => () => {}),
   onRoshanEvent: jest.fn(() => () => {}),
+  onItemEvent: jest.fn(() => () => {}),
 };
 
 (window as any).electronAPI = mockElectronAPI;

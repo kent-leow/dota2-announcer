@@ -1,7 +1,7 @@
 import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
-import { GsiPayload, GsiItems, ParsedGameState, GAME_STATES } from './gsiTypes';
+import { GsiPayload, GsiItems, GsiEvent, ParsedGameState, GAME_STATES } from './gsiTypes';
 
 export type GsiStateCallback = (state: ParsedGameState) => void;
 
@@ -56,6 +56,11 @@ function extractHeroName(heroName?: string): string {
   return heroName.replace(/^npc_dota_hero_/, '');
 }
 
+function extractEvents(events?: GsiEvent[]): GsiEvent[] {
+  if (!events || !Array.isArray(events)) return [];
+  return events;
+}
+
 function parsePayload(body: string): ParsedGameState | null {
   try {
     const data: GsiPayload = JSON.parse(body);
@@ -71,6 +76,7 @@ function parsePayload(body: string): ParsedGameState | null {
       roshanStateEndSeconds: data.map.roshan_state_end_seconds ?? 0,
       heroName: extractHeroName(data.hero?.name),
       items: extractItems(data.items),
+      events: extractEvents(data.events),
     };
   } catch {
     return null;

@@ -103,6 +103,13 @@ export function MainDock() {
       announcer.speak(text, 'high');
     });
 
+    const unsubItems = window.electronAPI.onItemEvent((event) => {
+      const text = event.type === 'item_acquired'
+        ? `${event.heroName} has ${event.displayName}`
+        : `${event.heroName} sold ${event.displayName}`;
+      announcer.speak(text);
+    });
+
     const unsubGsi = window.electronAPI.onGsiStatusUpdate((gsi) => {
       const prev = roshanStateRef.current;
       const newState = gsi.roshanState;
@@ -159,6 +166,7 @@ export function MainDock() {
     return () => {
       unsubState();
       unsubRoshan();
+      unsubItems();
       unsubGsi();
       unsubTick();
       unsubPause();

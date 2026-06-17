@@ -46,7 +46,7 @@ import * as roshanTracker from './roshanTracker';
 import * as itemsTracker from './itemsTracker';
 
 function makeState(gameState: string, clockTime: number = 0): ParsedGameState {
-  return { gameState, clockTime, matchId: 'test-match', paused: false, daytime: true, roshanState: 'alive', roshanStateEndSeconds: 0, heroName: 'ursa', items: [] };
+  return { gameState, clockTime, matchId: 'test-match', paused: false, daytime: true, roshanState: 'alive', roshanStateEndSeconds: 0, heroName: 'ursa', items: [], events: [] };
 }
 
 describe('matchStateManager', () => {

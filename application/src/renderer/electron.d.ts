@@ -69,6 +69,7 @@ export interface ElectronAPI {
   gsiGetInstallPath: () => Promise<string | null>;
   onGsiStatusUpdate: (callback: (status: GsiStatusUpdate) => void) => () => void;
   onRoshanEvent: (callback: (eventType: string) => void) => () => void;
+  onItemEvent: (callback: (event: { type: string; heroName: string; displayName: string }) => void) => () => void;
   sendOverlayNotification: (payload: { eventName: string; offsetSeconds: number; eventId: string; happenTimeMs: number; icon?: string }) => void;
   sendOverlayUpcoming: (occurrences: Array<{ eventId: string; eventName: string; happenTimeMs: number; icon?: string }>) => void;
   onEventsChanged: (callback: (config: EventsConfig) => void) => () => void;

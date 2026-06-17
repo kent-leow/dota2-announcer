@@ -9,6 +9,15 @@ export interface GsiMap {
   roshan_state_end_seconds: number;
 }
 
+export interface GsiEvent {
+  game_time: number;
+  event_type: string;
+  player_id?: number;
+  killed_by_team?: string;
+  killer_player_id?: number;
+  snatched?: boolean;
+}
+
 export interface GsiPlayer {
   steamid: string;
   name: string;
@@ -42,6 +51,7 @@ export interface GsiPayload {
   player?: GsiPlayer;
   hero?: GsiHero;
   items?: GsiItems;
+  events?: GsiEvent[];
 }
 
 export interface ParsedGameState {
@@ -54,6 +64,7 @@ export interface ParsedGameState {
   roshanStateEndSeconds: number;
   heroName: string;
   items: string[];
+  events: GsiEvent[];
 }
 
 export const GAME_STATES = {
