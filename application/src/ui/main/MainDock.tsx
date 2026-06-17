@@ -19,7 +19,7 @@ export function MainDock() {
   const persistentEnabledRef = useRef<boolean>(false);
   const persistentEventCountRef = useRef<number>(5);
   const persistentLookaheadRef = useRef<number>(30);
-  const roshanStateRef = useRef<{ state: string; minRespawnMs: number; maxRespawnMs: number }>({ state: 'alive', minRespawnMs: 0, maxRespawnMs: 0 });
+  const roshanStateRef = useRef<{ state: string; minRespawnSec: number; maxRespawnSec: number }>({ state: 'alive', minRespawnSec: 0, maxRespawnSec: 0 });
   const [gamePaused, setGamePaused] = useState<boolean>(false);
   const [muted, setMuted] = useState<boolean>(false);
   const [volume, setVolume] = useState<number>(100);
@@ -34,12 +34,11 @@ export function MainDock() {
     window.electronAPI.isPaused().then(setGamePaused);
     window.electronAPI.getGsiStatus().then((gsi) => {
       if (!gsi) return;
-      const now = elapsedRef.current;
       if (gsi.roshanState === 'respawn_base' || gsi.roshanState === 'respawn_variable') {
         roshanStateRef.current = {
           state: gsi.roshanState,
-          minRespawnMs: now + gsi.minRespawnSeconds * 1000,
-          maxRespawnMs: now + gsi.maxRespawnSeconds * 1000,
+          minRespawnSec: gsi.minRespawnSeconds,
+          maxRespawnSec: gsi.maxRespawnSeconds,
         };
       }
     });
@@ -113,14 +112,13 @@ export function MainDock() {
     const unsubGsi = window.electronAPI.onGsiStatusUpdate((gsi) => {
       const newState = gsi.roshanState;
       if (newState === 'respawn_base' || newState === 'respawn_variable') {
-        const now = elapsedRef.current;
         roshanStateRef.current = {
           state: newState,
-          minRespawnMs: now + gsi.minRespawnSeconds * 1000,
-          maxRespawnMs: now + gsi.maxRespawnSeconds * 1000,
+          minRespawnSec: gsi.minRespawnSeconds,
+          maxRespawnSec: gsi.maxRespawnSeconds,
         };
       } else {
-        roshanStateRef.current = { state: 'alive', minRespawnMs: 0, maxRespawnMs: 0 };
+        roshanStateRef.current = { state: 'alive', minRespawnSec: 0, maxRespawnSec: 0 };
       }
     });
 
@@ -132,9 +130,11 @@ export function MainDock() {
         const upcoming = eventScheduler.getUpcomingOccurrences(ms, persistentEventCountRef.current, persistentLookaheadRef.current * 1000);
         const rosh = roshanStateRef.current;
         if (rosh.state === 'respawn_base' || rosh.state === 'respawn_variable') {
-          upcoming.unshift({ eventId: 'roshan-must', eventName: 'Roshan must respawn', happenTimeMs: rosh.maxRespawnMs });
-          if (rosh.minRespawnMs > ms) {
-            upcoming.unshift({ eventId: 'roshan-may', eventName: 'Roshan may respawn', happenTimeMs: rosh.minRespawnMs });
+          const mustMs = ms + rosh.maxRespawnSec * 1000;
+          upcoming.unshift({ eventId: 'roshan-must', eventName: 'Roshan must respawn', happenTimeMs: mustMs });
+          if (rosh.minRespawnSec > 0) {
+            const mayMs = ms + rosh.minRespawnSec * 1000;
+            upcoming.unshift({ eventId: 'roshan-may', eventName: 'Roshan may respawn', happenTimeMs: mayMs });
           }
         }
         window.electronAPI.sendOverlayUpcoming(upcoming);
