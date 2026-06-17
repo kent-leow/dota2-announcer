@@ -1,4 +1,6 @@
 import * as http from 'http';
+import * as fs from 'fs';
+import * as path from 'path';
 import { GsiPayload, ParsedGameState, GAME_STATES } from './gsiTypes';
 
 export type GsiStateCallback = (state: ParsedGameState) => void;
@@ -24,6 +26,21 @@ function onHeartbeatTimeout(): void {
       gameState: GAME_STATES.DISCONNECT,
     });
   }
+}
+
+function getGsiDumpPath(): string {
+  try {
+    const { app } = require('electron');
+    return path.join(app.getPath('userData'), 'gsi-dump.json');
+  } catch {
+    return path.join(process.cwd(), 'gsi-dump.json');
+  }
+}
+
+function dumpRawPayload(body: string): void {
+  try {
+    fs.writeFileSync(getGsiDumpPath(), body, 'utf-8');
+  } catch { /* best-effort */ }
 }
 
 function parsePayload(body: string): ParsedGameState | null {
@@ -61,6 +78,7 @@ function handleRequest(req: http.IncomingMessage, res: http.ServerResponse): voi
   req.on('data', (chunk) => { body += chunk; });
   req.on('end', () => {
     resetHeartbeat();
+    dumpRawPayload(body);
     const state = parsePayload(body);
     if (state) {
       notifyListeners(state);
