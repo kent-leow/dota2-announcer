@@ -130,11 +130,12 @@ export function MainDock() {
         const upcoming = eventScheduler.getUpcomingOccurrences(ms, persistentEventCountRef.current, persistentLookaheadRef.current * 1000);
         const rosh = roshanStateRef.current;
         if (rosh.state === 'respawn_base' || rosh.state === 'respawn_variable') {
-          const mustMs = ms + rosh.maxRespawnSec * 1000;
-          upcoming.unshift({ eventId: 'roshan-must', eventName: 'Roshan must respawn', happenTimeMs: mustMs });
           if (rosh.minRespawnSec > 0) {
             const mayMs = ms + rosh.minRespawnSec * 1000;
             upcoming.unshift({ eventId: 'roshan-may', eventName: 'Roshan may respawn', happenTimeMs: mayMs });
+          } else {
+            const mustMs = ms + rosh.maxRespawnSec * 1000;
+            upcoming.unshift({ eventId: 'roshan-must', eventName: 'Roshan must respawn', happenTimeMs: mustMs });
           }
         }
         window.electronAPI.sendOverlayUpcoming(upcoming);
