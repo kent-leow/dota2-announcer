@@ -64,7 +64,7 @@ export function DynamicEventConfig() {
                 { key: 'countdown' as const, tooltip: 'Notify each minute during respawn window' },
                 { key: 'respawn' as const, tooltip: 'Notify when Roshan is confirmed alive' },
               ]).map(({ key, tooltip }) => (
-                <label key={key} className="flex items-center gap-1.5 cursor-pointer" title={tooltip}>
+                <label key={key} className="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={event.notifications[key]}
@@ -73,6 +73,14 @@ export function DynamicEventConfig() {
                     className="accent-dota-gold cursor-pointer"
                   />
                   <span className="text-dota-grey/70 capitalize">{key}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); alert(tooltip); }}
+                    className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-dota-grey/20 text-dota-grey/60 hover:bg-dota-grey/30 hover:text-dota-grey text-[9px] leading-none font-bold transition-colors"
+                    data-testid={`dynamic-info-${event.id}-${key}`}
+                  >
+                    ?
+                  </button>
                 </label>
               ))}
             </div>
