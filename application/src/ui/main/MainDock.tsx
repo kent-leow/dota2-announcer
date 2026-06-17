@@ -85,11 +85,7 @@ export function MainDock() {
       if (newState === 'idle') {
         eventScheduler.resetScheduler();
       } else if (newState === 'in-match') {
-        window.electronAPI.getElapsed().then((ms) => {
-          window.electronAPI.getEvents().then((config) => {
-            eventScheduler.loadSchedule(config, ms);
-          });
-        });
+        eventScheduler.resetScheduler();
       }
     });
 
