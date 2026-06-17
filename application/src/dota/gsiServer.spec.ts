@@ -86,8 +86,6 @@ describe('gsiServer', () => {
       matchId: '456',
       paused: false,
       daytime: true,
-      roshanState: 'alive',
-      roshanStateEndSeconds: 0,
       heroName: '',
       events: [],
     });

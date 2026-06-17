@@ -59,14 +59,13 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     const win = getWindow();
     if (win && !win.isDestroyed()) {
       const roshanTimer = roshanTracker.getRoshanTimerState();
-      const effectiveRoshanState = roshanTimer.state !== 'alive' ? roshanTimer.state : state.roshanState;
       const minRespawnSeconds = roshanTimer.minRespawnGameTime > 0
         ? Math.max(0, roshanTimer.minRespawnGameTime - state.clockTime) : 0;
       const maxRespawnSeconds = roshanTimer.maxRespawnGameTime > 0
         ? Math.max(0, roshanTimer.maxRespawnGameTime - state.clockTime) : 0;
       win.webContents.send('dota:gsiStatusUpdate', {
         daytime: state.daytime,
-        roshanState: effectiveRoshanState,
+        roshanState: roshanTimer.state,
         roshanStateEndSeconds: maxRespawnSeconds,
         minRespawnSeconds,
         maxRespawnSeconds,
@@ -108,14 +107,13 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     const last = gsiServer.getLastState();
     if (!last) return null;
     const roshanTimer = roshanTracker.getRoshanTimerState();
-    const effectiveRoshanState = roshanTimer.state !== 'alive' ? roshanTimer.state : last.roshanState;
     const minRespawnSeconds = roshanTimer.minRespawnGameTime > 0
       ? Math.max(0, roshanTimer.minRespawnGameTime - last.clockTime) : 0;
     const maxRespawnSeconds = roshanTimer.maxRespawnGameTime > 0
       ? Math.max(0, roshanTimer.maxRespawnGameTime - last.clockTime) : 0;
     return {
       daytime: last.daytime,
-      roshanState: effectiveRoshanState,
+      roshanState: roshanTimer.state,
       roshanStateEndSeconds: maxRespawnSeconds,
       minRespawnSeconds,
       maxRespawnSeconds,

@@ -5,8 +5,6 @@ export interface GsiMap {
   game_state: string;
   paused: boolean;
   daytime: boolean;
-  roshan_state: string;
-  roshan_state_end_seconds: number;
 }
 
 export interface GsiEvent {
@@ -43,8 +41,6 @@ export interface ParsedGameState {
   matchId: string;
   paused: boolean;
   daytime: boolean;
-  roshanState: string;
-  roshanStateEndSeconds: number;
   heroName: string;
   events: GsiEvent[];
 }

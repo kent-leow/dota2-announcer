@@ -64,8 +64,6 @@ function parsePayload(body: string): ParsedGameState | null {
       matchId: data.map.matchid,
       paused: data.map.paused,
       daytime: data.map.daytime ?? true,
-      roshanState: data.map.roshan_state ?? 'alive',
-      roshanStateEndSeconds: data.map.roshan_state_end_seconds ?? 0,
       heroName: extractHeroName(data.hero?.name),
       events: extractEvents(data.events),
     };

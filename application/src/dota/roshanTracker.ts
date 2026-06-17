@@ -45,9 +45,7 @@ function handleGsiState(state: ParsedGameState): void {
     return;
   }
 
-  const hasExplicitRoshanState = state.roshanState !== 'alive' || roshanKillGameTime > 0;
-
-  if (hasExplicitRoshanState && roshanKillGameTime > 0) {
+  if (roshanKillGameTime > 0) {
     const elapsed = state.clockTime - roshanKillGameTime;
 
     if (elapsed >= ROSHAN_MAX_RESPAWN_S) {
@@ -72,28 +70,6 @@ function handleGsiState(state: ParsedGameState): void {
         }
       }
       return;
-    }
-  }
-
-  const currentState = state.roshanState;
-  if (currentState && currentState !== 'alive') {
-    if (previousRoshanState === 'alive' && (currentState === 'respawn_base' || currentState === 'respawn_variable')) {
-      previousRoshanState = currentState;
-      if (lastProcessedRoshanKillTime !== state.clockTime) {
-        if (config.notifications.kill) {
-          notify({ type: 'killed' });
-        }
-      }
-    } else if (previousRoshanState === 'respawn_base' && currentState === 'respawn_variable') {
-      previousRoshanState = currentState;
-      if (config.notifications.countdown) {
-        notify({ type: 'may_respawn' });
-      }
-    }
-  } else if (currentState === 'alive' && previousRoshanState !== 'alive' && roshanKillGameTime === 0) {
-    previousRoshanState = 'alive';
-    if (config.notifications.respawn) {
-      notify({ type: 'respawn' });
     }
   }
 }
