@@ -133,8 +133,9 @@ function parseOverlaySize(parsed: Record<string, unknown>, notification: Notific
 }
 
 function parseDynamicEvents(parsed: Record<string, unknown>): DynamicEventConfig[] {
+  const validIds = new Set(DEFAULT_DYNAMIC_EVENTS.dynamicEvents.map((d) => d.id));
   if (Array.isArray(parsed.dynamicEvents)) {
-    const saved = parsed.dynamicEvents as DynamicEventConfig[];
+    const saved = (parsed.dynamicEvents as DynamicEventConfig[]).filter((e) => validIds.has(e.id));
     const savedIds = new Set(saved.map((e) => e.id));
     const missing = DEFAULT_DYNAMIC_EVENTS.dynamicEvents.filter((d) => !savedIds.has(d.id));
     return [...saved, ...missing];

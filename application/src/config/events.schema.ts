@@ -23,11 +23,6 @@ export const roshanNotificationsSchema = z.object({
   respawn: z.boolean(),
 });
 
-export const heroItemsNotificationsSchema = z.object({
-  acquired: z.boolean(),
-  sold: z.boolean(),
-});
-
 export const dynamicEventNotificationsSchema = z.record(z.boolean());
 
 export const dynamicEventConfigSchema = z.object({
