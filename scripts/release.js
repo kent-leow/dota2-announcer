@@ -3,25 +3,26 @@ const { execSync } = require('child_process');
 const { readFileSync, writeFileSync } = require('fs');
 const { resolve } = require('path');
 
-const version = process.argv[2];
-if (!version) {
-  console.error('Usage: npm run release -- <version>');
-  console.error('Example: npm run release -- 0.2.0');
+const bump = process.argv[2];
+if (!bump || !['major', 'minor', 'hotfix'].includes(bump)) {
+  console.error('Usage: npm run release -- <major|minor|hotfix>');
   process.exit(1);
 }
 
-if (!/^\d+\.\d+\.\d+$/.test(version)) {
-  console.error(`Invalid version format: "${version}". Expected: x.y.z`);
-  process.exit(1);
-}
+const pkgPath = resolve(__dirname, '../application/package.json');
+const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
+const [major, minor, patch] = pkg.version.split('.').map(Number);
+
+let version;
+if (bump === 'major') version = `${major + 1}.0.0`;
+else if (bump === 'minor') version = `${major}.${minor + 1}.0`;
+else version = `${major}.${minor}.${patch + 1}`;
 
 const run = (cmd) => {
   console.log(`> ${cmd}`);
   execSync(cmd, { stdio: 'inherit' });
 };
 
-const pkgPath = resolve(__dirname, '../application/package.json');
-const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
 pkg.version = version;
 writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
 console.log(`Updated application/package.json to ${version}`);
