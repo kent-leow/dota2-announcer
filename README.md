@@ -15,6 +15,7 @@ Desktop companion app that provides real-time audio announcements for Dota 2 gam
 All commands run from the project root:
 
 ```bash
+npm run install:all    # Install deps in application/ and landing/
 npm run dev            # Run desktop app (Electron)
 npm run dev:landing    # Run landing page dev server
 npm run build          # Build desktop app
