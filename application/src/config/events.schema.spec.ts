@@ -1,4 +1,4 @@
-import { eventsConfigSchema, dynamicEventConfigSchema, dynamicEventsConfigSchema } from './events.schema';
+import { eventsConfigSchema, dynamicEventConfigSchema, dynamicEventsConfigSchema, heroItemsNotificationsSchema } from './events.schema';
 
 describe('events.schema', () => {
   it('parses a valid config', () => {
@@ -153,14 +153,45 @@ describe('dynamicEventConfigSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('rejects missing notification sub-fields', () => {
-    const invalid = {
+  it('accepts partial notification fields (flexible record)', () => {
+    const valid = {
       id: 'roshan',
       name: 'Roshan',
       enabled: true,
       notifications: { kill: true },
     };
+    const result = dynamicEventConfigSchema.safeParse(valid);
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects non-boolean notification values', () => {
+    const invalid = {
+      id: 'roshan',
+      name: 'Roshan',
+      enabled: true,
+      notifications: { kill: 'yes' },
+    };
     const result = dynamicEventConfigSchema.safeParse(invalid);
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('heroItemsNotificationsSchema', () => {
+  it('validates hero-items notifications with acquired and sold', () => {
+    const valid = { acquired: true, sold: true };
+    const result = heroItemsNotificationsSchema.safeParse(valid);
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects missing acquired field', () => {
+    const invalid = { sold: true };
+    const result = heroItemsNotificationsSchema.safeParse(invalid);
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects missing sold field', () => {
+    const invalid = { acquired: true };
+    const result = heroItemsNotificationsSchema.safeParse(invalid);
     expect(result.success).toBe(false);
   });
 });

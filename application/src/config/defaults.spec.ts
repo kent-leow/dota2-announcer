@@ -64,4 +64,20 @@ describe('DEFAULT_DYNAMIC_EVENTS', () => {
     const roshan = DEFAULT_DYNAMIC_EVENTS.dynamicEvents.find((e) => e.id === 'roshan')!;
     expect(roshan.enabled).toBe(true);
   });
+
+  it('contains hero-items entry', () => {
+    const ids = DEFAULT_DYNAMIC_EVENTS.dynamicEvents.map((e) => e.id);
+    expect(ids).toContain('hero-items');
+  });
+
+  it('hero-items has acquired and sold notification flags defaulting to true', () => {
+    const heroItems = DEFAULT_DYNAMIC_EVENTS.dynamicEvents.find((e) => e.id === 'hero-items')!;
+    expect(heroItems.notifications.acquired).toBe(true);
+    expect(heroItems.notifications.sold).toBe(true);
+  });
+
+  it('hero-items is enabled by default', () => {
+    const heroItems = DEFAULT_DYNAMIC_EVENTS.dynamicEvents.find((e) => e.id === 'hero-items')!;
+    expect(heroItems.enabled).toBe(true);
+  });
 });

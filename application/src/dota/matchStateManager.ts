@@ -2,6 +2,7 @@ import * as gsiServer from './gsiServer';
 import * as gameTimer from 'src/timer/gameTimer';
 import * as eventScheduler from 'src/scheduler/eventScheduler';
 import * as roshanTracker from './roshanTracker';
+import * as itemsTracker from './itemsTracker';
 import { ParsedGameState, GAME_STATES } from './gsiTypes';
 
 export type MatchPhase = 'idle' | 'hero-pick' | 'pre-game' | 'in-match';
@@ -61,6 +62,7 @@ function handleGsiState(state: ParsedGameState): void {
       gameTimer.reset();
       eventScheduler.resetScheduler();
       roshanTracker._resetForTesting();
+      itemsTracker._resetForTesting();
       paused = false;
       setPhase('idle');
     }
@@ -71,6 +73,7 @@ export function startListening(): void {
   if (unsubGsi) return;
   unsubGsi = gsiServer.onStateChange(handleGsiState);
   roshanTracker.startListening();
+  itemsTracker.startListening();
 }
 
 export function stopListening(): void {
@@ -105,6 +108,7 @@ export function isPaused(): boolean {
 export function _resetForTesting(): void {
   stopListening();
   roshanTracker._resetForTesting();
+  itemsTracker._resetForTesting();
   currentPhase = 'idle';
   paused = false;
   listeners = [];

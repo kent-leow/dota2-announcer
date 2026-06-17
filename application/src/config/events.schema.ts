@@ -17,11 +17,18 @@ export const eventSchema = z.object({
   icon: z.string().optional(),
 });
 
-export const dynamicEventNotificationsSchema = z.object({
+export const roshanNotificationsSchema = z.object({
   kill: z.boolean(),
   countdown: z.boolean(),
   respawn: z.boolean(),
 });
+
+export const heroItemsNotificationsSchema = z.object({
+  acquired: z.boolean(),
+  sold: z.boolean(),
+});
+
+export const dynamicEventNotificationsSchema = z.record(z.boolean());
 
 export const dynamicEventConfigSchema = z.object({
   id: z.string().min(1),

@@ -91,9 +91,11 @@ describe('stateStore', () => {
     it('returns default dynamic events when state file missing', () => {
       (fs.readFileSync as jest.Mock).mockImplementation(() => { throw new Error('no file'); });
       const state = readAppState();
-      expect(state.dynamicEvents).toHaveLength(1);
+      expect(state.dynamicEvents).toHaveLength(2);
       expect(state.dynamicEvents[0].id).toBe('roshan');
       expect(state.dynamicEvents[0].enabled).toBe(true);
+      expect(state.dynamicEvents[1].id).toBe('hero-items');
+      expect(state.dynamicEvents[1].enabled).toBe(true);
     });
 
     it('returns default dynamic events when field not present in state', () => {
@@ -102,8 +104,9 @@ describe('stateStore', () => {
         persistent: { enabled: false, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5, lookaheadSeconds: 30 },
       }));
       const state = readAppState();
-      expect(state.dynamicEvents).toHaveLength(1);
+      expect(state.dynamicEvents).toHaveLength(2);
       expect(state.dynamicEvents[0].id).toBe('roshan');
+      expect(state.dynamicEvents[1].id).toBe('hero-items');
     });
 
     it('reads persisted dynamic events', () => {

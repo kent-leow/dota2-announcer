@@ -126,6 +126,15 @@ export const DEFAULT_DYNAMIC_EVENTS: DynamicEventsConfig = {
         respawn: true,
       },
     },
+    {
+      id: 'hero-items',
+      name: 'Hero Items',
+      enabled: true,
+      notifications: {
+        acquired: true,
+        sold: true,
+      },
+    },
   ],
 };
 

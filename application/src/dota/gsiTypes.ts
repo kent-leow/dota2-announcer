@@ -21,10 +21,27 @@ export interface GsiHero {
   alive: boolean;
 }
 
+export interface GsiItemSlot {
+  name: string;
+}
+
+export interface GsiItems {
+  slot0?: GsiItemSlot;
+  slot1?: GsiItemSlot;
+  slot2?: GsiItemSlot;
+  slot3?: GsiItemSlot;
+  slot4?: GsiItemSlot;
+  slot5?: GsiItemSlot;
+  slot6?: GsiItemSlot;
+  slot7?: GsiItemSlot;
+  slot8?: GsiItemSlot;
+}
+
 export interface GsiPayload {
   map?: GsiMap;
   player?: GsiPlayer;
   hero?: GsiHero;
+  items?: GsiItems;
 }
 
 export interface ParsedGameState {
@@ -35,6 +52,8 @@ export interface ParsedGameState {
   daytime: boolean;
   roshanState: string;
   roshanStateEndSeconds: number;
+  heroName: string;
+  items: string[];
 }
 
 export const GAME_STATES = {

@@ -35,6 +35,8 @@ function makeState(roshanState: string, roshanStateEndSeconds: number = 0): Pars
     daytime: true,
     roshanState,
     roshanStateEndSeconds,
+    heroName: 'ursa',
+    items: [],
   };
 }
 

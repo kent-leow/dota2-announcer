@@ -1,7 +1,7 @@
 import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
-import { GsiPayload, ParsedGameState, GAME_STATES } from './gsiTypes';
+import { GsiPayload, GsiItems, ParsedGameState, GAME_STATES } from './gsiTypes';
 
 export type GsiStateCallback = (state: ParsedGameState) => void;
 
@@ -43,6 +43,19 @@ function dumpRawPayload(body: string): void {
   } catch { /* best-effort */ }
 }
 
+function extractItems(items?: GsiItems): string[] {
+  if (!items) return [];
+  const slots = [items.slot0, items.slot1, items.slot2, items.slot3, items.slot4, items.slot5, items.slot6, items.slot7, items.slot8];
+  return slots
+    .map((s) => s?.name)
+    .filter((name): name is string => !!name && name !== 'empty');
+}
+
+function extractHeroName(heroName?: string): string {
+  if (!heroName) return '';
+  return heroName.replace(/^npc_dota_hero_/, '');
+}
+
 function parsePayload(body: string): ParsedGameState | null {
   try {
     const data: GsiPayload = JSON.parse(body);
@@ -56,6 +69,8 @@ function parsePayload(body: string): ParsedGameState | null {
       daytime: data.map.daytime ?? true,
       roshanState: data.map.roshan_state ?? 'alive',
       roshanStateEndSeconds: data.map.roshan_state_end_seconds ?? 0,
+      heroName: extractHeroName(data.hero?.name),
+      items: extractItems(data.items),
     };
   } catch {
     return null;
