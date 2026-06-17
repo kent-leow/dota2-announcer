@@ -10,14 +10,14 @@ function formatCountdown(endSeconds: number, currentSeconds: number): string {
 }
 
 function getRoshanLabel(state: string): string {
-  if (state === 'respawn_base') return 'May respawn';
-  if (state === 'respawn_extra') return 'Will respawn';
+  if (state === 'respawn_base') return 'Dead';
+  if (state === 'respawn_variable') return 'May respawn';
   return 'Alive';
 }
 
 function getRoshanColor(state: string): string {
-  if (state === 'respawn_base') return 'text-dota-amber';
-  if (state === 'respawn_extra') return 'text-dota-green';
+  if (state === 'respawn_base') return 'text-dota-red';
+  if (state === 'respawn_variable') return 'text-dota-amber';
   return 'text-dota-grey';
 }
 
@@ -65,7 +65,7 @@ export function GameStatusPanel() {
           {status.roshan.state !== 'alive' && status.roshan.endSeconds > 0 && (
             <div className="flex items-center justify-between mt-1">
               <span className="text-xs opacity-70">
-                {status.roshan.state === 'respawn_base' ? 'Until may respawn' : 'Until confirmed'}
+                {status.roshan.state === 'respawn_base' ? 'Until may respawn' : 'Until respawn'}
               </span>
               <span className="text-xs font-mono">
                 {formatCountdown(status.roshan.endSeconds, clockTime)}
