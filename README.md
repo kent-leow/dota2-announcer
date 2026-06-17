@@ -22,7 +22,7 @@ npm run build:landing  # Build landing page
 npm run test           # Run app tests
 npm run test:landing   # Run landing tests
 npm run test:all       # Run all tests
-npm run release -- 0.2.0  # Bump version, tag, push → triggers release pipeline
+npm run release -- major|minor|hotfix  # Auto-increment version, tag, push → triggers release pipeline
 ```
 
 ## Application
@@ -57,14 +57,17 @@ The release pipeline (`.github/workflows/release-app.yml`) builds the Electron a
 ### How to Publish a New App Version
 
 ```bash
-npm run release -- 0.2.0
+npm run release -- minor   # 0.4.2 → 0.5.0
+npm run release -- hotfix  # 0.4.2 → 0.4.3
+npm run release -- major   # 0.4.2 → 1.0.0
 ```
 
 This single command:
-1. Updates `application/package.json` version to `0.2.0`
-2. Commits the version bump
-3. Creates git tag `v0.2.0`
-4. Pushes commit + tag to origin
+1. Reads current version from `application/package.json`
+2. Auto-increments based on bump type (major/minor/hotfix)
+3. Commits the version bump
+4. Creates git tag `vX.Y.Z`
+5. Pushes commit + tag to origin
 
 The pipeline then:
 1. Builds the app on Windows (`windows-latest`) and macOS (`macos-latest`)
@@ -78,7 +81,7 @@ No additional secrets required — uses the auto-provided `GITHUB_TOKEN`.
 | You do this | Result |
 |-------------|--------|
 | Push to `main` | Website auto-deploys via Vercel (if `landing/` changed) |
-| `npm run release -- x.y.z` | App builds + GitHub Release created with installers |
+| `npm run release -- major\|minor\|hotfix` | App builds + GitHub Release created with installers |
 | Push to `main` (only `application/` changes) | Nothing — no release until you run the release command |
 
 The website and app releases are fully independent.
