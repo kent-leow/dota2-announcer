@@ -1,5 +1,37 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { DynamicEventConfig as DynamicEventConfigType } from 'src/config/events.schema';
+
+function InfoTip({ text, testId }: { text: string; testId: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handle = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, [open]);
+
+  return (
+    <span ref={ref} className="relative inline-flex">
+      <button
+        type="button"
+        onClick={(e) => { e.preventDefault(); setOpen(!open); }}
+        className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-dota-grey/20 text-dota-grey/60 hover:bg-dota-grey/30 hover:text-dota-grey text-[9px] leading-none font-bold transition-colors"
+        data-testid={testId}
+      >
+        ?
+      </button>
+      {open && (
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 rounded bg-dota-black border border-dota-gold/30 text-dota-grey text-[10px] whitespace-nowrap shadow-lg z-10">
+          {text}
+        </span>
+      )}
+    </span>
+  );
+}
 
 export function DynamicEventConfig() {
   const [events, setEvents] = useState<DynamicEventConfigType[]>([]);
@@ -73,14 +105,7 @@ export function DynamicEventConfig() {
                     className="accent-dota-gold cursor-pointer"
                   />
                   <span className="text-dota-grey/70 capitalize">{key}</span>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.preventDefault(); alert(tooltip); }}
-                    className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-dota-grey/20 text-dota-grey/60 hover:bg-dota-grey/30 hover:text-dota-grey text-[9px] leading-none font-bold transition-colors"
-                    data-testid={`dynamic-info-${event.id}-${key}`}
-                  >
-                    ?
-                  </button>
+                  <InfoTip text={tooltip} testId={`dynamic-info-${event.id}-${key}`} />
                 </label>
               ))}
             </div>
