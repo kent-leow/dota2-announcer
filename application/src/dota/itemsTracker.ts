@@ -114,10 +114,14 @@ export function onItemEvent(callback: ItemEventCallback): () => void {
   };
 }
 
-export function _resetForTesting(): void {
-  stopListening();
+export function reset(): void {
   previousItems = new Map();
   previousMatchId = '';
   initialized = false;
+}
+
+export function _resetForTesting(): void {
+  stopListening();
+  reset();
   listeners = [];
 }

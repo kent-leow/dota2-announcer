@@ -61,8 +61,8 @@ function handleGsiState(state: ParsedGameState): void {
     if (currentPhase !== 'idle') {
       gameTimer.reset();
       eventScheduler.resetScheduler();
-      roshanTracker._resetForTesting();
-      itemsTracker._resetForTesting();
+      roshanTracker.reset();
+      itemsTracker.reset();
       paused = false;
       setPhase('idle');
     }

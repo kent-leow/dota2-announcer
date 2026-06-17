@@ -73,8 +73,12 @@ export function getRoshanState(): string {
   return previousRoshanState;
 }
 
+export function reset(): void {
+  previousRoshanState = 'alive';
+}
+
 export function _resetForTesting(): void {
   stopListening();
-  previousRoshanState = 'alive';
+  reset();
   listeners = [];
 }

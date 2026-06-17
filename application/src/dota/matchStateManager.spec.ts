@@ -23,12 +23,14 @@ jest.mock('src/scheduler/eventScheduler', () => ({
 jest.mock('./roshanTracker', () => ({
   startListening: jest.fn(),
   stopListening: jest.fn(),
+  reset: jest.fn(),
   _resetForTesting: jest.fn(),
 }));
 
 jest.mock('./itemsTracker', () => ({
   startListening: jest.fn(),
   stopListening: jest.fn(),
+  reset: jest.fn(),
   _resetForTesting: jest.fn(),
 }));
 
@@ -156,7 +158,7 @@ describe('matchStateManager', () => {
     startListening();
     gsiCallback?.(makeState(GAME_STATES.GAME_IN_PROGRESS, 0));
     gsiCallback?.(makeState(GAME_STATES.POST_GAME, 0));
-    expect(roshanTracker._resetForTesting).toHaveBeenCalled();
+    expect(roshanTracker.reset).toHaveBeenCalled();
   });
 
   it('starts itemsTracker when listening starts', () => {
@@ -168,6 +170,6 @@ describe('matchStateManager', () => {
     startListening();
     gsiCallback?.(makeState(GAME_STATES.GAME_IN_PROGRESS, 0));
     gsiCallback?.(makeState(GAME_STATES.POST_GAME, 0));
-    expect(itemsTracker._resetForTesting).toHaveBeenCalled();
+    expect(itemsTracker.reset).toHaveBeenCalled();
   });
 });
