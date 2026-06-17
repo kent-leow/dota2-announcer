@@ -33,6 +33,14 @@ function InfoTip({ text, testId }: { text: string; testId: string }) {
   );
 }
 
+const NOTIFICATION_TOOLTIPS: Record<string, string> = {
+  'roshan:kill': 'Notify when Roshan is killed',
+  'roshan:countdown': 'Notify when Roshan may respawn (8 min mark)',
+  'roshan:respawn': 'Notify when Roshan has respawned',
+  'hero-items:acquired': 'Notify when hero acquires a new item',
+  'hero-items:sold': 'Notify when hero sells an item',
+};
+
 export function DynamicEventConfig() {
   const [events, setEvents] = useState<DynamicEventConfigType[]>([]);
 
@@ -55,7 +63,7 @@ export function DynamicEventConfig() {
     });
   }, [save]);
 
-  const toggleNotification = useCallback((idx: number, key: 'kill' | 'countdown' | 'respawn') => {
+  const toggleNotification = useCallback((idx: number, key: string) => {
     setEvents((prev) => {
       const updated = [...prev];
       updated[idx] = {
@@ -91,11 +99,7 @@ export function DynamicEventConfig() {
           </div>
           {event.enabled && (
             <div className="flex gap-3 text-xs">
-              {([
-                { key: 'kill' as const, tooltip: 'Notify when Roshan is killed' },
-                { key: 'countdown' as const, tooltip: 'Notify when Roshan may respawn (8 min mark)' },
-                { key: 'respawn' as const, tooltip: 'Notify when Roshan has respawned' },
-              ]).map(({ key, tooltip }) => (
+              {Object.keys(event.notifications).map((key) => (
                 <label key={key} className="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="checkbox"
@@ -105,7 +109,7 @@ export function DynamicEventConfig() {
                     className="accent-dota-gold cursor-pointer"
                   />
                   <span className="text-dota-grey/70 capitalize">{key}</span>
-                  <InfoTip text={tooltip} testId={`dynamic-info-${event.id}-${key}`} />
+                  <InfoTip text={NOTIFICATION_TOOLTIPS[`${event.id}:${key}`] || `Toggle ${key} notifications`} testId={`dynamic-info-${event.id}-${key}`} />
                 </label>
               ))}
             </div>
