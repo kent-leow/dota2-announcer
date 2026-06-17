@@ -1,4 +1,4 @@
-import { EventsConfig } from 'src/config/events.schema';
+import { EventsConfig, DynamicEventsConfig } from 'src/config/events.schema';
 
 export interface GsiStatusUpdate {
   daytime: boolean;
@@ -78,6 +78,8 @@ export interface ElectronAPI {
   getOverlaySize: () => Promise<number>;
   setOverlaySize: (size: number) => Promise<number>;
   onOverlayConfigChanged: (callback: (config: OverlayConfig) => void) => () => void;
+  getDynamicEvents: () => Promise<DynamicEventsConfig>;
+  setDynamicEvents: (config: DynamicEventsConfig) => Promise<{ success: boolean; error?: string }>;
 }
 
 declare global {

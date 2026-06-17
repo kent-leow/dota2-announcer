@@ -11,6 +11,12 @@ const mockElectronAPI = {
   setPersistentConfig: jest.fn((c: unknown) => Promise.resolve(c)),
   getOverlaySize: jest.fn(() => Promise.resolve(5)),
   setOverlaySize: jest.fn((s: number) => Promise.resolve(s)),
+  getDynamicEvents: jest.fn(() => Promise.resolve({
+    dynamicEvents: [
+      { id: 'roshan', name: 'Roshan', enabled: true, notifications: { kill: true, countdown: true, respawn: true } },
+    ],
+  })),
+  setDynamicEvents: jest.fn(() => Promise.resolve({ success: true })),
 };
 
 (window as any).electronAPI = mockElectronAPI;
@@ -68,8 +74,9 @@ describe('TimingConfig — Per-Overlay Configuration', () => {
   it('event toggle calls saveEvents immediately', async () => {
     render(<TimingConfig />);
     await waitFor(() => expect(screen.getByText('Bounty Rune')).toBeInTheDocument());
-    const checkbox = screen.getByRole('checkbox');
-    fireEvent.click(checkbox);
+    const checkboxes = screen.getAllByRole('checkbox');
+    const eventCheckbox = checkboxes.find((cb) => cb.closest('[class*="grid"]') === null && !cb.dataset.testid?.startsWith('dynamic-'));
+    fireEvent.click(eventCheckbox!);
     expect(mockElectronAPI.saveEvents).toHaveBeenCalledWith({ events: [] });
   });
 

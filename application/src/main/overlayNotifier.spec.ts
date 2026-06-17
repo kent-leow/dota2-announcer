@@ -1,7 +1,14 @@
+import { RoshanEvent } from 'src/dota/roshanTracker';
+
 let capturedCallback: ((name: string, offset: number, id: string, icon?: string) => void) | null = null;
+let capturedRoshanCallback: ((event: RoshanEvent) => void) | null = null;
 
 jest.mock('src/scheduler/eventScheduler', () => ({
   onAnnouncement: jest.fn((cb) => { capturedCallback = cb; }),
+}));
+
+jest.mock('src/dota/roshanTracker', () => ({
+  onRoshanEvent: jest.fn((cb) => { capturedRoshanCallback = cb; }),
 }));
 
 jest.mock('electron', () => ({
@@ -19,7 +26,9 @@ describe('overlayNotifier', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockOverlay.isDestroyed.mockReturnValue(false);
     capturedCallback = null;
+    capturedRoshanCallback = null;
   });
 
   it('subscribes to announcement callback', () => {
@@ -66,5 +75,58 @@ describe('overlayNotifier', () => {
     capturedCallback!('Bounty Rune', 30, 'bounty-rune');
 
     expect(mockSend).not.toHaveBeenCalled();
+  });
+
+  describe('roshan events', () => {
+    it('sends Roshan Killed notification', () => {
+      initOverlayNotifier(() => mockOverlay as any);
+      capturedRoshanCallback!({ type: 'killed' });
+
+      expect(mockSend).toHaveBeenCalledWith('overlay:notify', {
+        eventName: 'Roshan Killed',
+        offsetSeconds: 0,
+        eventId: 'roshan',
+        timestamp: expect.any(Number),
+      });
+    });
+
+    it('sends countdown notification with remaining minutes', () => {
+      initOverlayNotifier(() => mockOverlay as any);
+      capturedRoshanCallback!({ type: 'countdown', remainingSeconds: 180 });
+
+      expect(mockSend).toHaveBeenCalledWith('overlay:notify', {
+        eventName: 'Roshan — may respawn in 3m',
+        offsetSeconds: 0,
+        eventId: 'roshan',
+        timestamp: expect.any(Number),
+      });
+    });
+
+    it('sends Roshan Alive notification', () => {
+      initOverlayNotifier(() => mockOverlay as any);
+      capturedRoshanCallback!({ type: 'respawn' });
+
+      expect(mockSend).toHaveBeenCalledWith('overlay:notify', {
+        eventName: 'Roshan Alive',
+        offsetSeconds: 0,
+        eventId: 'roshan',
+        timestamp: expect.any(Number),
+      });
+    });
+
+    it('does not send roshan event if overlay is null', () => {
+      initOverlayNotifier(() => null);
+      capturedRoshanCallback!({ type: 'killed' });
+
+      expect(mockSend).not.toHaveBeenCalled();
+    });
+
+    it('does not send roshan event if overlay is destroyed', () => {
+      mockOverlay.isDestroyed.mockReturnValue(true);
+      initOverlayNotifier(() => mockOverlay as any);
+      capturedRoshanCallback!({ type: 'killed' });
+
+      expect(mockSend).not.toHaveBeenCalled();
+    });
   });
 });

@@ -86,4 +86,47 @@ describe('stateStore', () => {
       expect(written.notification.enabled).toBe(true);
     });
   });
+
+  describe('dynamicEvents', () => {
+    it('returns default dynamic events when state file missing', () => {
+      (fs.readFileSync as jest.Mock).mockImplementation(() => { throw new Error('no file'); });
+      const state = readAppState();
+      expect(state.dynamicEvents).toHaveLength(1);
+      expect(state.dynamicEvents[0].id).toBe('roshan');
+      expect(state.dynamicEvents[0].enabled).toBe(true);
+    });
+
+    it('returns default dynamic events when field not present in state', () => {
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify({
+        notification: { enabled: true, position: 'right', fontSize: { name: 16, offset: 13 } },
+        persistent: { enabled: false, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5, lookaheadSeconds: 30 },
+      }));
+      const state = readAppState();
+      expect(state.dynamicEvents).toHaveLength(1);
+      expect(state.dynamicEvents[0].id).toBe('roshan');
+    });
+
+    it('reads persisted dynamic events', () => {
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify({
+        notification: { enabled: true, position: 'right', fontSize: { name: 16, offset: 13 } },
+        persistent: { enabled: false, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5, lookaheadSeconds: 30 },
+        dynamicEvents: [{ id: 'roshan', name: 'Roshan', enabled: false, notifications: { kill: true, countdown: false, respawn: true } }],
+      }));
+      const state = readAppState();
+      expect(state.dynamicEvents[0].enabled).toBe(false);
+      expect(state.dynamicEvents[0].notifications.countdown).toBe(false);
+    });
+
+    it('persists dynamic events through writeAppState', () => {
+      (fs.readFileSync as jest.Mock).mockImplementation(() => { throw new Error('no file'); });
+      (fs.existsSync as jest.Mock).mockReturnValue(true);
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      const state = readAppState();
+      state.dynamicEvents[0].enabled = false;
+      writeAppState(state);
+
+      const written = JSON.parse((fs.writeFileSync as jest.Mock).mock.calls[0][1]);
+      expect(written.dynamicEvents[0].enabled).toBe(false);
+    });
+  });
 });

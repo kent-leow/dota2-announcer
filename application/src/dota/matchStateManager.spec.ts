@@ -20,6 +20,12 @@ jest.mock('src/scheduler/eventScheduler', () => ({
   resetScheduler: jest.fn(),
 }));
 
+jest.mock('./roshanTracker', () => ({
+  startListening: jest.fn(),
+  stopListening: jest.fn(),
+  _resetForTesting: jest.fn(),
+}));
+
 import {
   startListening,
   getPhase,
@@ -28,6 +34,7 @@ import {
 } from './matchStateManager';
 import * as gameTimer from 'src/timer/gameTimer';
 import * as eventScheduler from 'src/scheduler/eventScheduler';
+import * as roshanTracker from './roshanTracker';
 
 function makeState(gameState: string, clockTime: number = 0): ParsedGameState {
   return { gameState, clockTime, matchId: 'test-match', paused: false, daytime: true, roshanState: 'alive', roshanStateEndSeconds: 0 };
@@ -131,5 +138,17 @@ describe('matchStateManager', () => {
     gsiCallback?.(makeState(GAME_STATES.POST_GAME, 0));
 
     expect(getPhase()).toBe('idle');
+  });
+
+  it('starts roshanTracker when listening starts', () => {
+    startListening();
+    expect(roshanTracker.startListening).toHaveBeenCalled();
+  });
+
+  it('resets roshanTracker on match end', () => {
+    startListening();
+    gsiCallback?.(makeState(GAME_STATES.GAME_IN_PROGRESS, 0));
+    gsiCallback?.(makeState(GAME_STATES.POST_GAME, 0));
+    expect(roshanTracker._resetForTesting).toHaveBeenCalled();
   });
 });

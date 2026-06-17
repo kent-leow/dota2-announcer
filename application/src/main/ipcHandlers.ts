@@ -7,7 +7,7 @@ import * as gameTimer from 'src/timer/gameTimer';
 import * as muteManager from 'src/tts/muteManager';
 import * as volumeController from 'src/tts/volumeController';
 import * as eventsLoader from 'src/config/eventsLoader';
-import { eventsConfigSchema } from 'src/config/events.schema';
+import { eventsConfigSchema, dynamicEventsConfigSchema } from 'src/config/events.schema';
 import { readAppState, writeAppState, NotificationOverlayConfig, PersistentOverlayConfig } from 'src/tts/stateStore';
 import { getOverlayWindow } from './overlayWindow';
 
@@ -184,6 +184,22 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
   ipcMain.handle('gsi:isConnected', () => {
     const last = gsiServer.getLastState();
     return last !== null;
+  });
+
+  ipcMain.handle('config:getDynamicEvents', () => {
+    const state = readAppState();
+    return { dynamicEvents: state.dynamicEvents };
+  });
+
+  ipcMain.handle('config:setDynamicEvents', (_event, config: { dynamicEvents: unknown[] }) => {
+    const parsed = dynamicEventsConfigSchema.safeParse(config);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.message };
+    }
+    const state = readAppState();
+    state.dynamicEvents = parsed.data.dynamicEvents;
+    writeAppState(state);
+    return { success: true };
   });
 
 

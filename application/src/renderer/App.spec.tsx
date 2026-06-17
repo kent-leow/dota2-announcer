@@ -65,6 +65,12 @@ const mockElectronAPI = {
   onOverlayConfigChanged: jest.fn(() => () => {}),
   getOverlaySize: jest.fn(() => Promise.resolve(5)),
   setOverlaySize: jest.fn((s: number) => Promise.resolve(s)),
+  getDynamicEvents: jest.fn(() => Promise.resolve({
+    dynamicEvents: [
+      { id: 'roshan', name: 'Roshan', enabled: true, notifications: { kill: true, countdown: true, respawn: true } },
+    ],
+  })),
+  setDynamicEvents: jest.fn(() => Promise.resolve({ success: true })),
 };
 
 (window as any).electronAPI = mockElectronAPI;

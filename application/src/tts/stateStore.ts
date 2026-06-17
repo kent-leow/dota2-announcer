@@ -1,6 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { DEFAULT_OVERLAY_SIZE, fontSizeToOverlaySize } from 'src/config/overlaySize';
+import { DynamicEventConfig } from 'src/config/events.schema';
+import { DEFAULT_DYNAMIC_EVENTS } from 'src/config/defaults';
 
 export type OverlayPosition = 'left' | 'right';
 
@@ -32,6 +34,7 @@ export interface AppState {
   notification: NotificationOverlayConfig;
   persistent: PersistentOverlayConfig;
   overlaySize: number;
+  dynamicEvents: DynamicEventConfig[];
 }
 
 const DEFAULT_NOTIFICATION: NotificationOverlayConfig = {
@@ -129,6 +132,13 @@ function parseOverlaySize(parsed: Record<string, unknown>, notification: Notific
   return fontSizeToOverlaySize(notification.fontSize.name);
 }
 
+function parseDynamicEvents(parsed: Record<string, unknown>): DynamicEventConfig[] {
+  if (Array.isArray(parsed.dynamicEvents)) {
+    return parsed.dynamicEvents as DynamicEventConfig[];
+  }
+  return DEFAULT_DYNAMIC_EVENTS.dynamicEvents;
+}
+
 export function readAppState(): AppState {
   try {
     const raw = fs.readFileSync(getStatePath(), 'utf-8');
@@ -143,6 +153,7 @@ export function readAppState(): AppState {
       notification: overlays.notification,
       persistent: overlays.persistent,
       overlaySize: parseOverlaySize(parsed, overlays.notification),
+      dynamicEvents: parseDynamicEvents(parsed),
     };
   } catch {
     return {
@@ -154,6 +165,7 @@ export function readAppState(): AppState {
       notification: { ...DEFAULT_NOTIFICATION },
       persistent: { ...DEFAULT_PERSISTENT },
       overlaySize: DEFAULT_OVERLAY_SIZE,
+      dynamicEvents: DEFAULT_DYNAMIC_EVENTS.dynamicEvents,
     };
   }
 }

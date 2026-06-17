@@ -1,4 +1,4 @@
-import { eventsConfigSchema } from './events.schema';
+import { eventsConfigSchema, dynamicEventConfigSchema, dynamicEventsConfigSchema } from './events.schema';
 
 describe('events.schema', () => {
   it('parses a valid config', () => {
@@ -86,6 +86,103 @@ describe('events.schema', () => {
       events: [{ id: 'test', name: 'Test', spawnTime: 0, icon: 123 }],
     };
     const result = eventsConfigSchema.safeParse(invalid);
+    expect(result.success).toBe(false);
+  });
+
+  it('accepts event without type field (defaults to fixed)', () => {
+    const valid = {
+      events: [{ id: 'test', name: 'Test', spawnTime: 0 }],
+    };
+    const result = eventsConfigSchema.safeParse(valid);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.events[0].type).toBeUndefined();
+    }
+  });
+
+  it('accepts event with type "fixed"', () => {
+    const valid = {
+      events: [{ id: 'test', name: 'Test', spawnTime: 0, type: 'fixed' }],
+    };
+    const result = eventsConfigSchema.safeParse(valid);
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts event with type "dynamic"', () => {
+    const valid = {
+      events: [{ id: 'test', name: 'Test', spawnTime: 0, type: 'dynamic' }],
+    };
+    const result = eventsConfigSchema.safeParse(valid);
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects event with invalid type value', () => {
+    const invalid = {
+      events: [{ id: 'test', name: 'Test', spawnTime: 0, type: 'unknown' }],
+    };
+    const result = eventsConfigSchema.safeParse(invalid);
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('dynamicEventConfigSchema', () => {
+  it('validates a complete dynamic event config', () => {
+    const valid = {
+      id: 'roshan',
+      name: 'Roshan',
+      enabled: true,
+      notifications: { kill: true, countdown: true, respawn: true },
+    };
+    const result = dynamicEventConfigSchema.safeParse(valid);
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects missing notifications field', () => {
+    const invalid = { id: 'roshan', name: 'Roshan', enabled: true };
+    const result = dynamicEventConfigSchema.safeParse(invalid);
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects missing enabled field', () => {
+    const invalid = {
+      id: 'roshan',
+      name: 'Roshan',
+      notifications: { kill: true, countdown: true, respawn: true },
+    };
+    const result = dynamicEventConfigSchema.safeParse(invalid);
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects missing notification sub-fields', () => {
+    const invalid = {
+      id: 'roshan',
+      name: 'Roshan',
+      enabled: true,
+      notifications: { kill: true },
+    };
+    const result = dynamicEventConfigSchema.safeParse(invalid);
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('dynamicEventsConfigSchema', () => {
+  it('validates a config with dynamic events array', () => {
+    const valid = {
+      dynamicEvents: [
+        { id: 'roshan', name: 'Roshan', enabled: true, notifications: { kill: true, countdown: true, respawn: true } },
+      ],
+    };
+    const result = dynamicEventsConfigSchema.safeParse(valid);
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects empty id in dynamic event', () => {
+    const invalid = {
+      dynamicEvents: [
+        { id: '', name: 'Roshan', enabled: true, notifications: { kill: true, countdown: true, respawn: true } },
+      ],
+    };
+    const result = dynamicEventsConfigSchema.safeParse(invalid);
     expect(result.success).toBe(false);
   });
 });
