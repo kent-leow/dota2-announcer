@@ -4,7 +4,8 @@ import { registerIpcHandlers } from './ipcHandlers';
 import { loadEvents } from 'src/config/eventsLoader';
 import { loadMuteState } from 'src/tts/muteManager';
 import { loadVolume } from 'src/tts/volumeController';
-import { createOverlayWindow, showOverlay, hideOverlay, destroyOverlay } from './overlayWindow';
+import { createOverlayWindow, showOverlay, hideOverlay, destroyOverlay, getOverlayWindow } from './overlayWindow';
+import { initOverlayNotifier } from './overlayNotifier';
 import * as matchStateManager from 'src/dota/matchStateManager';
 import { readAppState } from 'src/tts/stateStore';
 import { buildAppMenu } from './appMenu';
@@ -159,6 +160,7 @@ app.whenReady().then(() => {
   createWindow();
   createTray();
   createOverlayWindow();
+  initOverlayNotifier(getOverlayWindow);
 
   const menu = buildAppMenu({
     getWindow: () => mainWindow,
