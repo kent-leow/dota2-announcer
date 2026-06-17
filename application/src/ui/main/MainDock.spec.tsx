@@ -28,6 +28,7 @@ let stateChangeHandler: ((state: string) => void) | null = null;
 const mockElectronAPI = {
   getState: jest.fn(() => Promise.resolve('idle')),
   getElapsed: jest.fn(() => Promise.resolve(0)),
+  getGsiStatus: jest.fn(() => Promise.resolve(null)),
   onStateChange: jest.fn((cb: (state: string) => void) => {
     stateChangeHandler = cb;
     return () => { stateChangeHandler = null; };

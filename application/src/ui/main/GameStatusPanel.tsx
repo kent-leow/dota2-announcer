@@ -25,6 +25,13 @@ export function GameStatusPanel() {
   const [status, setStatus] = useState<GameStatusState>(getStatus());
 
   useEffect(() => {
+    window.electronAPI.getGsiStatus().then((gsi) => {
+      if (gsi) {
+        updateFromGsi(gsi.daytime, gsi.roshanState, gsi.roshanStateEndSeconds);
+        setStatus(getStatus());
+      }
+    });
+
     const unsubGsi = window.electronAPI.onGsiStatusUpdate((gsi) => {
       updateFromGsi(gsi.daytime, gsi.roshanState, gsi.roshanStateEndSeconds);
       setStatus(getStatus());

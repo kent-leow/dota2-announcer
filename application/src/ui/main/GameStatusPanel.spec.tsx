@@ -6,6 +6,7 @@ let gsiCallback: ((status: { daytime: boolean; roshanState: string; roshanStateE
 let stateCallback: ((state: string) => void) | null = null;
 
 const mockElectronAPI = {
+  getGsiStatus: jest.fn(() => Promise.resolve(null)),
   onGsiStatusUpdate: jest.fn((cb) => {
     gsiCallback = cb;
     return () => { gsiCallback = null; };

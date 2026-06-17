@@ -32,6 +32,17 @@ export function MainDock() {
     window.electronAPI.getState().then((s) => setStatus(s as DotaState));
     window.electronAPI.getElapsed().then(setElapsed);
     window.electronAPI.isPaused().then(setGamePaused);
+    window.electronAPI.getGsiStatus().then((gsi) => {
+      if (!gsi) return;
+      const now = elapsedRef.current;
+      if (gsi.roshanState === 'respawn_base' || gsi.roshanState === 'respawn_variable') {
+        roshanStateRef.current = {
+          state: gsi.roshanState,
+          minRespawnMs: now + gsi.minRespawnSeconds * 1000,
+          maxRespawnMs: now + gsi.maxRespawnSeconds * 1000,
+        };
+      }
+    });
     window.electronAPI.isMuted().then((m) => {
       setMuted(m);
       announcer.setMuted(m);

@@ -104,6 +104,24 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
   ipcMain.handle('dota:getState', () => matchStateManager.getPhase());
   ipcMain.handle('dota:getElapsed', () => gameTimer.getElapsedMillis());
   ipcMain.handle('dota:isPaused', () => matchStateManager.isPaused());
+  ipcMain.handle('dota:getGsiStatus', () => {
+    const last = gsiServer.getLastState();
+    if (!last) return null;
+    const roshanTimer = roshanTracker.getRoshanTimerState();
+    const effectiveRoshanState = roshanTimer.state !== 'alive' ? roshanTimer.state : last.roshanState;
+    const minRespawnSeconds = roshanTimer.minRespawnGameTime > 0
+      ? Math.max(0, roshanTimer.minRespawnGameTime - last.clockTime) : 0;
+    const maxRespawnSeconds = roshanTimer.maxRespawnGameTime > 0
+      ? Math.max(0, roshanTimer.maxRespawnGameTime - last.clockTime) : 0;
+    return {
+      daytime: last.daytime,
+      roshanState: effectiveRoshanState,
+      roshanStateEndSeconds: maxRespawnSeconds,
+      minRespawnSeconds,
+      maxRespawnSeconds,
+      clockTime: last.clockTime,
+    };
+  });
   ipcMain.handle('audio:toggleMute', () => muteManager.toggleMute());
   ipcMain.handle('audio:setMuted', (_event, muted: boolean) => muteManager.setMuted(muted));
   ipcMain.handle('audio:isMuted', () => muteManager.isMuted());

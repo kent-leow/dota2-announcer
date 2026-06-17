@@ -32,6 +32,7 @@ jest.mock('src/tts/announcer', () => ({
 const mockElectronAPI = {
   getState: jest.fn(() => Promise.resolve('idle')),
   getElapsed: jest.fn(() => Promise.resolve(0)),
+  getGsiStatus: jest.fn(() => Promise.resolve(null)),
   onStateChange: jest.fn(() => () => {}),
   onClockTick: jest.fn(() => () => {}),
   toggleMute: jest.fn(() => Promise.resolve(true)),

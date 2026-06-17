@@ -47,6 +47,7 @@ export interface ElectronAPI {
   getState: () => Promise<string>;
   getElapsed: () => Promise<number>;
   isPaused: () => Promise<boolean>;
+  getGsiStatus: () => Promise<GsiStatusUpdate | null>;
   onStateChange: (callback: (state: string) => void) => () => void;
   onClockTick: (callback: (elapsedMs: number) => void) => () => void;
   onPauseChange: (callback: (paused: boolean) => void) => () => void;

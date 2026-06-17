@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getState: () => ipcRenderer.invoke('dota:getState'),
   getElapsed: () => ipcRenderer.invoke('dota:getElapsed'),
   isPaused: () => ipcRenderer.invoke('dota:isPaused'),
+  getGsiStatus: () => ipcRenderer.invoke('dota:getGsiStatus'),
   onStateChange: (callback: (state: string) => void) => {
     const handler = (_event: unknown, state: string) => callback(state);
     ipcRenderer.on('dota:stateChanged', handler);
