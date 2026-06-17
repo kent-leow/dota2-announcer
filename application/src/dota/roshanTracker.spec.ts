@@ -36,7 +36,6 @@ function makeState(roshanState: string, roshanStateEndSeconds: number = 0, clock
     roshanState,
     roshanStateEndSeconds,
     heroName: 'ursa',
-    items: [],
     events,
   };
 }

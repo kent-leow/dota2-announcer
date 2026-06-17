@@ -16,9 +16,11 @@ let unsubGsi: (() => void) | null = null;
 let previousRoshanState: string = 'alive';
 let lastProcessedRoshanKillTime: number = -1;
 let roshanKillGameTime: number = 0;
+let lastMayRespawnMinute: number = -1;
 
 const ROSHAN_MIN_RESPAWN_S = 480;
 const ROSHAN_MAX_RESPAWN_S = 660;
+const MAY_RESPAWN_INTERVAL_S = 60;
 
 function getConfig() {
   const dynamic = getDynamicEvents();
@@ -46,27 +48,30 @@ function handleGsiState(state: ParsedGameState): void {
   const hasExplicitRoshanState = state.roshanState !== 'alive' || roshanKillGameTime > 0;
 
   if (hasExplicitRoshanState && roshanKillGameTime > 0) {
-    if (previousRoshanState === 'respawn_base') {
-      const elapsed = state.clockTime - roshanKillGameTime;
-      if (elapsed >= ROSHAN_MIN_RESPAWN_S) {
+    const elapsed = state.clockTime - roshanKillGameTime;
+
+    if (elapsed >= ROSHAN_MAX_RESPAWN_S) {
+      previousRoshanState = 'alive';
+      roshanKillGameTime = 0;
+      lastMayRespawnMinute = -1;
+      if (config.notifications.respawn) {
+        notify({ type: 'respawn' });
+      }
+      return;
+    }
+
+    if (elapsed >= ROSHAN_MIN_RESPAWN_S) {
+      if (previousRoshanState === 'respawn_base') {
         previousRoshanState = 'respawn_variable';
+      }
+      const minutesSinceMin = Math.floor((elapsed - ROSHAN_MIN_RESPAWN_S) / MAY_RESPAWN_INTERVAL_S);
+      if (minutesSinceMin > lastMayRespawnMinute) {
+        lastMayRespawnMinute = minutesSinceMin;
         if (config.notifications.countdown) {
           notify({ type: 'may_respawn' });
         }
-        return;
       }
-    }
-
-    if (previousRoshanState === 'respawn_variable') {
-      const elapsed = state.clockTime - roshanKillGameTime;
-      if (elapsed >= ROSHAN_MAX_RESPAWN_S) {
-        previousRoshanState = 'alive';
-        roshanKillGameTime = 0;
-        if (config.notifications.respawn) {
-          notify({ type: 'respawn' });
-        }
-        return;
-      }
+      return;
     }
   }
 
@@ -120,10 +125,22 @@ export function getRoshanState(): string {
   return previousRoshanState;
 }
 
+export function getRoshanTimerState(): { state: string; minRespawnGameTime: number; maxRespawnGameTime: number } {
+  if (roshanKillGameTime === 0) {
+    return { state: previousRoshanState, minRespawnGameTime: 0, maxRespawnGameTime: 0 };
+  }
+  return {
+    state: previousRoshanState,
+    minRespawnGameTime: roshanKillGameTime + ROSHAN_MIN_RESPAWN_S,
+    maxRespawnGameTime: roshanKillGameTime + ROSHAN_MAX_RESPAWN_S,
+  };
+}
+
 export function reset(): void {
   previousRoshanState = 'alive';
   lastProcessedRoshanKillTime = -1;
   roshanKillGameTime = 0;
+  lastMayRespawnMinute = -1;
 }
 
 export function _resetForTesting(): void {

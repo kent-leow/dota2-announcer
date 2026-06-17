@@ -1,9 +1,7 @@
 import { RoshanEvent } from 'src/dota/roshanTracker';
-import { ItemEvent } from 'src/dota/itemsTracker';
 
 let capturedCallback: ((name: string, offset: number, id: string, icon?: string) => void) | null = null;
 let capturedRoshanCallback: ((event: RoshanEvent) => void) | null = null;
-let capturedItemCallback: ((event: ItemEvent) => void) | null = null;
 
 jest.mock('src/scheduler/eventScheduler', () => ({
   onAnnouncement: jest.fn((cb) => { capturedCallback = cb; }),
@@ -11,10 +9,6 @@ jest.mock('src/scheduler/eventScheduler', () => ({
 
 jest.mock('src/dota/roshanTracker', () => ({
   onRoshanEvent: jest.fn((cb) => { capturedRoshanCallback = cb; }),
-}));
-
-jest.mock('src/dota/itemsTracker', () => ({
-  onItemEvent: jest.fn((cb) => { capturedItemCallback = cb; }),
 }));
 
 jest.mock('electron', () => ({
@@ -35,7 +29,6 @@ describe('overlayNotifier', () => {
     mockOverlay.isDestroyed.mockReturnValue(false);
     capturedCallback = null;
     capturedRoshanCallback = null;
-    capturedItemCallback = null;
   });
 
   it('subscribes to announcement callback', () => {
@@ -93,6 +86,7 @@ describe('overlayNotifier', () => {
         eventName: 'Roshan is dead',
         offsetSeconds: 0,
         eventId: 'roshan',
+        icon: 'roshan',
         timestamp: expect.any(Number),
       });
     });
@@ -105,6 +99,7 @@ describe('overlayNotifier', () => {
         eventName: 'Roshan may respawn',
         offsetSeconds: 0,
         eventId: 'roshan',
+        icon: 'roshan',
         timestamp: expect.any(Number),
       });
     });
@@ -117,6 +112,7 @@ describe('overlayNotifier', () => {
         eventName: 'Roshan has respawned',
         offsetSeconds: 0,
         eventId: 'roshan',
+        icon: 'roshan',
         timestamp: expect.any(Number),
       });
     });
@@ -132,47 +128,6 @@ describe('overlayNotifier', () => {
       mockOverlay.isDestroyed.mockReturnValue(true);
       initOverlayNotifier(() => mockOverlay as any);
       capturedRoshanCallback!({ type: 'killed' });
-
-      expect(mockSend).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('item events', () => {
-    it('sends item acquired notification', () => {
-      initOverlayNotifier(() => mockOverlay as any);
-      capturedItemCallback!({ type: 'item_acquired', heroName: 'Ursa', itemName: 'item_black_king_bar', displayName: 'Black King Bar' });
-
-      expect(mockSend).toHaveBeenCalledWith('overlay:notify', {
-        eventName: 'Ursa has Black King Bar',
-        offsetSeconds: 0,
-        eventId: 'hero-items',
-        timestamp: expect.any(Number),
-      });
-    });
-
-    it('sends item sold notification', () => {
-      initOverlayNotifier(() => mockOverlay as any);
-      capturedItemCallback!({ type: 'item_sold', heroName: 'Ursa', itemName: 'item_butterfly', displayName: 'Butterfly' });
-
-      expect(mockSend).toHaveBeenCalledWith('overlay:notify', {
-        eventName: 'Ursa sold Butterfly',
-        offsetSeconds: 0,
-        eventId: 'hero-items',
-        timestamp: expect.any(Number),
-      });
-    });
-
-    it('does not send item event if overlay is null', () => {
-      initOverlayNotifier(() => null);
-      capturedItemCallback!({ type: 'item_acquired', heroName: 'Ursa', itemName: 'item_blink', displayName: 'Blink' });
-
-      expect(mockSend).not.toHaveBeenCalled();
-    });
-
-    it('does not send item event if overlay is destroyed', () => {
-      mockOverlay.isDestroyed.mockReturnValue(true);
-      initOverlayNotifier(() => mockOverlay as any);
-      capturedItemCallback!({ type: 'item_acquired', heroName: 'Ursa', itemName: 'item_blink', displayName: 'Blink' });
 
       expect(mockSend).not.toHaveBeenCalled();
     });

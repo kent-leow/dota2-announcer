@@ -37,8 +37,6 @@ const NOTIFICATION_TOOLTIPS: Record<string, string> = {
   'roshan:kill': 'Notify when Roshan is killed',
   'roshan:countdown': 'Notify when Roshan may respawn (8 min mark)',
   'roshan:respawn': 'Notify when Roshan has respawned',
-  'hero-items:acquired': 'Notify when hero acquires a new item',
-  'hero-items:sold': 'Notify when hero sells an item',
 };
 
 export function DynamicEventConfig() {

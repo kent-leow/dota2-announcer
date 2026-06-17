@@ -43,8 +43,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   gsiIsInstalled: () => ipcRenderer.invoke('gsi:isInstalled'),
   gsiIsConnected: () => ipcRenderer.invoke('gsi:isConnected'),
   gsiGetInstallPath: () => ipcRenderer.invoke('gsi:getInstallPath'),
-  onGsiStatusUpdate: (callback: (status: { daytime: boolean; roshanState: string; roshanStateEndSeconds: number; clockTime: number }) => void) => {
-    const handler = (_event: unknown, status: { daytime: boolean; roshanState: string; roshanStateEndSeconds: number; clockTime: number }) => callback(status);
+  onGsiStatusUpdate: (callback: (status: { daytime: boolean; roshanState: string; roshanStateEndSeconds: number; minRespawnSeconds: number; maxRespawnSeconds: number; clockTime: number }) => void) => {
+    const handler = (_event: unknown, status: { daytime: boolean; roshanState: string; roshanStateEndSeconds: number; minRespawnSeconds: number; maxRespawnSeconds: number; clockTime: number }) => callback(status);
     ipcRenderer.on('dota:gsiStatusUpdate', handler);
     return () => { ipcRenderer.removeListener('dota:gsiStatusUpdate', handler); };
   },
@@ -52,11 +52,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const handler = (_event: unknown, eventType: string) => callback(eventType);
     ipcRenderer.on('dota:roshanEvent', handler);
     return () => { ipcRenderer.removeListener('dota:roshanEvent', handler); };
-  },
-  onItemEvent: (callback: (event: { type: string; heroName: string; displayName: string }) => void) => {
-    const handler = (_event: unknown, data: { type: string; heroName: string; displayName: string }) => callback(data);
-    ipcRenderer.on('dota:itemEvent', handler);
-    return () => { ipcRenderer.removeListener('dota:itemEvent', handler); };
   },
   sendOverlayNotification: (payload: { eventName: string; offsetSeconds: number; eventId: string; happenTimeMs: number }) => ipcRenderer.send('overlay:announcement', payload),
   sendOverlayUpcoming: (occurrences: Array<{ eventId: string; eventName: string; happenTimeMs: number }>) => ipcRenderer.send('overlay:sendUpcoming', occurrences),

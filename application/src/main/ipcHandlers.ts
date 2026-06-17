@@ -4,7 +4,6 @@ import * as fs from 'fs';
 import * as gsiServer from 'src/dota/gsiServer';
 import * as matchStateManager from 'src/dota/matchStateManager';
 import * as roshanTracker from 'src/dota/roshanTracker';
-import * as itemsTracker from 'src/dota/itemsTracker';
 import * as gameTimer from 'src/timer/gameTimer';
 import * as muteManager from 'src/tts/muteManager';
 import * as volumeController from 'src/tts/volumeController';
@@ -59,10 +58,18 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
   gsiServer.onStateChange((state) => {
     const win = getWindow();
     if (win && !win.isDestroyed()) {
+      const roshanTimer = roshanTracker.getRoshanTimerState();
+      const effectiveRoshanState = roshanTimer.state !== 'alive' ? roshanTimer.state : state.roshanState;
+      const minRespawnSeconds = roshanTimer.minRespawnGameTime > 0
+        ? Math.max(0, roshanTimer.minRespawnGameTime - state.clockTime) : 0;
+      const maxRespawnSeconds = roshanTimer.maxRespawnGameTime > 0
+        ? Math.max(0, roshanTimer.maxRespawnGameTime - state.clockTime) : 0;
       win.webContents.send('dota:gsiStatusUpdate', {
         daytime: state.daytime,
-        roshanState: state.roshanState,
-        roshanStateEndSeconds: state.roshanStateEndSeconds,
+        roshanState: effectiveRoshanState,
+        roshanStateEndSeconds: maxRespawnSeconds,
+        minRespawnSeconds,
+        maxRespawnSeconds,
         clockTime: state.clockTime,
       });
     }
@@ -75,12 +82,6 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     }
   });
 
-  itemsTracker.onItemEvent((event) => {
-    const win = getWindow();
-    if (win && !win.isDestroyed()) {
-      win.webContents.send('dota:itemEvent', { type: event.type, heroName: event.heroName, displayName: event.displayName });
-    }
-  });
 
   matchStateManager.onPauseChange((isPaused) => {
     const win = getWindow();

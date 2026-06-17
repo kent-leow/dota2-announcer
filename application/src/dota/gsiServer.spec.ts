@@ -89,7 +89,6 @@ describe('gsiServer', () => {
       roshanState: 'alive',
       roshanStateEndSeconds: 0,
       heroName: '',
-      items: [],
       events: [],
     });
   });
@@ -217,43 +216,6 @@ describe('gsiServer', () => {
     // No disconnect because each message resets the 15s timer
     expect(received.every((s) => s.gameState === GAME_STATES.GAME_IN_PROGRESS)).toBe(true);
     jest.useRealTimers();
-  });
-
-  it('extracts item names from slot0–slot8 filtering empty', async () => {
-    await start(13001);
-    const received: ParsedGameState[] = [];
-    onStateChange((s) => received.push(s));
-
-    const payload = JSON.stringify({
-      map: { matchid: '600', game_time: 100, clock_time: 90, game_state: GAME_STATES.GAME_IN_PROGRESS, paused: false, daytime: true },
-      items: {
-        slot0: { name: 'item_black_king_bar' },
-        slot1: { name: 'item_butterfly' },
-        slot2: { name: 'empty' },
-        slot3: { name: 'empty' },
-        slot4: { name: 'empty' },
-        slot5: { name: 'empty' },
-        slot6: { name: 'item_blink' },
-        slot7: { name: 'empty' },
-        slot8: { name: 'empty' },
-      },
-    });
-    await simulatePost(payload);
-
-    expect(received[0].items).toEqual(['item_black_king_bar', 'item_butterfly', 'item_blink']);
-  });
-
-  it('returns empty items array when payload has no items field', async () => {
-    await start(13001);
-    const received: ParsedGameState[] = [];
-    onStateChange((s) => received.push(s));
-
-    const payload = JSON.stringify({
-      map: { matchid: '601', game_time: 100, clock_time: 90, game_state: GAME_STATES.GAME_IN_PROGRESS, paused: false, daytime: true },
-    });
-    await simulatePost(payload);
-
-    expect(received[0].items).toEqual([]);
   });
 
   it('extracts hero name stripping npc_dota_hero_ prefix', async () => {
