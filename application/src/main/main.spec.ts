@@ -119,9 +119,20 @@ jest.mock('./appMenu', () => ({
   buildAppMenu: jest.fn().mockReturnValue({}),
 }));
 
+const mockRecorderStop = jest.fn(() => Promise.resolve());
+jest.mock('src/dota/matchRecorder', () => ({
+  stop: mockRecorderStop,
+}));
+
+const mockLoadMapAwarenessConfig = jest.fn();
+jest.mock('src/dota/mapAwareness/configHolder', () => ({
+  loadFromAppState: mockLoadMapAwarenessConfig,
+}));
+
 jest.mock('src/config/preferences', () => ({
   loadPreferences: jest.fn(() => ({ closeBehavior: 'ask' })),
   savePreferences: jest.fn(),
+  updatePreferences: jest.fn(),
   resetClosePreference: jest.fn(),
 }));
 
@@ -156,6 +167,22 @@ describe('main process', () => {
     require('./main');
     await Promise.resolve();
     expect(mockCreateOverlayWindow).toHaveBeenCalled();
+  });
+
+  it('stops the match recorder on before-quit', () => {
+    jest.isolateModules(() => {
+      require('./main');
+    });
+    const call = mockOn.mock.calls.find((c: unknown[]) => c[0] === 'before-quit');
+    expect(call).toBeDefined();
+    call![1]();
+    expect(mockRecorderStop).toHaveBeenCalled();
+  });
+
+  it('loads map-awareness config on app ready', async () => {
+    require('./main');
+    await Promise.resolve();
+    expect(mockLoadMapAwarenessConfig).toHaveBeenCalled();
   });
 
   it('registers overlay phase change handler', async () => {

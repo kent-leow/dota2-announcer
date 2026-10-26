@@ -30,6 +30,7 @@ export const dynamicEventConfigSchema = z.object({
   name: z.string().min(1),
   enabled: z.boolean(),
   notifications: dynamicEventNotificationsSchema,
+  settings: z.record(z.number().finite()).optional(),
 });
 
 export const dynamicEventsConfigSchema = z.object({

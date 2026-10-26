@@ -54,6 +54,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('dota:roshanEvent', handler);
     return () => { ipcRenderer.removeListener('dota:roshanEvent', handler); };
   },
+  onMapAwarenessWarning: (callback: (text: string) => void) => {
+    const handler = (_event: unknown, text: string) => callback(text);
+    ipcRenderer.on('dota:mapAwarenessWarning', handler);
+    return () => { ipcRenderer.removeListener('dota:mapAwarenessWarning', handler); };
+  },
   sendOverlayNotification: (payload: { eventName: string; offsetSeconds: number; eventId: string; happenTimeMs: number }) => ipcRenderer.send('overlay:announcement', payload),
   sendOverlayUpcoming: (occurrences: Array<{ eventId: string; eventName: string; happenTimeMs: number }>) => ipcRenderer.send('overlay:sendUpcoming', occurrences),
   onEventsChanged: (callback: (config: unknown) => void) => {
@@ -74,4 +79,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   getDynamicEvents: () => ipcRenderer.invoke('config:getDynamicEvents'),
   setDynamicEvents: (config: unknown) => ipcRenderer.invoke('config:setDynamicEvents', config),
+  getRecordMatches: () => ipcRenderer.invoke('prefs:getRecordMatches'),
+  setRecordMatches: (value: boolean) => ipcRenderer.invoke('prefs:setRecordMatches', value),
+  openRecordingsFolder: () => ipcRenderer.invoke('prefs:openRecordingsFolder'),
 });

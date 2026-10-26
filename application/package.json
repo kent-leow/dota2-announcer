@@ -11,7 +11,8 @@
     "build:renderer": "vite build",
     "build:main": "tsc -p tsconfig.main.json",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "replay:report": "jest src/dota/mapAwareness/accuracyReport.run.spec.ts --selectProjects services"
   },
   "dependencies": {
     "react": "18.3.1",

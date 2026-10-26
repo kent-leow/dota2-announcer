@@ -91,8 +91,7 @@ describe('stateStore', () => {
     it('returns default dynamic events when state file missing', () => {
       (fs.readFileSync as jest.Mock).mockImplementation(() => { throw new Error('no file'); });
       const state = readAppState();
-      expect(state.dynamicEvents).toHaveLength(1);
-      expect(state.dynamicEvents[0].id).toBe('roshan');
+      expect(state.dynamicEvents.map((e) => e.id)).toEqual(['roshan', 'map-awareness']);
       expect(state.dynamicEvents[0].enabled).toBe(true);
     });
 
@@ -102,8 +101,7 @@ describe('stateStore', () => {
         persistent: { enabled: false, position: 'right', fontSize: { name: 16, offset: 13 }, eventCount: 5, lookaheadSeconds: 30 },
       }));
       const state = readAppState();
-      expect(state.dynamicEvents).toHaveLength(1);
-      expect(state.dynamicEvents[0].id).toBe('roshan');
+      expect(state.dynamicEvents.map((e) => e.id)).toEqual(['roshan', 'map-awareness']);
     });
 
     it('reads persisted dynamic events and merges missing defaults', () => {
@@ -115,7 +113,20 @@ describe('stateStore', () => {
       const state = readAppState();
       expect(state.dynamicEvents[0].enabled).toBe(false);
       expect(state.dynamicEvents[0].notifications.countdown).toBe(false);
-      expect(state.dynamicEvents).toHaveLength(1);
+      expect(state.dynamicEvents.map((e) => e.id)).toEqual(['roshan', 'map-awareness']);
+      expect(state.dynamicEvents[1].enabled).toBe(true);
+    });
+
+    it('preserves saved map-awareness settings', () => {
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify({
+        dynamicEvents: [
+          { id: 'roshan', name: 'Roshan', enabled: true, notifications: { kill: true, countdown: true, respawn: true } },
+          { id: 'map-awareness', name: 'Map Awareness', enabled: true, notifications: { visible: true, fog: false }, settings: { leadSeconds: 7, engageDistance: 900, maxFogSeconds: 15 } },
+        ],
+      }));
+      const ma = readAppState().dynamicEvents.find((e) => e.id === 'map-awareness')!;
+      expect(ma.settings).toEqual({ leadSeconds: 7, engageDistance: 900, maxFogSeconds: 15 });
+      expect(ma.notifications.fog).toBe(false);
     });
 
     it('persists dynamic events through writeAppState', () => {

@@ -1,8 +1,9 @@
 import { DEFAULT_EVENTS, DEFAULT_DYNAMIC_EVENTS, EVENT_GROUP_IDS } from './defaults';
 import { eventsConfigSchema, dynamicEventsConfigSchema } from './events.schema';
+import { LEAD_SECONDS, ENGAGE_DISTANCE, MAX_FOG_SECONDS } from 'src/dota/mapAwareness/constants';
 
 describe('defaults', () => {
-  it('contains all twelve event groups', () => {
+  it('contains all eight event groups', () => {
     const ids = DEFAULT_EVENTS.events.map((e) => e.id);
 
     for (const id of EVENT_GROUP_IDS) {
@@ -65,4 +66,14 @@ describe('DEFAULT_DYNAMIC_EVENTS', () => {
     expect(roshan.enabled).toBe(true);
   });
 
+  it('includes an enabled map-awareness entry with default settings', () => {
+    const ma = DEFAULT_DYNAMIC_EVENTS.dynamicEvents.find((e) => e.id === 'map-awareness')!;
+    expect(ma.enabled).toBe(true);
+    expect(ma.notifications).toEqual({ visible: true, fog: true });
+    expect(ma.settings).toEqual({
+      leadSeconds: LEAD_SECONDS.default,
+      engageDistance: ENGAGE_DISTANCE.default,
+      maxFogSeconds: MAX_FOG_SECONDS.default,
+    });
+  });
 });

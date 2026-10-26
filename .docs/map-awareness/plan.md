@@ -1,128 +1,192 @@
-# Dynamic Event: Map Awareness (Enemy Missing/Approaching)
+# Map Awareness: Enemy Arrival-Time Warning
 
 ## Summary
-Add a new dynamic GSI event that tracks enemy hero visibility on the minimap and warns the player when heroes go missing or are approaching. The system detects fog-of-war transitions (enemy disappearing from minimap data), estimates threat using dead reckoning (expanding reachability radius), vector-based approach detection (was enemy moving toward you?), and time-decay confidence scoring. This follows the same tracker pattern as Roshan and Hero Items — notification overlay only, no persistent panel entry.
+Warn the player a few seconds **before** an enemy hero can reach them. Using only what the player's own team can already see on the minimap (no fog-of-war bypass), the app learns how fast each enemy hero actually moves, predicts when an approaching enemy, or one that just disappeared into fog, could arrive at the player's position, and announces it ahead of time. Example: "Tidehunter, 5 seconds." This is the product's flagship differentiator, so accuracy is measured against recorded real matches and has explicit pass targets, rather than being judged by feel.
 
 ## Scope
 **In scope**
-- Extend GSI types and parser to extract minimap data (enemy hero positions, yaw, team) from the payload
-- Implement a `mapAwarenessTracker` module following the same pub-sub pattern as `roshanTracker` and `itemsTracker`
-- Detect fog-of-war transitions: enemy hero appearing/disappearing from minimap entries
-- Track last known position, facing direction (yaw), and velocity vector for each enemy hero
-- Implement dead reckoning: compute expanding threat radius based on assumed movement speed and elapsed time
-- Implement vector-based approach detection: dot product of enemy's last velocity vector against direction toward player's hero
-- Implement time-decay confidence model: threat score decreases as time-since-last-seen increases
-- Implement proximity alert: warn when a recently-fogged enemy was close to the player
-- Fire notification overlay events with configurable alert types (missing, approaching, nearby danger)
-- Add dynamic event config entry for "Map Awareness" with sub-toggles (missing alerts, approach warnings)
-- Register the tracker in the app lifecycle alongside existing trackers
-- Wire into `overlayNotifier` for overlay notifications
-- Extract player's own hero position (`hero.xpos`, `hero.ypos`) into parsed game state for distance calculations
+- Read every enemy hero currently visible on the minimap: hero name, position and facing
+- Identify each enemy by hero name, never by its position in the minimap list (the list order reshuffles between updates)
+- Read the player's own hero position, alive state and side (Radiant or Dire) and treat the opposite side as enemies
+- Learn each enemy's real movement speed from its observed movement while visible, because the game feed provides no speed value
+- Filter out invalid speed samples: blinks/teleports (impossible jumps), standing still, paused game and gaps across fog
+- Fall back to a safe default speed when an enemy has not been observed long enough
+- **Visible-enemy ETA**: for a visible enemy closing in on the player, predict seconds until it reaches engage distance, based on how fast the gap is actually shrinking
+- **Fog ETA**: for an enemy that vanished into fog, predict the earliest time it could reach the player, assuming it keeps coming at its learned speed by the most direct route, from its last seen position to the player's **current** position
+- Predict fog arrival for **every** enemy that vanished, whichever way it was heading; an enemy heading away only gets a small turn-around allowance added (a false warning is preferred over a missed one); stop predicting after a maximum fog age
+- Warn when the predicted arrival time drops to the configured lead time (e.g. 5 seconds), with hero name and seconds, via voice and overlay
+- One warning per threat episode per hero, re-armed only when a new episode starts
+- Grouped warning when two or more enemies are threatening at the same time (possible gank or smoke)
+- Exclude an enemy as dead only when it can be pinned to a specific kill; when unsure, treat it as alive (false warning preferred)
+- Freeze all predictions while the game is paused
+- No warnings while the player is dead; reset all tracking between matches
+- Settings: master on/off, toggles for visible and fog warnings, lead time, engage distance, maximum fog age
+- Record a full match's game feed and replay it through the warning engine offline, to measure and tune accuracy
+- Accuracy report with pass targets (see AC18)
 
 **Out of scope**
-- Terrain-aware pathfinding / navmesh flood-fill (v2 enhancement)
-- TP scroll detection or blink dagger awareness for enemies (enemy items not available in player GSI)
-- Spectator/observer mode (full-vision tracking)
-- Smoke of Deceit detection beyond "multiple heroes disappearing simultaneously"
-- Audio/TTS changes (existing TTS pipeline handles notifications generically)
-- Settings UI changes beyond the dynamic events toggle section
-- Persistent panel entry (notification only, events are ephemeral)
+- Revealing anything not already visible to the player's team (any fog bypass)
+- Terrain/pathfinding-aware routes (straight-line worst case used instead; candidate for v2)
+- Enemy items, buffs or abilities (Blink, Force Staff, Haste, invisibility) not exposed to the player feed. Covered only by safety margins
+- Spectator/observer full-vision mode
+- Persistent panel entry (warnings are ephemeral)
 
 ## Acceptance Criteria
 
-| **AC1** | GSI parser extracts minimap hero data |
+| **AC1** | Visible enemies read and identified by name |
 |---------|---|
-| Given | A GSI payload is received containing a `minimap` section with enemy hero entries (`image: "minimap_enemyicon"`) |
-| When | The payload is parsed |
-| Then | Enemy hero positions (xpos, ypos), facing direction (yaw), hero name, and team are extracted and available to the tracker |
+| Given | The minimap shows enemy heroes and the order of minimap entries differs from the previous update |
+| When | The update is processed |
+| Then | Each enemy is matched to its own history by hero name, with correct position and facing; allies and the player's own hero are never treated as enemies |
 
-| **AC2** | GSI parser extracts player hero position |
+| **AC2** | Player position and side |
 |---------|---|
-| Given | A GSI payload is received containing `hero.xpos` and `hero.ypos` fields |
-| When | The payload is parsed |
-| Then | The player's own world coordinates are available in `ParsedGameState` for distance calculations |
+| Given | The player is on Radiant or Dire |
+| When | An update is processed |
+| Then | The player's own position, alive state and side are known, and enemies are the opposite side |
 
-| **AC3** | Fog-of-war transition detected (hero goes missing) |
+| **AC3** | Speed learned from observed movement |
 |---------|---|
-| Given | An enemy hero was present in the minimap data on the previous tick |
-| When | That hero is absent from the current tick's minimap data and is not dead |
-| Then | A "hero missing" event fires recording the hero name, last known position, last known velocity, and timestamp |
+| Given | An enemy has been continuously visible for at least 3 consecutive game seconds while moving |
+| When | Its speed is estimated |
+| Then | The estimate is within ±15% of its true average speed over that window and never exceeds the game's maximum movement speed (550) |
 
-| **AC4** | Fog-of-war transition detected (hero reappears) |
+| **AC4** | Invalid speed samples rejected |
 |---------|---|
-| Given | An enemy hero was tracked as "missing" |
-| When | That hero reappears in the minimap data |
-| Then | The hero's missing state is cleared and tracking resumes with fresh position data |
+| Given | An enemy jumps further between two updates than the maximum speed allows (blink/teleport), stands still, or reappears after fog |
+| When | The speed estimate is updated |
+| Then | That sample is excluded and the previous estimate is kept |
 
-| **AC5** | Proximity alert on nearby disappearance |
+| **AC5** | Safe fallback speed |
 |---------|---|
-| Given | An enemy hero disappears from minimap within a configurable distance threshold of the player's hero (default: 3000 units) |
-| When | The fog transition is detected |
-| Then | An immediate "Hero X missing nearby!" notification fires |
+| Given | An enemy has fewer than 3 valid speed samples |
+| When | An arrival time is needed |
+| Then | A default speed of 350 is used (deliberately fast, so warnings come early rather than late) |
 
-| **AC6** | Approach detection warns when enemy was heading toward player |
+| **AC6** | Visible-enemy arrival time |
 |---------|---|
-| Given | An enemy hero's velocity vector (computed from position samples before disappearance) has a dot product > 0.6 against the direction toward the player |
-| When | The hero enters fog within a threshold distance (default: 4000 units) |
-| Then | An "Enemy approaching!" notification fires with the hero name |
+| Given | A visible enemy's distance to the player has shrunk by at least 100 units/second on average over the last 3 game seconds |
+| When | Arrival time is computed |
+| Then | Arrival time = (current distance − engage distance) ÷ measured closing rate; an enemy already inside engage distance has arrival time 0 |
 
-| **AC7** | Dead reckoning threat radius expands over time |
+| **AC7** | Fog arrival time (worst case) |
 |---------|---|
-| Given | An enemy hero has been missing for N seconds with assumed movement speed S |
-| When | The threat radius (S × N) overlaps the player's position |
-| Then | A "Hero X could reach you" warning fires (only once per missing period per hero) |
+| Given | An enemy vanished into fog N seconds ago with a learned speed S, heading in any direction |
+| When | Each game second passes |
+| Then | Earliest arrival time = (straight-line distance from its last seen position to the player's current position − engage distance − S × N) ÷ S, never negative, recalculated as the player moves; if it was heading away (more than 90° off the direction to the player) a turn-around allowance (default 1 s) is added, and it is never excluded from warnings |
 
-| **AC8** | Time-decay suppresses stale alerts |
+| **AC8** | Fog prediction expires |
 |---------|---|
-| Given | An enemy hero has been missing for longer than a configurable decay threshold (default: 15 seconds) |
-| When | The confidence score drops below a minimum threshold |
-| Then | No further approach/reachability warnings fire for that hero until new information arrives |
+| Given | An enemy has been in fog longer than the maximum fog age (default 20 seconds) |
+| When | Predictions run |
+| Then | No further fog warnings fire for that enemy until it is seen again |
 
-| **AC9** | Dead heroes do not trigger missing alerts |
+| **AC9** | Warning fires at lead time |
 |---------|---|
-| Given | An enemy hero disappears from the minimap |
-| When | The game's kill feed or hero status indicates the hero is dead |
-| Then | No "missing" alert fires; the hero is tracked as "dead" until respawn |
+| Given | An enemy's arrival time (visible or fog) is above the lead time (default 5 seconds) |
+| When | It drops to or below the lead time |
+| Then | A warning fires within the same game second |
 
-| **AC10** | Dynamic event config controls map awareness notifications |
+| **AC10** | Warning content |
 |---------|---|
-| Given | The "Map Awareness" dynamic event is disabled in config or specific sub-notifications are toggled off |
-| When | A fog transition or threat condition occurs |
-| Then | No notification fires for disabled alert types |
+| Given | A warning fires |
+| When | It is shown and spoken |
+| Then | The overlay shows the enemy hero icon/name, whether it is visible or in fog, and a live countdown to arrival; voice says the hero name and seconds (e.g. "Tidehunter, 5 seconds") |
 
-| **AC11** | Tracker resets between matches |
+| **AC11** | One warning per threat episode |
 |---------|---|
-| Given | A match ends and a new match starts |
-| When | The match ID changes |
-| Then | All enemy tracking state (positions, missing status, velocity history) is cleared |
+| Given | A warning fired for an enemy |
+| When | That enemy's arrival time stays at or below lead time, or flickers around it |
+| Then | No repeat warning fires; it re-arms only after the enemy is seen moving away (arrival time rises above lead time + 3 seconds), reappears from fog, or the fog prediction expires |
 
-| **AC12** | Alert cooldown prevents notification spam |
+| **AC12** | Grouped gank warning |
 |---------|---|
-| Given | A notification was fired for a specific enemy hero |
-| When | The same alert type would fire again within a configurable cooldown period (default: 8 seconds per hero) |
-| Then | The duplicate notification is suppressed |
+| Given | Two or more enemies have arrival times at or below lead time within the same 3-second window |
+| When | Warnings would fire |
+| Then | A single grouped warning fires listing the number of heroes and the earliest arrival time (e.g. "3 heroes, 4 seconds") instead of separate warnings |
+
+| **AC13** | Dead enemy identified by elimination |
+|---------|---|
+| Given | The player's team kill score rises by K, and within the same 2 game seconds exactly K enemies vanish from the minimap |
+| When | Fog prediction would start |
+| Then | Those K enemies are marked dead and get no fog prediction until seen again; if the number of vanished enemies is not exactly K, all of them are treated as alive and predicted normally |
+
+| **AC14** | Pause freezes predictions |
+|---------|---|
+| Given | The game is paused |
+| When | Real time passes |
+| Then | Fog time, arrival times and countdowns do not advance; no warnings fire until unpaused |
+
+| **AC15** | Silent while player is dead |
+|---------|---|
+| Given | The player's hero is dead |
+| When | Any threat condition occurs |
+| Then | No warning fires; tracking continues so state is correct on respawn |
+
+| **AC16** | Reset between matches |
+|---------|---|
+| Given | A match ends or a new one starts (match ID may be "0" in lobby/practice games) |
+| When | The match ID changes, the game leaves in-progress state, or the game clock goes backwards |
+| Then | All enemy history, speeds and pending warnings are cleared |
+
+| **AC17** | Player settings |
+|---------|---|
+| Given | The player changes master toggle, visible/fog toggles, lead time (2–15 s), engage distance (300–1500) or maximum fog age (5–40 s) |
+| When | The next game second is processed |
+| Then | The new settings apply without restart; disabled warning types never fire |
+
+| **AC18** | Match recording and offline replay |
+|---------|---|
+| Given | Recording is enabled for a match |
+| When | The match ends |
+| Then | Every game-feed update is saved, and replaying it through the warning engine produces exactly the same warnings, in the same game seconds, as the live run |
+
+| **AC19** | Accuracy targets met on recorded matches |
+|---------|---|
+| Given | At least 5 recorded real matches, with "arrivals" labelled where an enemy actually came within engage distance of the player |
+| When | The replay accuracy report runs |
+| Then | **Pass gate:** ≥ 80% of walking arrivals were warned with ≥ 3 s notice (median error ≤ 1.5 s for visible warnings). False warnings are counted and reported for tuning but are **not** a pass/fail gate (missing a real arrival is worse than a false warning). Report lists every miss and false warning |
 
 ## Open Questions
-> None — all resolved.
+| # | Question | Impact if unresolved |
+|---|----------|----------------------|
+| OQ1 | **Deferred:** user will record at least 5 full real matches after recording (AC18) ships. Does not block building; blocks AC19 sign-off only. | Speed learning, thresholds and accuracy cannot be validated until recordings exist |
 
 ## Estimate
-**Story Points**: 21 SP (~42 days)
-> raw SP = (12 AC × 2) + 0 OQ = 24, rounded to nearest Fibonacci = 21. 1 SP = 2 days.
+**Story Points**: 55 SP (~110 days)
+> raw SP = (19 AC × 2) + 1 OQ = 39, rounded up to nearest Fibonacci = 55. 1 SP = 2 days.
 
 ## Notes
-- **Algorithm summary**: Layered approach — L0 (fog transition detection) → L1 (proximity alert) → L2 (dead reckoning + time decay) → L3 (vector approach detection). All layers combined cost <1ms per tick.
-- **GSI minimap structure**: Flat object with keys `o0`, `o1`, ... Each entry has `xpos`, `ypos`, `yaw`, `image`, `team`, `name`, `unitname`. Filter by `image === "minimap_enemyicon"` for enemy heroes.
-- **Coordinate system**: Map ranges approximately -8100 to +8100 on both axes (~16,000 × 16,000 unit playable area).
-- **Movement speed assumptions**: Assume 350 units/sec base (accounts for boots) since enemy item data is unavailable. Speed cap is 550.
-- **Velocity calculation**: Compare enemy position between consecutive ticks. With ~1 Hz GSI updates, velocity = `(pos_current - pos_previous) / delta_time`.
-- **Approach score**: `dot(normalize(velocity), normalize(player_pos - enemy_pos))`. Values >0.6 indicate "heading toward player".
-- **Decay function**: `confidence = 1 / (1 + 0.15 * elapsed_seconds)`. At 3s: 0.69, 8s: 0.45, 15s: 0.31, 30s: 0.18.
-- **Config structure**: `{ id: "map-awareness", name: "Map Awareness", enabled: true, notifications: { missing: true, approaching: true, reachable: true } }`
-- **Anti-cheat**: Feature uses ONLY Valve-provided GSI data (visible minimap). No memory reading, packet sniffing, or fog penetration. Equivalent to a human watching the minimap carefully.
-- **`previously` section**: GSI delta encoding shows changed fields from last tick — can be used for velocity without storing state, but explicit state tracking is more reliable.
-- **Death detection (OQ1 resolved)**: GSI `events` array contains `CHAT_MESSAGE_HERO_KILL` entries with `playerid` fields. Parse these to detect enemy deaths and suppress false "missing" alerts for dead heroes. Respawn time can be estimated from hero level.
-- **Update frequency (OQ2 resolved)**: GSI dump confirms 1Hz updates (`game_time` increments by 1 per tick). Velocity calculation from consecutive position samples is viable at this rate — gives ~1 sample/sec, sufficient for approach vector with some noise tolerance.
+**Dump evidence (2 snapshots, game second 64 and 832)**
+- **No movement speed data** anywhere in the feed: not for the player's hero, not for enemies, not on the minimap. Speed must be learned from movement (AC3–AC5).
+- Visible enemies carry: hero name, side, position, facing (−180…180°), vision range. Only 2 of 5 enemies were listed at 832 s → feed respects fog.
+- Minimap list order is **not stable**: the same list slot held an ally at 831 s and an enemy at 832 s. The feed's "previous values" section is keyed by slot too, so it cannot be used for enemy movement. The app must keep its own per-hero history.
+- Player's own position on the hero data equals its minimap position → one shared coordinate space (≈ −8200…+8200), no calibration.
+- Feed updates every game second during play (game clock changes each second), so predictions are evaluated per game second. Pause stops the clock → naturally freezes (AC14).
+- No per-enemy alive/dead flag and no hero-kill events in the feed. The player's own kill list names victims only by player slot (no hero name). Team kill score is the only all-team death signal → specific dead hero found by elimination (AC13). Works because a kill almost always happens inside the killing team's vision, so the victim is usually visible right before it vanishes. Denies, suicides and neutral-creep deaths may not raise the score → that enemy stays "alive" (safe side).
+- Match ID is "0" in practice lobbies (AC16).
+
+**Prediction model (reference)**
+- Learned speed = distance travelled ÷ game seconds, over a rolling 3-second window of continuous visibility; capped at 550; samples implying > 550 × 1.2 rejected as blink/teleport; samples < 50 units/s ignored (idle).
+- Visible ETA uses the **measured closing rate** of the distance (it already reflects both heroes' movement and real pathing), not raw speed.
+- Fog ETA is a **worst case**: straight line, at learned speed but never below 350 (observed averages underestimate heroes that are last-hitting or juking), starting from the moment it was last seen. Straight line makes warnings early, never late.
+- Direction does not exclude anyone: heading away only adds the turn-around allowance (default 1 s, tune from recordings). Main noise limiter is the maximum fog age: at 350 speed, 20 s of fog + 5 s lead covers ≈ 8,750 units, so most enemies in fog nearby can trigger. Accepted: a false warning is better than a miss.
+- Heading toward player = facing/movement direction within ±60° of the direction to the player at the moment of vanishing.
+- Real Dota hero speeds ≈ 270–330 base, ≈ 315–420 with boots, max 550.
+- 1-second update rate means arrival-time precision is roughly ±1 s; default lead time 5 s leaves headroom.
+
+**Known limitations (communicate to users)**
+- Blink, Force Staff, teleports, Haste rune, invisibility and speed buffs used **in fog** cannot be seen → earlier-than-predicted arrivals are possible.
+- Straight-line worst case may warn about enemies blocked by cliffs/trees.
+- Illusions/clones share hero names; the entry closest to the previous known position is followed.
+
+**Anti-cheat**: uses only Valve-provided Game State Integration data that the player can already see. Equivalent to an attentive player watching the minimap.
 
 ## Changelog
 - 2026-06-17: Created plan.
 - 2026-06-17: Resolved OQ1 — GSI `events` array has `CHAT_MESSAGE_HERO_KILL` for death detection. Resolved OQ2 — confirmed 1Hz update rate from GSI dump (`game_time` 664→665).
+- 2026-10-26: Reviewed GSI sample dumps. Added visible-nearby alert (AC13), side detection (AC14), suppress-while-dead (AC15), 1s game-clock timer in scope. Reworked AC9 (no hero-kill event in dump → kill-score proxy) and AC11 (match ID is "0" in dump). Reopened death-detection as OQ1; added OQ2 (default values). Estimate 21 → 34 SP.
+- 2026-10-26: Rethought plan around an Enemy Arrival-Time (ETA) warning engine. Confirmed the game feed has NO movement-speed field → speed is learned from observed movement. Found minimap slot keys reshuffle between updates → heroes identified by name only. Replaced radius/decay/proximity ACs with speed learning, visible ETA, fog ETA, lead-time warning, episode/re-arm, gank grouping, pause handling, recording/replay and measurable accuracy target. Removed implementation detail (file/module names) per plan rules. Corrected earlier note: evaluation can be driven by the per-second game feed (clock changes every second), no separate timer needed. Estimate 34 → 55 SP.
+- 2026-10-26: OQ4 resolved — fog warnings for all enemies regardless of direction; heading away adds 1 s turn-around allowance (AC7, Scope, Notes). OQ1 deferred (recordings later; blocks AC19 sign-off only). Estimate unchanged 55 SP.
+- 2026-10-26: OQ2 resolved — dead enemy identified by elimination (score rise K + exactly K enemies vanish), otherwise treated alive (AC13). OQ3 resolved — prefer false warnings over misses: catch rate is the only pass gate, false warnings reported but not gating (AC19). Estimate unchanged 55 SP.
+- 2026-10-26: Implemented task-001…008. Fog speed floor of 350 applied (Notes). Live-lobby checks and AC19 sign-off pending (OQ1).

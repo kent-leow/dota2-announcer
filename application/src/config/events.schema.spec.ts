@@ -176,6 +176,24 @@ describe('dynamicEventConfigSchema', () => {
   });
 });
 
+describe('dynamicEventConfigSchema settings', () => {
+  const base = { id: 'map-awareness', name: 'Map Awareness', enabled: true, notifications: { visible: true } };
+
+  it('accepts numeric settings', () => {
+    expect(dynamicEventConfigSchema.safeParse({ ...base, settings: { leadSeconds: 5 } }).success).toBe(true);
+  });
+
+  it('accepts entries without settings', () => {
+    expect(dynamicEventConfigSchema.safeParse(base).success).toBe(true);
+  });
+
+  it('rejects non-numeric, NaN and infinite settings', () => {
+    expect(dynamicEventConfigSchema.safeParse({ ...base, settings: { leadSeconds: 'abc' } }).success).toBe(false);
+    expect(dynamicEventConfigSchema.safeParse({ ...base, settings: { leadSeconds: NaN } }).success).toBe(false);
+    expect(dynamicEventConfigSchema.safeParse({ ...base, settings: { leadSeconds: Infinity } }).success).toBe(false);
+  });
+});
+
 describe('dynamicEventsConfigSchema', () => {
   it('validates a config with dynamic events array', () => {
     const valid = {

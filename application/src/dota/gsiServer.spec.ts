@@ -15,7 +15,7 @@ jest.mock('http', () => ({
   }),
 }));
 
-import { start, stop, onStateChange, getLastState, _resetForTesting } from './gsiServer';
+import { start, stop, onStateChange, onRawPayload, getLastState, _resetForTesting } from './gsiServer';
 
 function simulatePost(body: string): Promise<number> {
   return new Promise((resolve) => {
@@ -89,6 +89,47 @@ describe('gsiServer', () => {
       heroName: '',
       events: [],
     });
+  });
+
+  it('delivers every raw body to raw payload listeners until unsubscribed', async () => {
+    await start(13001);
+    const bodies: string[] = [];
+    const unsub = onRawPayload((body, receivedAtMs) => {
+      bodies.push(body);
+      expect(typeof receivedAtMs).toBe('number');
+    });
+    await simulatePost('{"map":null}');
+    await simulatePost('not json');
+    unsub();
+    await simulatePost('{"after":true}');
+    expect(bodies).toEqual(['{"map":null}', 'not json']);
+  });
+
+  it('still responds 200 when a raw listener throws', async () => {
+    await start(13001);
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    onRawPayload(() => { throw new Error('boom'); });
+    expect(await simulatePost('{}')).toBe(200);
+    jest.restoreAllMocks();
+  });
+
+  it('emits visible enemy heroes from the minimap to listeners', async () => {
+    await start(13001);
+    const received: ParsedGameState[] = [];
+    onStateChange((s) => received.push(s));
+
+    await simulatePost(JSON.stringify({
+      map: { matchid: '457', game_time: 200, clock_time: 180, game_state: GAME_STATES.GAME_IN_PROGRESS, paused: false, daytime: true },
+      player: { team_name: 'radiant' },
+      hero: { name: 'npc_dota_hero_ursa', alive: true, xpos: 10, ypos: 20 },
+      minimap: {
+        o1: { xpos: 500, ypos: 600, team: 3, unitname: 'npc_dota_hero_tidehunter' },
+        o2: { xpos: 10, ypos: 20, team: 2, unitname: 'npc_dota_hero_ursa' },
+      },
+    }));
+
+    expect(received[0].enemyHeroes).toEqual([{ name: 'tidehunter', x: 500, y: 600 }]);
+    expect(received[0].player).toEqual({ team: 'radiant', x: 10, y: 20, alive: true });
   });
 
   it('ignores malformed JSON body without crashing', async () => {

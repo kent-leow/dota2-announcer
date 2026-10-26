@@ -5,14 +5,11 @@ import {
   POWER_RUNE_ICON,
   WISDOM_RUNE_ICON,
   LOTUS_RUNE_ICON,
-  NIGHT_ICON,
-  DAY_ICON,
   NEUTRAL_CAMP_ICON,
   TORMENTOR_ICON,
   AGHANIM_SHARD_ICON,
-  SIEGE_CREEP_ICON,
-  FLAGBEARER_CREEP_ICON,
 } from './defaultIcons';
+import { MAP_AWARENESS_EVENT_ID, LEAD_SECONDS, ENGAGE_DISTANCE, MAX_FOG_SECONDS } from 'src/dota/mapAwareness/constants';
 
 export const DEFAULT_EVENTS: EventsConfig = {
   events: [
@@ -58,22 +55,6 @@ export const DEFAULT_EVENTS: EventsConfig = {
       icon: LOTUS_RUNE_ICON,
     },
     {
-      id: 'night',
-      name: 'Night',
-      spawnTime: 300,
-      repeatEvery: 600,
-      warnings: [{ offsetSeconds: 0 }],
-      icon: NIGHT_ICON,
-    },
-    {
-      id: 'day',
-      name: 'Day',
-      spawnTime: 0,
-      repeatEvery: 600,
-      warnings: [{ offsetSeconds: 0 }],
-      icon: DAY_ICON,
-    },
-    {
       id: 'neutral-camp',
       name: 'Neutral Camp',
       spawnTime: 60,
@@ -95,22 +76,6 @@ export const DEFAULT_EVENTS: EventsConfig = {
       warnings: [{ offsetSeconds: 0 }],
       icon: AGHANIM_SHARD_ICON,
     },
-    {
-      id: 'siege-creep',
-      name: 'Siege Creep',
-      spawnTime: 300,
-      repeatEvery: 300,
-      warnings: [{ offsetSeconds: 0 }],
-      icon: SIEGE_CREEP_ICON,
-    },
-    {
-      id: 'flagbearer-creep',
-      name: 'Flagbearer Creep',
-      spawnTime: 120,
-      repeatEvery: 60,
-      warnings: [{ offsetSeconds: 0 }],
-      icon: FLAGBEARER_CREEP_ICON,
-    },
   ],
 };
 
@@ -126,6 +91,20 @@ export const DEFAULT_DYNAMIC_EVENTS: DynamicEventsConfig = {
         respawn: true,
       },
     },
+    {
+      id: MAP_AWARENESS_EVENT_ID,
+      name: 'Map Awareness',
+      enabled: true,
+      notifications: {
+        visible: true,
+        fog: true,
+      },
+      settings: {
+        leadSeconds: LEAD_SECONDS.default,
+        engageDistance: ENGAGE_DISTANCE.default,
+        maxFogSeconds: MAX_FOG_SECONDS.default,
+      },
+    },
   ],
 };
 
@@ -135,11 +114,7 @@ export const EVENT_GROUP_IDS = [
   'power-rune',
   'wisdom-rune',
   'lotus-rune',
-  'night',
-  'day',
   'neutral-camp',
   'tormentor',
   'aghanim-shard',
-  'siege-creep',
-  'flagbearer-creep',
 ] as const;

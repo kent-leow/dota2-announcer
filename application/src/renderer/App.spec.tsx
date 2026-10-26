@@ -57,6 +57,7 @@ const mockElectronAPI = {
   gsiGetInstallPath: jest.fn(() => Promise.resolve(null)),
   onGsiStatusUpdate: jest.fn(() => () => {}),
   onRoshanEvent: jest.fn(() => () => {}),
+  onMapAwarenessWarning: jest.fn((_cb: (text: string) => void) => () => {}),
   sendOverlayNotification: jest.fn(),
   sendOverlayUpcoming: jest.fn(),
   onEventsChanged: jest.fn(() => () => {}),
@@ -73,6 +74,9 @@ const mockElectronAPI = {
     ],
   })),
   setDynamicEvents: jest.fn(() => Promise.resolve({ success: true })),
+  getRecordMatches: jest.fn(() => Promise.resolve(false)),
+  setRecordMatches: jest.fn(() => Promise.resolve({ success: true })),
+  openRecordingsFolder: jest.fn(() => Promise.resolve({ success: true })),
 };
 
 (window as any).electronAPI = mockElectronAPI;

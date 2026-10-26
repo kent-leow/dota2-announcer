@@ -1,7 +1,14 @@
 import { RoshanEvent } from 'src/dota/roshanTracker';
+import { MapAwarenessWarning } from 'src/dota/mapAwareness/types';
+import { MAP_AWARENESS_ICON } from 'src/config/defaultIcons';
 
 let capturedCallback: ((name: string, offset: number, id: string, icon?: string) => void) | null = null;
 let capturedRoshanCallback: ((event: RoshanEvent) => void) | null = null;
+let capturedWarningCallback: ((warning: MapAwarenessWarning) => void) | null = null;
+
+jest.mock('src/dota/mapAwarenessTracker', () => ({
+  onWarning: jest.fn((cb) => { capturedWarningCallback = cb; }),
+}));
 
 jest.mock('src/scheduler/eventScheduler', () => ({
   onAnnouncement: jest.fn((cb) => { capturedCallback = cb; }),
@@ -126,6 +133,35 @@ describe('overlayNotifier', () => {
       initOverlayNotifier(() => mockOverlay as any);
       capturedRoshanCallback!({ type: 'killed' });
 
+      expect(mockSend).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('map awareness warnings', () => {
+    const warning: MapAwarenessWarning = {
+      heroes: [{ name: 'nevermore', etaSeconds: 4.6, source: 'fog' }],
+      etaSeconds: 4.6,
+      clockTime: 600,
+      grouped: false,
+    };
+
+    it('sends one overlay:notify with title, icon and live countdown target', () => {
+      initOverlayNotifier(() => mockOverlay as any);
+      capturedWarningCallback!(warning);
+      expect(mockSend).toHaveBeenCalledTimes(1);
+      expect(mockSend).toHaveBeenCalledWith('overlay:notify', expect.objectContaining({
+        eventName: 'Shadow Fiend (fog)',
+        offsetSeconds: 5,
+        eventId: 'map-awareness',
+        icon: MAP_AWARENESS_ICON,
+        happenTimeMs: 604600,
+      }));
+    });
+
+    it('does not send when the overlay is destroyed', () => {
+      mockOverlay.isDestroyed.mockReturnValue(true);
+      initOverlayNotifier(() => mockOverlay as any);
+      expect(() => capturedWarningCallback!(warning)).not.toThrow();
       expect(mockSend).not.toHaveBeenCalled();
     });
   });

@@ -9,7 +9,9 @@ import { initOverlayNotifier } from './overlayNotifier';
 import * as matchStateManager from 'src/dota/matchStateManager';
 import { readAppState } from 'src/tts/stateStore';
 import { buildAppMenu } from './appMenu';
-import { loadPreferences, savePreferences } from 'src/config/preferences';
+import { loadPreferences, updatePreferences } from 'src/config/preferences';
+import * as matchRecorder from 'src/dota/matchRecorder';
+import * as mapAwarenessConfig from 'src/dota/mapAwareness/configHolder';
 
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
 app.commandLine.appendSwitch('disk-cache-dir', path.join(app.getPath('userData'), 'Cache'));
@@ -93,12 +95,12 @@ function createWindow(): BrowserWindow {
     }).then(({ response, checkboxChecked }) => {
       if (response === 0) {
         if (checkboxChecked) {
-          savePreferences({ closeBehavior: 'minimize' });
+          updatePreferences({ closeBehavior: 'minimize' });
         }
         mainWindow?.hide();
       } else {
         if (checkboxChecked) {
-          savePreferences({ closeBehavior: 'quit' });
+          updatePreferences({ closeBehavior: 'quit' });
         }
         isQuitting = true;
         app.quit();
@@ -156,6 +158,7 @@ app.whenReady().then(() => {
   loadEvents();
   loadMuteState();
   loadVolume();
+  mapAwarenessConfig.loadFromAppState();
   registerIpcHandlers(() => mainWindow);
   createWindow();
   createTray();
@@ -197,6 +200,7 @@ app.on('second-instance', () => {
 
 app.on('before-quit', () => {
   isQuitting = true;
+  void matchRecorder.stop();
   destroyOverlay();
 });
 

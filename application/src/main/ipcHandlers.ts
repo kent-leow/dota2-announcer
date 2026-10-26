@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, app } from 'electron';
+import { ipcMain, BrowserWindow, app, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as gsiServer from 'src/dota/gsiServer';
@@ -11,6 +11,11 @@ import * as eventsLoader from 'src/config/eventsLoader';
 import { eventsConfigSchema, dynamicEventsConfigSchema } from 'src/config/events.schema';
 import { readAppState, writeAppState, NotificationOverlayConfig, PersistentOverlayConfig } from 'src/tts/stateStore';
 import { getOverlayWindow } from './overlayWindow';
+import { loadPreferences, updatePreferences } from 'src/config/preferences';
+import * as matchRecorder from 'src/dota/matchRecorder';
+import * as mapAwarenessConfig from 'src/dota/mapAwareness/configHolder';
+import * as mapAwarenessTracker from 'src/dota/mapAwarenessTracker';
+import { speechText } from 'src/dota/mapAwareness/messages';
 
 function findDotaGsiPath(): string | null {
   const platform = process.platform;
@@ -78,6 +83,13 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     const win = getWindow();
     if (win && !win.isDestroyed()) {
       win.webContents.send('dota:roshanEvent', event.type);
+    }
+  });
+
+  mapAwarenessTracker.onWarning((warning) => {
+    const win = getWindow();
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('dota:mapAwarenessWarning', speechText(warning));
     }
   });
 
@@ -219,6 +231,19 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     return last !== null;
   });
 
+  ipcMain.handle('prefs:getRecordMatches', () => loadPreferences().recordMatches);
+  ipcMain.handle('prefs:setRecordMatches', (_event, value: unknown) => {
+    if (typeof value !== 'boolean') return { success: false, error: 'recordMatches must be a boolean' };
+    updatePreferences({ recordMatches: value });
+    return { success: true };
+  });
+  ipcMain.handle('prefs:openRecordingsFolder', async () => {
+    const dir = matchRecorder.getRecordingsDir();
+    fs.mkdirSync(dir, { recursive: true });
+    const error = await shell.openPath(dir);
+    return error ? { success: false, error } : { success: true };
+  });
+
   ipcMain.handle('config:getDynamicEvents', () => {
     const state = readAppState();
     return { dynamicEvents: state.dynamicEvents };
@@ -232,6 +257,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
     const state = readAppState();
     state.dynamicEvents = parsed.data.dynamicEvents;
     writeAppState(state);
+    mapAwarenessConfig.setFromDynamicEvents(parsed.data.dynamicEvents);
     return { success: true };
   });
 

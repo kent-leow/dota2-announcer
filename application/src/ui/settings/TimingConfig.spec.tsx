@@ -17,6 +17,9 @@ const mockElectronAPI = {
     ],
   })),
   setDynamicEvents: jest.fn(() => Promise.resolve({ success: true })),
+  getRecordMatches: jest.fn(() => Promise.resolve(false)),
+  setRecordMatches: jest.fn(() => Promise.resolve({ success: true })),
+  openRecordingsFolder: jest.fn(() => Promise.resolve({ success: true })),
 };
 
 (window as any).electronAPI = mockElectronAPI;

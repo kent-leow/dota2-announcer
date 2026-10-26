@@ -1,15 +1,18 @@
 import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
-import { GsiPayload, GsiEvent, ParsedGameState, GAME_STATES } from './gsiTypes';
+import { ParsedGameState, GAME_STATES } from './gsiTypes';
+import { parseGsiPayload } from './gsiParser';
 
 export type GsiStateCallback = (state: ParsedGameState) => void;
+export type GsiRawPayloadCallback = (body: string, receivedAtMs: number) => void;
 
 const GSI_PORT = 3001;
 const GSI_TIMEOUT_MS = 35_000;
 
 let server: http.Server | null = null;
 let listeners: GsiStateCallback[] = [];
+let rawListeners: GsiRawPayloadCallback[] = [];
 let lastState: ParsedGameState | null = null;
 let heartbeatTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -43,35 +46,6 @@ function dumpRawPayload(body: string): void {
   } catch { /* best-effort */ }
 }
 
-function extractHeroName(heroName?: string): string {
-  if (!heroName) return '';
-  return heroName.replace(/^npc_dota_hero_/, '');
-}
-
-function extractEvents(events?: GsiEvent[]): GsiEvent[] {
-  if (!events || !Array.isArray(events)) return [];
-  return events;
-}
-
-function parsePayload(body: string): ParsedGameState | null {
-  try {
-    const data: GsiPayload = JSON.parse(body);
-    if (!data.map) return null;
-
-    return {
-      gameState: data.map.game_state,
-      clockTime: data.map.clock_time,
-      matchId: data.map.matchid,
-      paused: data.map.paused,
-      daytime: data.map.daytime ?? true,
-      heroName: extractHeroName(data.hero?.name),
-      events: extractEvents(data.events),
-    };
-  } catch {
-    return null;
-  }
-}
-
 function notifyListeners(state: ParsedGameState): void {
   lastState = state;
   listeners.forEach((cb) => cb(state));
@@ -89,7 +63,7 @@ function handleRequest(req: http.IncomingMessage, res: http.ServerResponse): voi
   req.on('end', () => {
     resetHeartbeat();
     dumpRawPayload(body);
-    const state = parsePayload(body);
+    const state = parseGsiPayload(body);
     if (state) {
       notifyListeners(state);
     } else if (lastState && lastState.gameState !== GAME_STATES.POST_GAME && lastState.gameState !== GAME_STATES.DISCONNECT) {
@@ -98,6 +72,14 @@ function handleRequest(req: http.IncomingMessage, res: http.ServerResponse): voi
         gameState: GAME_STATES.DISCONNECT,
       });
     }
+    const receivedAtMs = Date.now();
+    rawListeners.forEach((cb) => {
+      try {
+        cb(body, receivedAtMs);
+      } catch (error) {
+        console.error('[gsiServer] raw payload listener failed', (error as Error).message);
+      }
+    });
     res.writeHead(200);
     res.end();
   });
@@ -139,6 +121,13 @@ export function onStateChange(callback: GsiStateCallback): () => void {
   };
 }
 
+export function onRawPayload(callback: GsiRawPayloadCallback): () => void {
+  rawListeners.push(callback);
+  return () => {
+    rawListeners = rawListeners.filter((cb) => cb !== callback);
+  };
+}
+
 export function getLastState(): ParsedGameState | null {
   return lastState;
 }
@@ -149,5 +138,6 @@ export function _resetForTesting(): void {
     heartbeatTimer = null;
   }
   listeners = [];
+  rawListeners = [];
   lastState = null;
 }

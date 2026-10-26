@@ -5,10 +5,12 @@ export type CloseBehavior = 'ask' | 'minimize' | 'quit';
 
 export interface Preferences {
   closeBehavior: CloseBehavior;
+  recordMatches: boolean;
 }
 
 const DEFAULT_PREFERENCES: Preferences = {
   closeBehavior: 'ask',
+  recordMatches: false,
 };
 
 function getPreferencesPath(): string {
@@ -26,6 +28,7 @@ export function loadPreferences(): Preferences {
     const parsed = JSON.parse(raw);
     return {
       closeBehavior: isCloseBehavior(parsed.closeBehavior) ? parsed.closeBehavior : 'ask',
+      recordMatches: typeof parsed.recordMatches === 'boolean' ? parsed.recordMatches : false,
     };
   } catch {
     return { ...DEFAULT_PREFERENCES };
@@ -39,6 +42,12 @@ export function savePreferences(prefs: Preferences): void {
     fs.mkdirSync(dir, { recursive: true });
   }
   fs.writeFileSync(filePath, JSON.stringify(prefs, null, 2), 'utf-8');
+}
+
+export function updatePreferences(changes: Partial<Preferences>): Preferences {
+  const prefs = { ...loadPreferences(), ...changes };
+  savePreferences(prefs);
+  return prefs;
 }
 
 export function resetClosePreference(): void {

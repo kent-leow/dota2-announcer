@@ -110,6 +110,10 @@ export function MainDock() {
       announcer.speak(text, 'high');
     });
 
+    const unsubMapAwareness = window.electronAPI.onMapAwarenessWarning((text) => {
+      announcer.speak(text, 'high');
+    });
+
     const unsubGsi = window.electronAPI.onGsiStatusUpdate((gsi) => {
       const newState = gsi.roshanState;
       if (newState === 'respawn_base' || newState === 'respawn_variable') {
@@ -164,6 +168,7 @@ export function MainDock() {
     return () => {
       unsubState();
       unsubRoshan();
+      unsubMapAwareness();
       unsubGsi();
       unsubTick();
       unsubPause();

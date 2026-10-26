@@ -72,6 +72,7 @@ export interface ElectronAPI {
   gsiGetInstallPath: () => Promise<string | null>;
   onGsiStatusUpdate: (callback: (status: GsiStatusUpdate) => void) => () => void;
   onRoshanEvent: (callback: (eventType: string) => void) => () => void;
+  onMapAwarenessWarning: (callback: (text: string) => void) => () => void;
   sendOverlayNotification: (payload: { eventName: string; offsetSeconds: number; eventId: string; happenTimeMs: number; icon?: string }) => void;
   sendOverlayUpcoming: (occurrences: Array<{ eventId: string; eventName: string; happenTimeMs: number; icon?: string }>) => void;
   onEventsChanged: (callback: (config: EventsConfig) => void) => () => void;
@@ -84,6 +85,9 @@ export interface ElectronAPI {
   onOverlayConfigChanged: (callback: (config: OverlayConfig) => void) => () => void;
   getDynamicEvents: () => Promise<DynamicEventsConfig>;
   setDynamicEvents: (config: DynamicEventsConfig) => Promise<{ success: boolean; error?: string }>;
+  getRecordMatches: () => Promise<boolean>;
+  setRecordMatches: (value: boolean) => Promise<{ success: boolean; error?: string }>;
+  openRecordingsFolder: () => Promise<{ success: boolean; error?: string }>;
 }
 
 declare global {

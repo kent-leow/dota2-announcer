@@ -2,6 +2,9 @@ import * as gsiServer from './gsiServer';
 import * as gameTimer from 'src/timer/gameTimer';
 import * as eventScheduler from 'src/scheduler/eventScheduler';
 import * as roshanTracker from './roshanTracker';
+import * as mapAwarenessTracker from './mapAwarenessTracker';
+import * as matchRecorder from './matchRecorder';
+import { loadPreferences } from 'src/config/preferences';
 import { ParsedGameState, GAME_STATES } from './gsiTypes';
 
 export type MatchPhase = 'idle' | 'hero-pick' | 'pre-game' | 'in-match';
@@ -13,6 +16,8 @@ let paused = false;
 let listeners: MatchPhaseCallback[] = [];
 let pauseListeners: PauseCallback[] = [];
 let unsubGsi: (() => void) | null = null;
+let unsubRaw: (() => void) | null = null;
+let recordingMatchId: string | null = null;
 
 function setPhase(phase: MatchPhase): void {
   if (phase === currentPhase) return;
@@ -31,7 +36,30 @@ function setPaused(value: boolean): void {
   pauseListeners.forEach((cb) => cb(paused));
 }
 
+function syncRecording(state: ParsedGameState): void {
+  if (currentPhase === 'idle') {
+    if (recordingMatchId !== null) {
+      recordingMatchId = null;
+      void matchRecorder.stop();
+    }
+    return;
+  }
+  if (recordingMatchId === state.matchId) return;
+
+  const isNewMatchInProgress = recordingMatchId !== null;
+  recordingMatchId = state.matchId;
+  if (isNewMatchInProgress) void matchRecorder.stop();
+  if (loadPreferences().recordMatches) {
+    matchRecorder.start(state.matchId);
+  }
+}
+
 function handleGsiState(state: ParsedGameState): void {
+  updatePhase(state);
+  syncRecording(state);
+}
+
+function updatePhase(state: ParsedGameState): void {
   if (state.gameState === GAME_STATES.HERO_SELECTION || state.gameState === GAME_STATES.STRATEGY_TIME) {
     if (currentPhase !== 'hero-pick') {
       setPhase('hero-pick');
@@ -61,6 +89,7 @@ function handleGsiState(state: ParsedGameState): void {
       gameTimer.reset();
       eventScheduler.resetScheduler();
       roshanTracker.reset();
+      mapAwarenessTracker.reset();
       paused = false;
       setPhase('idle');
     }
@@ -70,13 +99,19 @@ function handleGsiState(state: ParsedGameState): void {
 export function startListening(): void {
   if (unsubGsi) return;
   unsubGsi = gsiServer.onStateChange(handleGsiState);
+  unsubRaw = gsiServer.onRawPayload((body, receivedAtMs) => matchRecorder.append(body, receivedAtMs));
   roshanTracker.startListening();
+  mapAwarenessTracker.startListening();
 }
 
 export function stopListening(): void {
   if (unsubGsi) {
     unsubGsi();
     unsubGsi = null;
+  }
+  if (unsubRaw) {
+    unsubRaw();
+    unsubRaw = null;
   }
 }
 
@@ -105,6 +140,8 @@ export function isPaused(): boolean {
 export function _resetForTesting(): void {
   stopListening();
   roshanTracker._resetForTesting();
+  mapAwarenessTracker._resetForTesting();
+  recordingMatchId = null;
   currentPhase = 'idle';
   paused = false;
   listeners = [];

@@ -5,6 +5,8 @@ export interface GsiMap {
   game_state: string;
   paused: boolean;
   daytime: boolean;
+  radiant_score?: number;
+  dire_score?: number;
 }
 
 export interface GsiEvent {
@@ -26,6 +28,19 @@ export interface GsiHero {
   name: string;
   level: number;
   alive: boolean;
+  xpos?: number;
+  ypos?: number;
+}
+
+export interface GsiMinimapEntry {
+  xpos?: number;
+  ypos?: number;
+  yaw?: number;
+  image?: string;
+  team?: number;
+  name?: string;
+  unitname?: string;
+  visionrange?: number;
 }
 
 export interface GsiPayload {
@@ -33,6 +48,27 @@ export interface GsiPayload {
   player?: GsiPlayer;
   hero?: GsiHero;
   events?: GsiEvent[];
+  minimap?: Record<string, GsiMinimapEntry>;
+}
+
+export type TeamSide = 'radiant' | 'dire';
+
+export interface VisibleHero {
+  name: string;
+  x: number;
+  y: number;
+}
+
+export interface PlayerSnapshot {
+  team: TeamSide;
+  x: number;
+  y: number;
+  alive: boolean;
+}
+
+export interface KillScores {
+  radiant: number;
+  dire: number;
 }
 
 export interface ParsedGameState {
@@ -43,6 +79,9 @@ export interface ParsedGameState {
   daytime: boolean;
   heroName: string;
   events: GsiEvent[];
+  player?: PlayerSnapshot;
+  enemyHeroes?: VisibleHero[];
+  killScores?: KillScores;
 }
 
 export const GAME_STATES = {

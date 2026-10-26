@@ -60,6 +60,7 @@ const mockElectronAPI = {
   onOverlayConfigChanged: jest.fn(() => () => {}),
   onGsiStatusUpdate: jest.fn(() => () => {}),
   onRoshanEvent: jest.fn(() => () => {}),
+  onMapAwarenessWarning: jest.fn((_cb: (text: string) => void) => () => {}),
 };
 
 (window as any).electronAPI = mockElectronAPI;
@@ -215,6 +216,22 @@ describe('MainDock', () => {
 
       expect(announcer.formatMessage).toHaveBeenCalledWith('Bounty Rune', 30);
       expect(announcer.speak).toHaveBeenCalledWith('Bounty Rune in 30 seconds');
+    });
+
+    it('speaks map-awareness warnings with high priority and unsubscribes on unmount', async () => {
+      const unsub = jest.fn();
+      mockElectronAPI.onMapAwarenessWarning.mockImplementationOnce(() => unsub);
+      const { unmount } = render(<MainDock />);
+      await waitFor(() => expect(mockElectronAPI.onMapAwarenessWarning).toHaveBeenCalled());
+
+      const cb = mockElectronAPI.onMapAwarenessWarning.mock.calls[0][0];
+      act(() => {
+        cb('Tidehunter, 5 seconds');
+      });
+      expect(announcer.speak).toHaveBeenCalledWith('Tidehunter, 5 seconds', 'high');
+
+      unmount();
+      expect(unsub).toHaveBeenCalled();
     });
 
     it('sends overlay notification when notification enabled', async () => {
